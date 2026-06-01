@@ -1,0 +1,42 @@
+import { Model } from 'mongoose';
+import { ConfigService } from '@nestjs/config';
+import { BankConnectionDocument } from './schemas/bank-connection.schema';
+import { BankAccountDocument } from './schemas/bank-account.schema';
+import { GenerateConnectUrlDto } from './dto/generate-connect-url.dto';
+import { ExchangeCodeDto } from './dto/exchange-code.dto';
+import { TenantsService } from '../tenants/tenants.service';
+import { EncryptionService } from './services/encryption.service';
+export declare class BankingAggregatorService {
+    private bankConnectionModel;
+    private bankAccountModel;
+    private configService;
+    private tenantsService;
+    private encryptionService;
+    private readonly logger;
+    constructor(bankConnectionModel: Model<BankConnectionDocument>, bankAccountModel: Model<BankAccountDocument>, configService: ConfigService, tenantsService: TenantsService, encryptionService: EncryptionService);
+    private isBankingServiceActive;
+    private getBankingConfig;
+    getInstitutions(country?: string): Promise<any[]>;
+    generateConnectUrl(tenantId: string, dto: GenerateConnectUrlDto): Promise<{
+        url: string;
+        state: string;
+    }>;
+    exchangeCodeForToken(tenantId: string, dto: ExchangeCodeDto): Promise<BankConnectionDocument>;
+    fetchRealTransactions(connectionId: string): Promise<any[]>;
+    syncBankAccounts(connectionId: string): Promise<void>;
+    private generateGoCardlessUrl;
+    private generateBridgeUrl;
+    private exchangeCodeWithProvider;
+    private exchangeGoCardlessCode;
+    private exchangeBridgeCode;
+    private createOrUpdateConnection;
+    private refreshAccessToken;
+    private refreshGoCardlessToken;
+    private refreshBridgeToken;
+    private fetchAccountsFromProvider;
+    private fetchGoCardlessAccounts;
+    private fetchBridgeAccounts;
+    private fetchTransactionsFromProvider;
+    private fetchGoCardlessTransactions;
+    private fetchBridgeTransactions;
+}
