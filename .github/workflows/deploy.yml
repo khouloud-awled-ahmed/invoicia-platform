@@ -24,6 +24,7 @@ jobs:
       - name: Build backend
         run: |
           cd backend
+          chmod +x ./node_modules/.bin/nest
           ./node_modules/.bin/nest build
 
       - name: Build success
