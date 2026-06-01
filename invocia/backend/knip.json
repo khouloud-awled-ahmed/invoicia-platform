@@ -1,0 +1,28 @@
+{
+    "$schema": "https://unpkg.com/knip@next/schema.json",
+    "entry": [
+      "src/main.tsx",
+      "src/index.tsx",
+      "src/app.tsx",
+      "backend/src/main.ts"
+    ],
+    "project": [
+      "src/**/*.{ts,tsx}",
+      "backend/src/**/*.{ts,tsx}"
+    ],
+    "ignore": [
+      "**/*.d.ts",
+      "**/*.test.ts",
+      "**/*.spec.ts",
+      "**/dist/**",
+      "**/build/**",
+      "src/components/ui/**"
+    ],
+    "tsconfig": "backend/tsconfig.json",
+    "plugins": {
+      "nestjs": {
+        "entry": "backend/src/main.ts"
+      }
+    },
+    "ignoreDependencies": ["eslint-config-prettier", "eslint-plugin-prettier"]
+  }

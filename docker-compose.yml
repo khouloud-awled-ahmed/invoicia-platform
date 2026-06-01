@@ -1,0 +1,32 @@
+services:
+  mongodb:
+    image: mongo:7
+    container_name: invocia-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - invocia-network
+
+  backend:
+    build: ./backend
+    container_name: invocia-backend
+    ports:
+      - "3001:3001"
+    environment:
+      - DB_URI=mongodb://mongodb:27017/INVOCIA-TN
+      - MONGODB_URI=mongodb://mongodb:27017/INVOCIA-TN
+      - JWT_SECRET=invocia-secret-2026
+      - PORT=3001
+    depends_on:
+      - mongodb
+    networks:
+      - invocia-network
+
+volumes:
+  mongodb_data:
+
+networks:
+  invocia-network:
+    driver: bridge

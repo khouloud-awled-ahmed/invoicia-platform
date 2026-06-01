@@ -1,0 +1,1 @@
+const mongoose = require("mongoose"); mongoose.connect("mongodb://localhost:27017/INVOCIA-TN").then(async () => { const r = await mongoose.connection.db.collection("users").updateMany({isActive: {$exists: false}}, {$set: {isActive: true}}); console.log("Fixed users:", r.modifiedCount); mongoose.disconnect(); });

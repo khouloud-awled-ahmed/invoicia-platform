@@ -1,0 +1,1 @@
+const mongoose = require("mongoose"); mongoose.connect("mongodb://localhost:27017/INVOCIA-TN").then(async () => { await mongoose.connection.db.collection("users").updateOne({email: "admin@admin.fr"}, {$set: {name: "Super Admin"}}); console.log("Done!"); mongoose.disconnect(); });
