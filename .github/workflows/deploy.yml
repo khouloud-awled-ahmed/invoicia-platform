@@ -24,7 +24,7 @@ jobs:
       - name: Build backend
         run: |
           cd backend
-          npx nest build
+          ./node_modules/.bin/nest build
 
       - name: Build success
-        run: echo "Build completed successfully!"
+        run: echo "✅ Build completed successfully!"
