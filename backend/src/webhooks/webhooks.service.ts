@@ -8,7 +8,8 @@ export class WebhooksService {
   constructor(@InjectModel(Webhook.name) private webhookModel: Model<Webhook>) {}
 
   async findAll(tenantId: string) {
-    const docs = await this.webhookModel.find({ tenantId }).lean(); return docs.map(d => ({ ...d, id: d._id?.toString() }));
+    const docs = await this.webhookModel.find({ tenantId }).lean();
+    return docs.map((d) => ({ ...d, id: d._id?.toString() }));
   }
 
   async create(tenantId: string, dto: any) {
@@ -25,4 +26,3 @@ export class WebhooksService {
     return this.webhookModel.findOneAndDelete({ _id: id, tenantId });
   }
 }
-

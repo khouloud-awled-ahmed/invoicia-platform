@@ -1,4 +1,12 @@
-import { IsEmail, IsNotEmpty, MinLength, IsOptional, IsEnum, IsArray, IsString } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  MinLength,
+  IsOptional,
+  IsEnum,
+  IsArray,
+  IsString,
+} from 'class-validator';
 
 export class RegisterDto {
   @IsNotEmpty()
@@ -27,4 +35,3 @@ export class RegisterDto {
   @IsString({ each: true })
   selectedModules?: string[];
 }
-

@@ -33,11 +33,16 @@ export class IntervenantsService {
         );
 
         // Lier l'Intervenant au User créé (via metadata ou nouveau champ)
-        await this.intervenantModel.findByIdAndUpdate(savedIntervenant._id, {
-          $set: { metadata: { ...savedIntervenant.metadata, userId: user._id.toString() } },
-        }).exec();
+        await this.intervenantModel
+          .findByIdAndUpdate(savedIntervenant._id, {
+            $set: { metadata: { ...savedIntervenant.metadata, userId: user._id.toString() } },
+          })
+          .exec();
       } catch (error) {
-        this.logger.error('Erreur lors de la création automatique du User pour intervenant:', error);
+        this.logger.error(
+          'Erreur lors de la création automatique du User pour intervenant:',
+          error,
+        );
         // Note: On ne fait pas échouer la création de l'intervenant si le User ne peut pas être créé
         // car l'intervenant peut exister sans compte utilisateur
       }
@@ -46,7 +51,10 @@ export class IntervenantsService {
     return savedIntervenant;
   }
 
-  async findAll(tenantId: string, filters?: { type?: string; status?: string }): Promise<Intervenant[]> {
+  async findAll(
+    tenantId: string,
+    filters?: { type?: string; status?: string },
+  ): Promise<Intervenant[]> {
     const query: any = { tenantId };
     if (filters?.type) query.type = filters.type;
     if (filters?.status) query.status = filters.status;
@@ -86,22 +94,26 @@ export class IntervenantsService {
   async generateCRAAccessToken(id: string, tenantId: string): Promise<string> {
     const intervenant = await this.findOne(id, tenantId);
     const token = `cra_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-    
-    await this.intervenantModel.findOneAndUpdate(
-      { _id: id, tenantId },
-      { craAccessToken: token, canSubmitCRA: true },
-      { new: true }
-    ).exec();
+
+    await this.intervenantModel
+      .findOneAndUpdate(
+        { _id: id, tenantId },
+        { craAccessToken: token, canSubmitCRA: true },
+        { new: true },
+      )
+      .exec();
 
     return token;
   }
 
   // Trouver un intervenant par token CRA (pour accès public)
   async findByCRAToken(token: string): Promise<Intervenant | null> {
-    return this.intervenantModel.findOne({ 
-      craAccessToken: token, 
-      canSubmitCRA: true,
-      status: 'active'
-    }).exec();
+    return this.intervenantModel
+      .findOne({
+        craAccessToken: token,
+        canSubmitCRA: true,
+        status: 'active',
+      })
+      .exec();
   }
 }

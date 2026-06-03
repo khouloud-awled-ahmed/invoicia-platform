@@ -6,9 +6,7 @@ import { ParsingTemplate, ParsingTemplateSchema } from './schemas/parsing-templa
 
 @Module({
   imports: [
-    MongooseModule.forFeature([
-      { name: ParsingTemplate.name, schema: ParsingTemplateSchema },
-    ]),
+    MongooseModule.forFeature([{ name: ParsingTemplate.name, schema: ParsingTemplateSchema }]),
   ],
   controllers: [DocumentParserController],
   providers: [UniversalDocumentParserService],

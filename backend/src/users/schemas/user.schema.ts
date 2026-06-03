@@ -10,7 +10,7 @@ export class User {
   email: string;
   @Prop({ required: true })
   password: string;
- @Prop({
+  @Prop({
     required: true,
     enum: ['PLATFORM_ADMIN', 'TENANT_ADMIN', 'USER', 'CONSULTANT', 'MANAGER', 'RH'],
     default: 'USER',
@@ -45,4 +45,3 @@ export class User {
   resetPasswordExpiresAt?: Date;
 }
 export const UserSchema = SchemaFactory.createForClass(User);
-

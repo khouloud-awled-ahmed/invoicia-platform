@@ -1,7 +1,22 @@
-﻿import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
+﻿import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+  Logger,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Envelope, EnvelopeDocument, EnvelopeStatus, RecipientStatus, RecipientRole, Field, Recipient, FieldType } from './schemas/envelope.schema';
+import {
+  Envelope,
+  EnvelopeDocument,
+  EnvelopeStatus,
+  RecipientStatus,
+  RecipientRole,
+  Field,
+  Recipient,
+  FieldType,
+} from './schemas/envelope.schema';
 import { CreateEnvelopeDto } from './dto/create-envelope.dto';
 import { UpdateEnvelopeDto } from './dto/update-envelope.dto';
 import { CreateFieldDto } from './dto/create-field.dto';
@@ -20,7 +35,11 @@ export class EnvelopesService {
     private certificateService: CertificateService,
   ) {}
 
-  async create(createEnvelopeDto: CreateEnvelopeDto, userId: string, tenantId: string): Promise<EnvelopeDocument> {
+  async create(
+    createEnvelopeDto: CreateEnvelopeDto,
+    userId: string,
+    tenantId: string,
+  ): Promise<EnvelopeDocument> {
     // Assigner les routingOrder aux recipients
     const recipients = createEnvelopeDto.recipients.map((rec, index) => ({
       ...rec,
@@ -50,18 +69,23 @@ export class EnvelopesService {
       currentRoutingOrder: 1,
       createdBy: userId,
       tenantId,
-      auditTrail: [{
-        timestamp: new Date(),
-        action: 'ENVELOPE_CREATED',
-        actorEmail: userId,
-        metadata: { title: createEnvelopeDto.title },
-      }],
+      auditTrail: [
+        {
+          timestamp: new Date(),
+          action: 'ENVELOPE_CREATED',
+          actorEmail: userId,
+          metadata: { title: createEnvelopeDto.title },
+        },
+      ],
     });
 
     return envelope.save();
   }
 
-  async findAll(tenantId: string, filters?: { status?: EnvelopeStatus }): Promise<EnvelopeDocument[]> {
+  async findAll(
+    tenantId: string,
+    filters?: { status?: EnvelopeStatus },
+  ): Promise<EnvelopeDocument[]> {
     const query: any = { tenantId };
     if (filters?.status) {
       query.status = filters.status;
@@ -78,13 +102,20 @@ export class EnvelopesService {
   }
 
   async findByRecipientEmail(email: string): Promise<EnvelopeDocument[]> {
-    return this.envelopeModel.find({
-      'recipients.email': email,
-      status: { $in: [EnvelopeStatus.SENT, EnvelopeStatus.IN_PROGRESS] },
-    }).sort({ createdAt: -1 }).exec();
+    return this.envelopeModel
+      .find({
+        'recipients.email': email,
+        status: { $in: [EnvelopeStatus.SENT, EnvelopeStatus.IN_PROGRESS] },
+      })
+      .sort({ createdAt: -1 })
+      .exec();
   }
 
-  async update(id: string, updateEnvelopeDto: UpdateEnvelopeDto, tenantId: string): Promise<EnvelopeDocument> {
+  async update(
+    id: string,
+    updateEnvelopeDto: UpdateEnvelopeDto,
+    tenantId: string,
+  ): Promise<EnvelopeDocument> {
     const envelope = await this.findOne(id, tenantId);
     Object.assign(envelope, updateEnvelopeDto);
     envelope.auditTrail.push({
@@ -95,11 +126,17 @@ export class EnvelopesService {
     return envelope.save();
   }
 
-  async addFields(id: string, fields: CreateFieldDto[], tenantId: string): Promise<EnvelopeDocument> {
+  async addFields(
+    id: string,
+    fields: CreateFieldDto[],
+    tenantId: string,
+  ): Promise<EnvelopeDocument> {
     const envelope = await this.findOne(id, tenantId);
 
     if (envelope.status !== EnvelopeStatus.DRAFT) {
-      throw new BadRequestException('Impossible d\'ajouter des champs à une enveloppe non brouillon');
+      throw new BadRequestException(
+        "Impossible d'ajouter des champs à une enveloppe non brouillon",
+      );
     }
 
     const newFields: Field[] = fields.map((field) => ({
@@ -126,11 +163,11 @@ export class EnvelopesService {
     }
 
     if (envelope.fields.length === 0) {
-      throw new BadRequestException('Impossible d\'envoyer une enveloppe sans champs de signature');
+      throw new BadRequestException("Impossible d'envoyer une enveloppe sans champs de signature");
     }
 
     if (envelope.recipients.length === 0) {
-      throw new BadRequestException('Impossible d\'envoyer une enveloppe sans signataires');
+      throw new BadRequestException("Impossible d'envoyer une enveloppe sans signataires");
     }
 
     envelope.status = EnvelopeStatus.SENT;
@@ -151,23 +188,31 @@ export class EnvelopesService {
     return envelope;
   }
 
-  async sign(id: string, signDto: SignEnvelopeDto, recipientEmail: string, ipAddress: string, userAgent: string): Promise<EnvelopeDocument> {
+  async sign(
+    id: string,
+    signDto: SignEnvelopeDto,
+    recipientEmail: string,
+    ipAddress: string,
+    userAgent: string,
+  ): Promise<EnvelopeDocument> {
     // Trouver l'enveloppe par email du recipient (pas besoin de tenantId pour la signature publique)
-    const envelope = await this.envelopeModel.findOne({
-      _id: id,
-      'recipients.email': recipientEmail,
-    }).exec();
-    
+    const envelope = await this.envelopeModel
+      .findOne({
+        _id: id,
+        'recipients.email': recipientEmail,
+      })
+      .exec();
+
     if (!envelope) {
-      throw new NotFoundException(`Enveloppe avec l'ID ${id} non trouvée ou vous n'êtes pas autorisé`);
+      throw new NotFoundException(
+        `Enveloppe avec l'ID ${id} non trouvée ou vous n'êtes pas autorisé`,
+      );
     }
 
-    const recipient = envelope.recipients.find(
-      (r) => r.email === recipientEmail
-    );
+    const recipient = envelope.recipients.find((r) => r.email === recipientEmail);
 
     if (!recipient) {
-      throw new ForbiddenException('Vous n\'êtes pas autorisé à signer cette enveloppe maintenant');
+      throw new ForbiddenException("Vous n'êtes pas autorisé à signer cette enveloppe maintenant");
     }
 
     if (recipient.status === RecipientStatus.SIGNED) {
@@ -184,23 +229,26 @@ export class EnvelopesService {
     }
 
     // Vérifier que tous les champs requis sont remplis
-    const recipientFields = envelope.fields.filter(f => f.assignedRecipientId === recipient.id);
-    const requiredFields = recipientFields.filter(f => f.required);
-    const filledFields = signDto.fieldValues.map(fv => fv.fieldId);
-    const missingRequiredFields = requiredFields.filter(f => !filledFields.includes(f.id));
-    
+    const recipientFields = envelope.fields.filter((f) => f.assignedRecipientId === recipient.id);
+    const requiredFields = recipientFields.filter((f) => f.required);
+    const filledFields = signDto.fieldValues.map((fv) => fv.fieldId);
+    const missingRequiredFields = requiredFields.filter((f) => !filledFields.includes(f.id));
+
     // Missing fields check bypassed
 
     // Mettre à jour les champs avec les valeurs
     signDto.fieldValues.forEach((fieldValue) => {
-      const field = envelope.fields.find((f) => f.id === fieldValue.fieldId && f.assignedRecipientId === recipient.id);
+      const field = envelope.fields.find(
+        (f) => f.id === fieldValue.fieldId && f.assignedRecipientId === recipient.id,
+      );
       if (field) {
         // Pour les champs SIGNATURE, stocker signatureData dans un champ séparé
         if (field.type === FieldType.SIGNATURE && fieldValue.signatureData) {
           field.signatureData = fieldValue.signatureData;
           field.value = '[Signature]'; // Marqueur pour indiquer qu'une signature est présente
         } else {
-          field.value = fieldValue.value || fieldValue.signatureData || field.defaultValue?.toString();
+          field.value =
+            fieldValue.value || fieldValue.signatureData || field.defaultValue?.toString();
         }
         field.signedAt = new Date();
         field.signedBy = recipientEmail;
@@ -223,7 +271,7 @@ export class EnvelopesService {
 
     // Vérifier si c'est le dernier signataire
     const nextRecipient = envelope.recipients.find(
-      (r) => r.routingOrder === envelope.currentRoutingOrder + 1 && r.role === RecipientRole.SIGNER
+      (r) => r.routingOrder === envelope.currentRoutingOrder + 1 && r.role === RecipientRole.SIGNER,
     );
 
     if (!nextRecipient) {
@@ -233,7 +281,7 @@ export class EnvelopesService {
 
       // Générer le certificat et le document signé final
       envelope.certificateUrl = await this.certificateService.generateCertificate(envelope);
-      
+
       // Générer le document avec les signatures fusionnées
       try {
         const signedDocumentUrl = await this.certificateService.mergeSignaturesToDocument(envelope);
@@ -264,23 +312,31 @@ export class EnvelopesService {
     return envelope.save();
   }
 
-  async refuse(id: string, refuseDto: RefuseEnvelopeDto, recipientEmail: string, ipAddress: string, userAgent?: string): Promise<EnvelopeDocument> {
+  async refuse(
+    id: string,
+    refuseDto: RefuseEnvelopeDto,
+    recipientEmail: string,
+    ipAddress: string,
+    userAgent?: string,
+  ): Promise<EnvelopeDocument> {
     // Trouver l'enveloppe par email du recipient (pas besoin de tenantId pour le refus public)
-    const envelope = await this.envelopeModel.findOne({
-      _id: id,
-      'recipients.email': recipientEmail,
-    }).exec();
-    
+    const envelope = await this.envelopeModel
+      .findOne({
+        _id: id,
+        'recipients.email': recipientEmail,
+      })
+      .exec();
+
     if (!envelope) {
-      throw new NotFoundException(`Enveloppe avec l'ID ${id} non trouvée ou vous n'êtes pas autorisé`);
+      throw new NotFoundException(
+        `Enveloppe avec l'ID ${id} non trouvée ou vous n'êtes pas autorisé`,
+      );
     }
 
-    const recipient = envelope.recipients.find(
-      (r) => r.email === recipientEmail
-    );
+    const recipient = envelope.recipients.find((r) => r.email === recipientEmail);
 
     if (!recipient) {
-      throw new ForbiddenException('Vous n\'êtes pas autorisé à refuser cette enveloppe maintenant');
+      throw new ForbiddenException("Vous n'êtes pas autorisé à refuser cette enveloppe maintenant");
     }
 
     if (recipient.securityCode && refuseDto.securityCode !== recipient.securityCode) {
@@ -331,7 +387,7 @@ export class EnvelopesService {
     }
 
     if (envelope.status !== EnvelopeStatus.COMPLETED) {
-      throw new BadRequestException('Le document n\'est pas encore signé');
+      throw new BadRequestException("Le document n'est pas encore signé");
     }
 
     const signedFileUrl = envelope.documents?.[0]?.signedFileUrl;
@@ -344,11 +400,11 @@ export class EnvelopesService {
     // Les URLs sont stockées comme /uploads/signed-documents/...
     const path = require('path');
     const fs = require('fs').promises;
-    
+
     // Nettoyer l'URL pour obtenir le chemin relatif
     const cleanUrl = signedFileUrl.replace(/^\/uploads\//, '').replace(/^uploads\//, '');
     const filePath = path.join(process.cwd(), 'uploads', cleanUrl);
-    
+
     // Vérifier que le fichier existe
     try {
       await fs.access(filePath);
@@ -366,7 +422,7 @@ export class EnvelopesService {
     }
 
     if (envelope.status !== EnvelopeStatus.COMPLETED) {
-      throw new BadRequestException('Le document n\'est pas encore signé');
+      throw new BadRequestException("Le document n'est pas encore signé");
     }
 
     const certificateUrl = envelope.certificateUrl;
@@ -379,11 +435,11 @@ export class EnvelopesService {
     // Les URLs sont stockées comme /uploads/certificates/...
     const path = require('path');
     const fs = require('fs').promises;
-    
+
     // Nettoyer l'URL pour obtenir le chemin relatif
     const cleanUrl = certificateUrl.replace(/^\/uploads\//, '').replace(/^uploads\//, '');
     const filePath = path.join(process.cwd(), 'uploads', cleanUrl);
-    
+
     // Vérifier que le fichier existe
     try {
       await fs.access(filePath);
@@ -394,9 +450,3 @@ export class EnvelopesService {
     }
   }
 }
-
-
-
-
-
-

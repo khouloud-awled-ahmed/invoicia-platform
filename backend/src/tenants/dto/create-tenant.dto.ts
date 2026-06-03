@@ -1,4 +1,15 @@
-import { IsNotEmpty, IsEmail, IsOptional, IsEnum, IsArray, IsNumber, IsBoolean, IsObject, IsString, ValidateNested } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsEmail,
+  IsOptional,
+  IsEnum,
+  IsArray,
+  IsNumber,
+  IsBoolean,
+  IsObject,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 class AddressDto {
@@ -212,4 +223,3 @@ export class CreateTenantDto {
   @IsArray()
   features?: string[];
 }
-

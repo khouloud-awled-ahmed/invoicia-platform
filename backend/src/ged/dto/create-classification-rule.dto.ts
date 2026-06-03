@@ -1,4 +1,12 @@
-import { IsNotEmpty, IsString, IsOptional, IsEnum, IsArray, IsNumber, IsObject } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsArray,
+  IsNumber,
+  IsObject,
+} from 'class-validator';
 
 export class CreateClassificationRuleDto {
   @IsNotEmpty()

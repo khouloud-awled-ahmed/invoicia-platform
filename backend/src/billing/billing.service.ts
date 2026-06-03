@@ -13,9 +13,16 @@ export class BillingService {
       throw new ForbiddenException('Tenant not found');
     }
 
-    const billingEnabled = tenant.billingSettings?.enabled || tenant.features?.includes('billing') || false;
-    const structuredFormatsEnabled = tenant.billingSettings?.structuredFormatsEnabled || tenant.features?.includes('structured-formats') || false;
-    const platformAgreementEnabled = tenant.billingSettings?.platformAgreementEnabled || tenant.features?.includes('platform-agreement') || false;
+    const billingEnabled =
+      tenant.billingSettings?.enabled || tenant.features?.includes('billing') || false;
+    const structuredFormatsEnabled =
+      tenant.billingSettings?.structuredFormatsEnabled ||
+      tenant.features?.includes('structured-formats') ||
+      false;
+    const platformAgreementEnabled =
+      tenant.billingSettings?.platformAgreementEnabled ||
+      tenant.features?.includes('platform-agreement') ||
+      false;
 
     return {
       enabled: billingEnabled,
@@ -25,7 +32,7 @@ export class BillingService {
       },
       platformAgreement: {
         enabled: platformAgreementEnabled,
-        configured: !!(tenant.metadata?.platformAgreementConfig),
+        configured: !!tenant.metadata?.platformAgreementConfig,
         platform: tenant.metadata?.platformAgreementConfig?.platform || null,
       },
     };

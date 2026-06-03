@@ -70,4 +70,3 @@ export class Employee {
 export const EmployeeSchema = SchemaFactory.createForClass(Employee);
 EmployeeSchema.index({ tenantId: 1, email: 1 });
 EmployeeSchema.index({ tenantId: 1, status: 1 });
-

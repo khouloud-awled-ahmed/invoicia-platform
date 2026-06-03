@@ -167,7 +167,16 @@ export class Tenant {
   };
 
   @Prop({
-    enum: ['INCOMPLETE', 'TRIAL', 'ACTIVE', 'PAST_DUE', 'CANCELED', 'PENDING_PAYMENT', 'SUSPENDED', 'CANCELLED'],
+    enum: [
+      'INCOMPLETE',
+      'TRIAL',
+      'ACTIVE',
+      'PAST_DUE',
+      'CANCELED',
+      'PENDING_PAYMENT',
+      'SUSPENDED',
+      'CANCELLED',
+    ],
     default: 'INCOMPLETE',
   })
   subscriptionStatus: string;
@@ -259,4 +268,3 @@ export class Tenant {
 }
 
 export const TenantSchema = SchemaFactory.createForClass(Tenant);
-

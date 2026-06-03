@@ -1,4 +1,14 @@
-import { IsString, IsOptional, IsArray, ValidateNested, IsEmail, IsDateString, IsEnum, Min, Max } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsArray,
+  ValidateNested,
+  IsEmail,
+  IsDateString,
+  IsEnum,
+  Min,
+  Max,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { RecipientRole } from '../schemas/envelope.schema';
 

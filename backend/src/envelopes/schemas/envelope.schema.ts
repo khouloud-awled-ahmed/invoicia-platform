@@ -226,6 +226,3 @@ EnvelopeSchema.index({ tenantId: 1, createdAt: -1 });
 EnvelopeSchema.index({ 'recipients.email': 1 });
 EnvelopeSchema.index({ status: 1 });
 EnvelopeSchema.index({ expiresAt: 1 });
-
-
-

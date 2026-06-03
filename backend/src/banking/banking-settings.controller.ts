@@ -123,7 +123,16 @@ export class BankingSettingsController {
   @Post('accounts')
   async createBankAccount(@CurrentUserDecorator() user: any, @Body() body: any) {
     if (!user.tenantId) throw new BadRequestException('Tenant ID is required');
-    const account = new this.bankAccountModel({ name: body.accountName || body.name, iban: body.iban, bic: body.bic, bankName: body.bankName, tenantId: user.tenantId, provider: 'MANUAL', currency: body.currency, balance: body.balance });
+    const account = new this.bankAccountModel({
+      name: body.accountName || body.name,
+      iban: body.iban,
+      bic: body.bic,
+      bankName: body.bankName,
+      tenantId: user.tenantId,
+      provider: 'MANUAL',
+      currency: body.currency,
+      balance: body.balance,
+    });
     const saved = await account.save();
     return { ...saved.toObject(), id: saved._id?.toString() };
   }
@@ -135,19 +144,35 @@ export class BankingSettingsController {
   @Post('transactions')
   async createTransactions(
     @CurrentUserDecorator() user: any,
-    @Body() body: { bankAccountId: string; transactions: Array<{ date: string; label: string; amount: number; type?: 'debit' | 'credit'; currency?: string }> },
+    @Body()
+    body: {
+      bankAccountId: string;
+      transactions: Array<{
+        date: string;
+        label: string;
+        amount: number;
+        type?: 'debit' | 'credit';
+        currency?: string;
+      }>;
+    },
   ) {
     if (!user.tenantId) {
       throw new BadRequestException('Tenant ID is required');
     }
-    if (!body.bankAccountId || !Array.isArray(body.transactions) || body.transactions.length === 0) {
+    if (
+      !body.bankAccountId ||
+      !Array.isArray(body.transactions) ||
+      body.transactions.length === 0
+    ) {
       throw new BadRequestException('bankAccountId and non-empty transactions array are required');
     }
 
-    const account = await this.bankAccountModel.findOne({
-      _id: body.bankAccountId,
-      tenantId: user.tenantId,
-    }).exec();
+    const account = await this.bankAccountModel
+      .findOne({
+        _id: body.bankAccountId,
+        tenantId: user.tenantId,
+      })
+      .exec();
     if (!account) {
       throw new BadRequestException('Compte bancaire introuvable');
     }
@@ -193,7 +218,12 @@ export class BankingSettingsController {
       filter.status = status;
     }
 
-    const list = await this.bankTransactionModel.find(filter).sort({ date: -1 }).limit(500).lean().exec();
+    const list = await this.bankTransactionModel
+      .find(filter)
+      .sort({ date: -1 })
+      .limit(500)
+      .lean()
+      .exec();
     return list.map((t: any) => ({
       id: t._id.toString(),
       bankAccountId: t.bankAccountId,
@@ -282,7 +312,9 @@ export class BankingSettingsController {
 
     // Vérifier que l'utilisateur est admin (seulement les admins peuvent configurer)
     if (user.role !== 'TENANT_ADMIN' && user.role !== 'PLATFORM_ADMIN') {
-      throw new BadRequestException('Seuls les administrateurs peuvent configurer le module bancaire');
+      throw new BadRequestException(
+        'Seuls les administrateurs peuvent configurer le module bancaire',
+      );
     }
 
     // Crypter les credentials avant de les sauvegarder
@@ -330,21 +362,15 @@ export class BankingSettingsController {
    * POST /banking/import/learn
    */
   @Post('import/learn')
-  async learnFormat(
-    @CurrentUserDecorator() user: any,
-    @Body() learnFormatDto: LearnFormatDto,
-  ) {
+  async learnFormat(@CurrentUserDecorator() user: any, @Body() learnFormatDto: LearnFormatDto) {
     if (!user.tenantId) {
       throw new BadRequestException('Tenant ID is required');
     }
 
-    const template = await this.documentParser.learnFormat(
-      user.tenantId,
-      {
-        ...learnFormatDto,
-        type: 'BANK', // Forcer le type BANK pour les imports bancaires
-      },
-    );
+    const template = await this.documentParser.learnFormat(user.tenantId, {
+      ...learnFormatDto,
+      type: 'BANK', // Forcer le type BANK pour les imports bancaires
+    });
 
     return {
       message: 'Format appris avec succès',
@@ -367,7 +393,7 @@ export class BankingSettingsController {
     }
 
     const templates = await this.documentParser.getTemplates(user.tenantId, 'BANK');
-    return templates.map(t => ({
+    return templates.map((t) => ({
       id: t._id.toString(),
       name: t.name,
       signature: t.signature,
@@ -381,10 +407,7 @@ export class BankingSettingsController {
    * DELETE /banking/import/templates/:id
    */
   @Delete('import/templates/:id')
-  async deleteTemplate(
-    @CurrentUserDecorator() user: any,
-    @Param('id') templateId: string,
-  ) {
+  async deleteTemplate(@CurrentUserDecorator() user: any, @Param('id') templateId: string) {
     if (!user.tenantId) {
       throw new BadRequestException('Tenant ID is required');
     }

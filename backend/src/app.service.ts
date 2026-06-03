@@ -12,7 +12,9 @@ export class AppService implements OnModuleInit {
       if (this.connection.readyState === 1) {
         console.log('✅ MongoDB connection verified');
       } else {
-        console.warn('⚠️ MongoDB connection state: ' + this.getConnectionState(this.connection.readyState));
+        console.warn(
+          '⚠️ MongoDB connection state: ' + this.getConnectionState(this.connection.readyState),
+        );
       }
     } catch (error) {
       console.error('❌ Error verifying MongoDB connection:', error.message);
@@ -47,4 +49,3 @@ export class AppService implements OnModuleInit {
     };
   }
 }
-

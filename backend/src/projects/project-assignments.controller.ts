@@ -14,7 +14,8 @@ export class ProjectAssignmentsController {
    */
   @Post()
   async create(
-    @Body() createDto: {
+    @Body()
+    createDto: {
       userId: string;
       projectId: string;
       startDate: string;
@@ -72,7 +73,8 @@ export class ProjectAssignmentsController {
   @Patch(':id')
   async update(
     @Param('id') id: string,
-    @Body() updateDto: {
+    @Body()
+    updateDto: {
       endDate?: string;
       validatorId?: string;
       dailyRate?: number;

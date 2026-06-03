@@ -11,7 +11,8 @@ export class FacturXGeneratorService {
     const facturX = {
       '@xmlns': 'urn:factur-x:erdi:cross:invoice:1.0',
       '@xmlns:qdt': 'urn:un:unece:uncefact:data:standard:QualifiedDataType:100',
-      '@xmlns:ram': 'urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100',
+      '@xmlns:ram':
+        'urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100',
       '@xmlns:rsm': 'urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100',
       '@xmlns:udt': 'urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100',
       'rsm:ExchangedDocument': {
@@ -138,7 +139,7 @@ export class FacturXGeneratorService {
     let xml = '';
     for (const [key, value] of Object.entries(obj)) {
       if (key.startsWith('@')) continue;
-      
+
       if (Array.isArray(value)) {
         value.forEach((item) => {
           xml += `${indent}<${key}>\n`;

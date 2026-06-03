@@ -1,7 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { AccountingEntry, AccountingEntryDocument } from '../../accounting/schemas/accounting-entry.schema';
+import {
+  AccountingEntry,
+  AccountingEntryDocument,
+} from '../../accounting/schemas/accounting-entry.schema';
 
 @Injectable()
 export class AccountingService {

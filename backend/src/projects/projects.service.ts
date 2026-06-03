@@ -5,9 +5,7 @@ import { Project, ProjectDocument } from './schemas/project.schema';
 
 @Injectable()
 export class ProjectsService {
-  constructor(
-    @InjectModel(Project.name) private projectModel: Model<ProjectDocument>,
-  ) {}
+  constructor(@InjectModel(Project.name) private projectModel: Model<ProjectDocument>) {}
 
   async create(createDto: any, tenantId: string): Promise<Project> {
     const project = new this.projectModel({
@@ -48,4 +46,3 @@ export class ProjectsService {
     }
   }
 }
-

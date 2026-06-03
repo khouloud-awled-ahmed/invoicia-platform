@@ -39,4 +39,3 @@ export class AccountingEntry {
 export const AccountingEntrySchema = SchemaFactory.createForClass(AccountingEntry);
 AccountingEntrySchema.index({ tenantId: 1, date: -1 });
 AccountingEntrySchema.index({ tenantId: 1, account: 1 });
-

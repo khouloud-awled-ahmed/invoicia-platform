@@ -27,7 +27,11 @@ export class AttachmentsController {
   @UseInterceptors(FileInterceptor('file'))
   async upload(
     @UploadedFile() file: any,
-    @Query('entityType', new ParseEnumPipe(['invoice', 'purchase_invoice', 'credit_note', 'tenant_logo'])) entityType: string,
+    @Query(
+      'entityType',
+      new ParseEnumPipe(['invoice', 'purchase_invoice', 'credit_note', 'tenant_logo']),
+    )
+    entityType: string,
     @Query('entityId') entityId: string,
     @CurrentUser() user: any,
   ) {
@@ -35,7 +39,11 @@ export class AttachmentsController {
     if (!entityId) throw new BadRequestException('entityId is required');
     if (!file.buffer) throw new BadRequestException('File buffer is missing');
     const attachment = await this.attachmentsService.upload(
-      file, entityType, entityId, user.tenantId, user.email || user.userId,
+      file,
+      entityType,
+      entityId,
+      user.tenantId,
+      user.email || user.userId,
     );
     return {
       success: true,
@@ -63,7 +71,8 @@ export class AttachmentsController {
   @UseGuards(JwtAuthGuard)
   @Get(':entityType/:entityId')
   async findAll(
-    @Param('entityType', new ParseEnumPipe(['invoice', 'purchase_invoice', 'credit_note'])) entityType: string,
+    @Param('entityType', new ParseEnumPipe(['invoice', 'purchase_invoice', 'credit_note']))
+    entityType: string,
     @Param('entityId') entityId: string,
     @CurrentUser() user: any,
   ) {

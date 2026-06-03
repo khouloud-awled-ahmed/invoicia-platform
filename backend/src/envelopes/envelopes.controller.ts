@@ -46,11 +46,7 @@ export class EnvelopesController {
 
   @Get()
   @UseGuards(JwtAuthGuard)
-  async findAll(
-    @CurrentUser() user: any,
-    @Req() req: any,
-    @Query('status') status?: string,
-  ) {
+  async findAll(@CurrentUser() user: any, @Req() req: any, @Query('status') status?: string) {
     const tenantId = user.tenantId || req.user?.tenantId;
     return this.envelopesService.findAll(tenantId, status ? { status: status as any } : undefined);
   }
@@ -66,11 +62,7 @@ export class EnvelopesController {
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)
-  async findOne(
-    @Param('id') id: string,
-    @CurrentUser() user: any,
-    @Req() req: any,
-  ) {
+  async findOne(@Param('id') id: string, @CurrentUser() user: any, @Req() req: any) {
     const tenantId = user.tenantId || req.user?.tenantId;
     return this.envelopesService.findOne(id, tenantId);
   }
@@ -96,20 +88,17 @@ export class EnvelopesController {
     @Req() req: any,
   ) {
     const tenantId = user.tenantId || req.user?.tenantId;
-    const fields = Array.isArray(body) ? body : (body.fields || []);
+    const fields = Array.isArray(body) ? body : body.fields || [];
     return this.envelopesService.addFields(id, fields, tenantId);
   }
 
   @Post(':id/send')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard)
-  async send(
-    @Param('id') id: string,
-    @CurrentUser() user: any,
-    @Req() req: any,
-  ) {
+  async send(@Param('id') id: string, @CurrentUser() user: any, @Req() req: any) {
     const tenantId = user.tenantId || req.user?.tenantId;
-    const ipAddress = req.ip || req.connection?.remoteAddress || req.headers['x-forwarded-for'] || 'unknown';
+    const ipAddress =
+      req.ip || req.connection?.remoteAddress || req.headers['x-forwarded-for'] || 'unknown';
     return this.envelopesService.send(id, tenantId, ipAddress);
   }
 
@@ -125,7 +114,12 @@ export class EnvelopesController {
     if (!email) {
       throw new BadRequestException('Email query parameter is required');
     }
-    const ipAddress = req.ip || req.connection?.remoteAddress || req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
+    const ipAddress =
+      req.ip ||
+      req.connection?.remoteAddress ||
+      req.headers['x-forwarded-for'] ||
+      req.socket?.remoteAddress ||
+      'unknown';
     const userAgent = req.headers['user-agent'] || 'unknown';
     return this.envelopesService.sign(id, signDto, email, ipAddress, userAgent);
   }
@@ -142,7 +136,12 @@ export class EnvelopesController {
     if (!email) {
       throw new BadRequestException('Email query parameter is required');
     }
-    const ipAddress = req.ip || req.connection?.remoteAddress || req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
+    const ipAddress =
+      req.ip ||
+      req.connection?.remoteAddress ||
+      req.headers['x-forwarded-for'] ||
+      req.socket?.remoteAddress ||
+      'unknown';
     const userAgent = req.headers['user-agent'] || 'unknown';
     return this.envelopesService.refuse(id, refuseDto, email, ipAddress, userAgent);
   }
@@ -157,7 +156,7 @@ export class EnvelopesController {
   ) {
     const tenantId = user.tenantId || req.user?.tenantId;
     const filePath = await this.envelopesService.getSignedDocumentPath(id, tenantId);
-    
+
     if (!filePath) {
       throw new NotFoundException('Document signé non trouvé');
     }
@@ -179,7 +178,7 @@ export class EnvelopesController {
   ) {
     const tenantId = user.tenantId || req.user?.tenantId;
     const filePath = await this.envelopesService.getCertificatePath(id, tenantId);
-    
+
     if (!filePath) {
       throw new NotFoundException('Certificat non trouvé');
     }
@@ -194,17 +193,8 @@ export class EnvelopesController {
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(JwtAuthGuard)
-  async remove(
-    @Param('id') id: string,
-    @CurrentUser() user: any,
-    @Req() req: any,
-  ) {
+  async remove(@Param('id') id: string, @CurrentUser() user: any, @Req() req: any) {
     const tenantId = user.tenantId || req.user?.tenantId;
     await this.envelopesService.remove(id, tenantId);
   }
 }
-
-
-
-
-

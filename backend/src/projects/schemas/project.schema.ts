@@ -77,4 +77,3 @@ export class Project {
 
 export const ProjectSchema = SchemaFactory.createForClass(Project);
 ProjectSchema.index({ tenantId: 1, status: 1 });
-

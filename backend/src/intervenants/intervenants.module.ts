@@ -7,9 +7,7 @@ import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([
-      { name: Intervenant.name, schema: IntervenantSchema },
-    ]),
+    MongooseModule.forFeature([{ name: Intervenant.name, schema: IntervenantSchema }]),
     UsersModule,
   ],
   controllers: [IntervenantsController],
@@ -17,4 +15,3 @@ import { UsersModule } from '../users/users.module';
   exports: [IntervenantsService],
 })
 export class IntervenantsModule {}
-

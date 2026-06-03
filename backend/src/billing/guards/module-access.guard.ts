@@ -5,9 +5,7 @@ import { Tenant, TenantDocument } from '../../tenants/schemas/tenant.schema';
 
 @Injectable()
 export class ModuleAccessGuard implements CanActivate {
-  constructor(
-    @InjectModel(Tenant.name) private tenantModel: Model<TenantDocument>,
-  ) {}
+  constructor(@InjectModel(Tenant.name) private tenantModel: Model<TenantDocument>) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();

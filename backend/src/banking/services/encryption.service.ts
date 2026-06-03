@@ -20,10 +20,11 @@ export class EncryptionService {
    * En production, utilisez une clé maître stockée de manière sécurisée (AWS KMS, HashiCorp Vault, etc.)
    */
   private getEncryptionKey(): Buffer {
-    const masterKey = this.configService.get<string>('ENCRYPTION_MASTER_KEY') || 
-                     process.env.ENCRYPTION_MASTER_KEY || 
-                     'default-master-key-change-in-production-minimum-32-characters-long';
-    
+    const masterKey =
+      this.configService.get<string>('ENCRYPTION_MASTER_KEY') ||
+      process.env.ENCRYPTION_MASTER_KEY ||
+      'default-master-key-change-in-production-minimum-32-characters-long';
+
     if (masterKey.length < 32) {
       this.logger.warn('ENCRYPTION_MASTER_KEY is too short. Using default (INSECURE).');
     }
@@ -46,19 +47,14 @@ export class EncryptionService {
       const salt = crypto.randomBytes(this.saltLength);
 
       const cipher = crypto.createCipheriv(this.algorithm, key, iv);
-      
+
       let encrypted = cipher.update(text, 'utf8', 'hex');
       encrypted += cipher.final('hex');
-      
+
       const tag = cipher.getAuthTag();
 
       // Combiner: salt + iv + tag + encrypted
-      const result = Buffer.concat([
-        salt,
-        iv,
-        tag,
-        Buffer.from(encrypted, 'hex'),
-      ]);
+      const result = Buffer.concat([salt, iv, tag, Buffer.from(encrypted, 'hex')]);
 
       return result.toString('base64');
     } catch (error) {

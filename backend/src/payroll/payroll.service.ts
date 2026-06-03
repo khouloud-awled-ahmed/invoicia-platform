@@ -12,12 +12,20 @@ export class PayrollService {
     return this.bulletinModel.find({ tenantId }).sort({ year: -1, month: -1 }).exec();
   }
   async validate(id: string, tenantId: string) {
-    const b = await this.bulletinModel.findOneAndUpdate({ _id: id, tenantId }, { status: 'validated' }, { new: true });
+    const b = await this.bulletinModel.findOneAndUpdate(
+      { _id: id, tenantId },
+      { status: 'validated' },
+      { new: true },
+    );
     if (!b) throw new NotFoundException();
     return b;
   }
   async pay(id: string, tenantId: string) {
-    const b = await this.bulletinModel.findOneAndUpdate({ _id: id, tenantId }, { status: 'paid' }, { new: true });
+    const b = await this.bulletinModel.findOneAndUpdate(
+      { _id: id, tenantId },
+      { status: 'paid' },
+      { new: true },
+    );
     if (!b) throw new NotFoundException();
     return b;
   }

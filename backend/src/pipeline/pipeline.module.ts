@@ -5,11 +5,7 @@ import { PipelineService } from './pipeline.service';
 import { Opportunity, OpportunitySchema } from './opportunity.schema';
 
 @Module({
-  imports: [
-    MongooseModule.forFeature([
-      { name: Opportunity.name, schema: OpportunitySchema },
-    ]),
-  ],
+  imports: [MongooseModule.forFeature([{ name: Opportunity.name, schema: OpportunitySchema }])],
   controllers: [PipelineController],
   providers: [PipelineService],
 })

@@ -153,7 +153,8 @@ export class TenantsService {
     if (data.nextNumber !== undefined) updateData['invoiceSettings.nextNumber'] = data.nextNumber;
     if (data.footerText !== undefined) updateData['invoiceSettings.footerText'] = data.footerText;
     if (data.currency !== undefined) updateData['invoiceSettings.currency'] = data.currency;
-    if (data.timbreFiscalAmount !== undefined) updateData['invoiceSettings.timbreFiscalAmount'] = data.timbreFiscalAmount;
+    if (data.timbreFiscalAmount !== undefined)
+      updateData['invoiceSettings.timbreFiscalAmount'] = data.timbreFiscalAmount;
 
     const tenant = await this.tenantModel.findById(id).exec();
     if (!tenant) {
@@ -265,7 +266,8 @@ export class TenantsService {
   }
 
   private validateBIC(bic: string): boolean {
-    if (!bic) return false; const cleaned = bic.replace(/\s/g, '');
+    if (!bic) return false;
+    const cleaned = bic.replace(/\s/g, '');
     // BIC doit faire 8 ou 11 caractères
     return cleaned.length === 8 || cleaned.length === 11;
   }
@@ -294,7 +296,7 @@ export class TenantsService {
 
     // Mettre à jour les features selon les paramètres
     const features = tenant.features || [];
-    
+
     if (data.enabled && !features.includes('billing')) {
       features.push('billing');
     } else if (data.enabled === false && features.includes('billing')) {
@@ -329,7 +331,7 @@ export class TenantsService {
 
   async getBillingSettings(id: string): Promise<any> {
     const tenant = await this.findOne(id);
-    
+
     return {
       enabled: tenant.billingSettings?.enabled || false,
       structuredFormatsEnabled: tenant.billingSettings?.structuredFormatsEnabled || false,
@@ -348,25 +350,27 @@ export class TenantsService {
     }>,
   ): Promise<Tenant> {
     const tenant = await this.tenantModel.findById(id).exec();
-    
+
     if (!tenant) {
       throw new NotFoundException(`Tenant with ID ${id} not found`);
     }
-    
+
     if (!tenant.settings) {
       tenant.settings = {};
     }
-    
+
     tenant.settings.paymentMethods = paymentMethods;
-    
+
     return tenant.save();
   }
 
-  async getPaymentMethods(id: string): Promise<Array<{
-    type: 'IBAN' | 'STRIPE' | 'PAYPAL' | 'CHECK';
-    enabled: boolean;
-    details: Record<string, any>;
-  }>> {
+  async getPaymentMethods(id: string): Promise<
+    Array<{
+      type: 'IBAN' | 'STRIPE' | 'PAYPAL' | 'CHECK';
+      enabled: boolean;
+      details: Record<string, any>;
+    }>
+  > {
     const tenant = await this.findOne(id);
     return tenant.settings?.paymentMethods || [];
   }
@@ -504,4 +508,3 @@ export class TenantsService {
     return tenant.save();
   }
 }
-

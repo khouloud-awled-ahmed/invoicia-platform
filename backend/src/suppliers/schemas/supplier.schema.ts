@@ -57,4 +57,3 @@ export class Supplier {
 
 export const SupplierSchema = SchemaFactory.createForClass(Supplier);
 SupplierSchema.index({ tenantId: 1, name: 1 });
-

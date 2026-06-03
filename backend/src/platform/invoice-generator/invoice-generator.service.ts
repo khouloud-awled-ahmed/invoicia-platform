@@ -43,13 +43,14 @@ export class InvoiceGeneratorService {
           const logoPath = platformSettings.invoiceLogoUrl.startsWith('http')
             ? null
             : path.join(process.cwd(), 'uploads', platformSettings.invoiceLogoUrl);
-          
+
           if (logoPath && fs.existsSync(logoPath)) {
             const logoBytes = fs.readFileSync(logoPath);
             // Détecter le type d'image
             const isPng = logoPath.toLowerCase().endsWith('.png');
-            const isJpg = logoPath.toLowerCase().endsWith('.jpg') || logoPath.toLowerCase().endsWith('.jpeg');
-            
+            const isJpg =
+              logoPath.toLowerCase().endsWith('.jpg') || logoPath.toLowerCase().endsWith('.jpeg');
+
             let logoImage;
             if (isPng) {
               logoImage = await pdfDoc.embedPng(logoBytes);
@@ -64,7 +65,7 @@ export class InvoiceGeneratorService {
                 logoImage = await pdfDoc.embedJpg(logoBytes);
               }
             }
-            
+
             const logoDims = logoImage.scale(0.3);
             page.drawImage(logoImage, {
               x: 50,
@@ -79,7 +80,8 @@ export class InvoiceGeneratorService {
       }
 
       // Nom de l'entreprise (plateforme)
-      const companyName = platformSettings.invoiceCompanyName || platformSettings.companyName || 'Invoicia';
+      const companyName =
+        platformSettings.invoiceCompanyName || platformSettings.companyName || 'Invoicia';
       page.drawText(companyName, {
         x: 50,
         y: yPosition,
@@ -99,7 +101,12 @@ export class InvoiceGeneratorService {
           page.drawText(addr.line2, { x: 50, y: yPosition, size: 10, font: helveticaFont });
           yPosition -= 12;
         }
-        page.drawText(`${addr.postalCode} ${addr.city}`, { x: 50, y: yPosition, size: 10, font: helveticaFont });
+        page.drawText(`${addr.postalCode} ${addr.city}`, {
+          x: 50,
+          y: yPosition,
+          size: 10,
+          font: helveticaFont,
+        });
         yPosition -= 12;
         page.drawText(addr.country, { x: 50, y: yPosition, size: 10, font: helveticaFont });
         yPosition -= 12;
@@ -175,7 +182,11 @@ export class InvoiceGeneratorService {
       });
       yPosition -= 20;
 
-      const tenantName = invoice.tenantSnapshot?.businessName || invoice.tenantSnapshot?.name || tenant.businessName || tenant.name;
+      const tenantName =
+        invoice.tenantSnapshot?.businessName ||
+        invoice.tenantSnapshot?.name ||
+        tenant.businessName ||
+        tenant.name;
       page.drawText(tenantName, {
         x: 50,
         y: yPosition,
@@ -192,7 +203,12 @@ export class InvoiceGeneratorService {
           page.drawText(addr.line2, { x: 50, y: yPosition, size: 10, font: helveticaFont });
           yPosition -= 12;
         }
-        page.drawText(`${addr.postalCode} ${addr.city}`, { x: 50, y: yPosition, size: 10, font: helveticaFont });
+        page.drawText(`${addr.postalCode} ${addr.city}`, {
+          x: 50,
+          y: yPosition,
+          size: 10,
+          font: helveticaFont,
+        });
         yPosition -= 12;
         page.drawText(addr.country, { x: 50, y: yPosition, size: 10, font: helveticaFont });
         yPosition -= 12;

@@ -10,12 +10,12 @@ async function bootstrap() {
     const app = await NestFactory.create<NestExpressApplication>(AppModule, {
       logger: ['error', 'warn', 'log'],
     });
-    
+
     // Servir les fichiers statiques pour les certificats et uploads
     app.useStaticAssets(join(__dirname, '..', 'uploads'), {
       prefix: '/uploads',
     });
-    
+
     const configService = app.get(ConfigService);
     const port = configService.get('PORT') || 3000;
 
@@ -39,7 +39,7 @@ async function bootstrap() {
           enableImplicitConversion: true,
         },
         exceptionFactory: (errors) => {
-          const messages = errors.map(error => {
+          const messages = errors.map((error) => {
             const constraints = error.constraints || {};
             return Object.values(constraints).join(', ');
           });
@@ -55,7 +55,7 @@ async function bootstrap() {
     app.setGlobalPrefix('api');
 
     await app.listen(port);
-    
+
     console.log('');
     console.log('═══════════════════════════════════════════════════════════');
     console.log('🚀 Application is running on: http://localhost:' + port + '/api');
@@ -67,19 +67,18 @@ async function bootstrap() {
     console.error('❌ ERREUR DE CONNEXION À LA BASE DE DONNÉES');
     console.error('═══════════════════════════════════════════════════════════');
     console.error('');
-    
+
     if (error.message && error.message.includes('ECONNREFUSED')) {
-      console.error('🔍 Problème détecté : MongoDB n\'est pas accessible');
+      console.error("🔍 Problème détecté : MongoDB n'est pas accessible");
       const dbUri = process.env.DB_URI || 'mongodb://localhost:27017/invoicia';
       console.error('      DB_URI actuel : ' + dbUri);
     } else {
       console.error('Erreur détectée :', error.message);
     }
-    
+
     console.error('═══════════════════════════════════════════════════════════');
     process.exit(1);
   }
 }
 
 bootstrap();
-

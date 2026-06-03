@@ -3,7 +3,10 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { BankTransaction, BankTransactionSchema } from '../banking/schemas/bank-transaction.schema';
 import { Invoice, InvoiceSchema } from '../billing/sales/schemas/invoice.schema';
 import { Expense, ExpenseSchema } from '../billing/purchases/schemas/expense.schema';
-import { AccountingEntry, AccountingEntrySchema } from '../accounting/schemas/accounting-entry.schema';
+import {
+  AccountingEntry,
+  AccountingEntrySchema,
+} from '../accounting/schemas/accounting-entry.schema';
 import { ReconciliationService } from './reconciliation.service';
 import { ReconciliationController } from './reconciliation.controller';
 

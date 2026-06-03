@@ -12,7 +12,7 @@ export class PlatformSettingsService {
 
   async getSettings(): Promise<PlatformSettings> {
     let settings = await this.settingsModel.findOne({ id: 'platform' }).exec();
-    
+
     if (!settings) {
       // Créer les settings par défaut
       settings = new this.settingsModel({

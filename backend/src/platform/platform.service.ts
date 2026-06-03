@@ -45,15 +45,23 @@ export class PlatformService {
 
   async createTenant(createTenantDto: CreateTenantDto) {
     // Vérifier que l'email admin n'existe pas déjà
-    const existingUser = await this.userModel.findOne({ email: createTenantDto.adminEmail.toLowerCase() }).exec();
+    const existingUser = await this.userModel
+      .findOne({ email: createTenantDto.adminEmail.toLowerCase() })
+      .exec();
     if (existingUser) {
-      throw new BadRequestException(`Un utilisateur avec l'email ${createTenantDto.adminEmail} existe déjà`);
+      throw new BadRequestException(
+        `Un utilisateur avec l'email ${createTenantDto.adminEmail} existe déjà`,
+      );
     }
 
     // Vérifier que le Matricule Fiscal n'existe pas déjà
-    const existingTenant = await this.tenantModel.findOne({ matriculeFiscal: createTenantDto.matriculeFiscal }).exec();
+    const existingTenant = await this.tenantModel
+      .findOne({ matriculeFiscal: createTenantDto.matriculeFiscal })
+      .exec();
     if (existingTenant) {
-      throw new BadRequestException(`Un tenant avec le Matricule Fiscal ${createTenantDto.matriculeFiscal} existe déjà`);
+      throw new BadRequestException(
+        `Un tenant avec le Matricule Fiscal ${createTenantDto.matriculeFiscal} existe déjà`,
+      );
     }
 
     // Créer le tenant
@@ -80,7 +88,10 @@ export class PlatformService {
     const savedTenant = await tenant.save();
 
     // Créer l'utilisateur admin du tenant
-    const hashedPassword = await bcrypt.hash(createTenantDto.adminPassword || 'TempPassword123!', 10);
+    const hashedPassword = await bcrypt.hash(
+      createTenantDto.adminPassword || 'TempPassword123!',
+      10,
+    );
     const adminUser = new this.userModel({
       name: createTenantDto.adminName || 'Administrateur',
       email: createTenantDto.adminEmail.toLowerCase(),
@@ -93,10 +104,9 @@ export class PlatformService {
     await adminUser.save();
 
     // Mettre à jour le compteur d'utilisateurs
-    await this.tenantModel.updateOne(
-      { _id: savedTenant._id },
-      { $inc: { currentUsers: 1 } }
-    ).exec();
+    await this.tenantModel
+      .updateOne({ _id: savedTenant._id }, { $inc: { currentUsers: 1 } })
+      .exec();
 
     return {
       id: savedTenant._id.toString(),
@@ -153,7 +163,16 @@ export class PlatformService {
     };
   }
 
-  async updateTenant(id: string, updateData: { name?: string; email?: string; adminEmail?: string; planId?: string; subscriptionStatus?: string }) {
+  async updateTenant(
+    id: string,
+    updateData: {
+      name?: string;
+      email?: string;
+      adminEmail?: string;
+      planId?: string;
+      subscriptionStatus?: string;
+    },
+  ) {
     const tenant = await this.tenantModel.findById(id).exec();
     if (!tenant) {
       throw new NotFoundException(`Tenant with ID ${id} not found`);

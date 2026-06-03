@@ -1,7 +1,12 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { PlatformInvoice, PlatformInvoiceDocument, PlatformInvoiceStatus, PlatformInvoicePaymentMethod } from '../schemas/platform-invoice.schema';
+import {
+  PlatformInvoice,
+  PlatformInvoiceDocument,
+  PlatformInvoiceStatus,
+  PlatformInvoicePaymentMethod,
+} from '../schemas/platform-invoice.schema';
 import { PlatformSettings, PlatformSettingsDocument } from '../schemas/platform-settings.schema';
 import { Tenant, TenantDocument } from '../../tenants/schemas/tenant.schema';
 import { SubscriptionPlan, SubscriptionPlanDocument } from '../schemas/subscription-plan.schema';
@@ -52,7 +57,7 @@ export class PlatformInvoicesService {
     }
 
     const invoiceNumber = `${yearPrefix}${settings.nextInvoiceNumber.toString().padStart(3, '0')}`;
-    
+
     // Incrémenter pour la prochaine facture
     settings.nextInvoiceNumber++;
     await settings.save();
@@ -120,9 +125,10 @@ export class PlatformInvoicesService {
       planName: plan.name,
       amount: totalAmount,
       currency: plan.currency || 'EUR',
-      status: paymentMethod === PlatformInvoicePaymentMethod.CARD 
-        ? PlatformInvoiceStatus.ISSUED 
-        : PlatformInvoiceStatus.DRAFT,
+      status:
+        paymentMethod === PlatformInvoicePaymentMethod.CARD
+          ? PlatformInvoiceStatus.ISSUED
+          : PlatformInvoiceStatus.DRAFT,
       paymentMethod,
       issuedAt: new Date(),
       dueDate,
@@ -140,18 +146,26 @@ export class PlatformInvoicesService {
     // Générer le PDF immédiatement si paiement par carte
     if (paymentMethod === PlatformInvoicePaymentMethod.CARD) {
       const pdfUrl = await this.generateAndSavePDF(invoice._id.toString());
-      
+
       // Envoyer l'email avec la facture
       try {
         const settings = await this.settingsModel.findOne({ id: 'platform' }).exec();
         if (settings && invoice.pdfPath) {
-          await this.invoiceEmailService.sendInvoiceEmail(invoice, tenant, settings, invoice.pdfPath);
+          await this.invoiceEmailService.sendInvoiceEmail(
+            invoice,
+            tenant,
+            settings,
+            invoice.pdfPath,
+          );
           invoice.emailSent = true;
           invoice.emailSentAt = new Date();
           await invoice.save();
         }
       } catch (error) {
-        this.logger.error(`Erreur lors de l'envoi de l'email pour la facture ${invoice.invoiceNumber}:`, error);
+        this.logger.error(
+          `Erreur lors de l'envoi de l'email pour la facture ${invoice.invoiceNumber}:`,
+          error,
+        );
       }
     }
 
@@ -275,7 +289,7 @@ export class PlatformInvoicesService {
     try {
       const tenant = await this.tenantModel.findById(tenantId).exec();
       const settings = await this.settingsModel.findOne({ id: 'platform' }).exec();
-      
+
       if (tenant && settings && draftInvoice.pdfPath) {
         await this.invoiceEmailService.sendInvoiceEmail(
           draftInvoice,
@@ -288,7 +302,10 @@ export class PlatformInvoicesService {
         await draftInvoice.save();
       }
     } catch (error) {
-      this.logger.error(`Erreur lors de l'envoi de l'email pour la facture ${draftInvoice.invoiceNumber}:`, error);
+      this.logger.error(
+        `Erreur lors de l'envoi de l'email pour la facture ${draftInvoice.invoiceNumber}:`,
+        error,
+      );
     }
 
     return draftInvoice;

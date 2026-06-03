@@ -43,10 +43,7 @@ export class ProjectAssignmentsService {
         userId,
         projectId,
         status: 'ACTIVE',
-        $or: [
-          { endDate: { $gte: startDate } },
-          { endDate: null },
-        ],
+        $or: [{ endDate: { $gte: startDate } }, { endDate: null }],
       })
       .exec();
 
@@ -80,7 +77,11 @@ export class ProjectAssignmentsService {
   /**
    * Récupère toutes les affectations actives d'un utilisateur
    */
-  async findByUser(userId: string, tenantId: string, includeEnded = false): Promise<ProjectAssignmentDocument[]> {
+  async findByUser(
+    userId: string,
+    tenantId: string,
+    includeEnded = false,
+  ): Promise<ProjectAssignmentDocument[]> {
     const query: any = { userId, tenantId };
     if (!includeEnded) {
       query.status = 'ACTIVE';

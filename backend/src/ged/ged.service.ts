@@ -3,7 +3,10 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { GEDFolder, GEDFolderDocument } from './schemas/ged-folder.schema';
 import { GEDDocument, GEDDocumentDocument } from './schemas/ged-document.schema';
-import { GEDClassificationRule, GEDClassificationRuleDocument } from './schemas/ged-classification-rule.schema';
+import {
+  GEDClassificationRule,
+  GEDClassificationRuleDocument,
+} from './schemas/ged-classification-rule.schema';
 import { AttachmentsService } from '../attachments/attachments.service';
 
 @Injectable()
@@ -11,7 +14,8 @@ export class GEDService {
   constructor(
     @InjectModel(GEDFolder.name) private folderModel: Model<GEDFolderDocument>,
     @InjectModel(GEDDocument.name) private documentModel: Model<GEDDocumentDocument>,
-    @InjectModel(GEDClassificationRule.name) private ruleModel: Model<GEDClassificationRuleDocument>,
+    @InjectModel(GEDClassificationRule.name)
+    private ruleModel: Model<GEDClassificationRuleDocument>,
     private attachmentsService: AttachmentsService,
   ) {}
 
@@ -42,7 +46,9 @@ export class GEDService {
       .findOne({ tenantId, parentId: parentId || null, name })
       .exec();
     if (existingFolder) {
-      throw new BadRequestException(`A folder with the name "${name}" already exists in this location`);
+      throw new BadRequestException(
+        `A folder with the name "${name}" already exists in this location`,
+      );
     }
 
     const folder = new this.folderModel({
@@ -121,7 +127,12 @@ export class GEDService {
     if (updates.name && updates.name !== folder.name) {
       // Vérifier qu'un autre dossier avec ce nom n'existe pas dans le même parent
       const existing = await this.folderModel
-        .findOne({ tenantId, parentId: folder.parentId || null, name: updates.name, _id: { $ne: id } })
+        .findOne({
+          tenantId,
+          parentId: folder.parentId || null,
+          name: updates.name,
+          _id: { $ne: id },
+        })
         .exec();
       if (existing) {
         throw new BadRequestException(`A folder with the name "${updates.name}" already exists`);
@@ -143,7 +154,11 @@ export class GEDService {
     return folder.save();
   }
 
-  private async updateFolderPathRecursive(folderId: string, oldPath: string, newPath: string): Promise<void> {
+  private async updateFolderPathRecursive(
+    folderId: string,
+    oldPath: string,
+    newPath: string,
+  ): Promise<void> {
     const folder = await this.folderModel.findById(folderId).exec();
     if (!folder) return;
 
@@ -164,7 +179,11 @@ export class GEDService {
     }
   }
 
-  async moveFolder(folderId: string, newParentId: string | null, tenantId: string): Promise<GEDFolder> {
+  async moveFolder(
+    folderId: string,
+    newParentId: string | null,
+    tenantId: string,
+  ): Promise<GEDFolder> {
     const folder = await this.folderModel.findOne({ _id: folderId, tenantId }).exec();
     if (!folder) {
       throw new NotFoundException(`Folder with ID ${folderId} not found`);
@@ -269,9 +288,7 @@ export class GEDService {
     );
 
     // Construire le chemin
-    const folder = targetFolderId
-      ? await this.folderModel.findById(targetFolderId).exec()
-      : null;
+    const folder = targetFolderId ? await this.folderModel.findById(targetFolderId).exec() : null;
     const path = folder ? `${folder.path}/${file.originalname}` : `/${file.originalname}`;
 
     // Créer le document GED
@@ -303,7 +320,11 @@ export class GEDService {
     return savedDocument;
   }
 
-  private async classifyDocument(file: any, tenantId: string, documentType?: string): Promise<string | null> {
+  private async classifyDocument(
+    file: any,
+    tenantId: string,
+    documentType?: string,
+  ): Promise<string | null> {
     // Récupérer les règles de classement actives
     const rules = await this.ruleModel
       .find({ tenantId, isActive: true })
@@ -321,7 +342,9 @@ export class GEDService {
 
       // Vérifier les mots-clés
       if (rule.keywords.length > 0) {
-        const hasKeyword = rule.keywords.some((keyword) => fileName.includes(keyword.toLowerCase()));
+        const hasKeyword = rule.keywords.some((keyword) =>
+          fileName.includes(keyword.toLowerCase()),
+        );
         if (!hasKeyword) continue;
       }
 
@@ -353,7 +376,8 @@ export class GEDService {
     if (lowerName.includes('avoir') || lowerName.includes('credit')) return 'avoir';
     if (lowerName.includes('devis') || lowerName.includes('quote')) return 'devis';
     if (lowerName.includes('contrat') || lowerName.includes('contract')) return 'contrat';
-    if (lowerName.includes('fournisseur') || lowerName.includes('supplier')) return 'document_fournisseur';
+    if (lowerName.includes('fournisseur') || lowerName.includes('supplier'))
+      return 'document_fournisseur';
     if (lowerName.includes('client') || lowerName.includes('customer')) return 'document_client';
     if (lowerName.includes('societe') || lowerName.includes('company')) return 'document_societe';
 
@@ -374,7 +398,11 @@ export class GEDService {
     return this.documentModel.find(query).sort({ createdAt: -1 }).exec();
   }
 
-  async moveDocument(documentId: string, newFolderId: string | null, tenantId: string): Promise<GEDDocument> {
+  async moveDocument(
+    documentId: string,
+    newFolderId: string | null,
+    tenantId: string,
+  ): Promise<GEDDocument> {
     const document = await this.documentModel.findOne({ _id: documentId, tenantId }).exec();
     if (!document) {
       throw new NotFoundException(`Document with ID ${documentId} not found`);

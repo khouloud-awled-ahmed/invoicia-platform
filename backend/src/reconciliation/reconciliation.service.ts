@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import {
@@ -79,11 +75,7 @@ export class ReconciliationService {
         .sort({ dueDate: 1 })
         .lean()
         .exec(),
-      this.expenseModel
-        .find({ tenantId, status: 'verified' })
-        .sort({ date: 1 })
-        .lean()
-        .exec(),
+      this.expenseModel.find({ tenantId, status: 'verified' }).sort({ date: 1 }).lean().exec(),
     ]);
 
     return {
@@ -120,10 +112,12 @@ export class ReconciliationService {
     targetId: string,
     targetType: ReconciliationTargetType,
   ): Promise<{ success: boolean; message: string }> {
-    const tx = await this.bankTransactionModel.findOne({
-      _id: bankTransactionId,
-      tenantId,
-    }).exec();
+    const tx = await this.bankTransactionModel
+      .findOne({
+        _id: bankTransactionId,
+        tenantId,
+      })
+      .exec();
     if (!tx) {
       throw new NotFoundException('Transaction bancaire introuvable');
     }
@@ -136,18 +130,17 @@ export class ReconciliationService {
     const reference = `Rapprochement ${tx.label || tx._id}`;
 
     if (targetType === ReconciliationTargetType.INVOICE) {
-      const invoice = await this.invoiceModel.findOne({
-        _id: targetId,
-        tenantId,
-      }).exec();
+      const invoice = await this.invoiceModel
+        .findOne({
+          _id: targetId,
+          tenantId,
+        })
+        .exec();
       if (!invoice) {
         throw new NotFoundException('Facture introuvable');
       }
       await this.invoiceModel
-        .updateOne(
-          { _id: targetId, tenantId },
-          { $set: { status: 'paid' } },
-        )
+        .updateOne({ _id: targetId, tenantId }, { $set: { status: 'paid' } })
         .exec();
       // Écriture : débit 512 (banque), crédit 411 (clients)
       await this.createBankReconciliationEntries(
@@ -155,23 +148,22 @@ export class ReconciliationService {
         date,
         reference,
         amount,
-        '512000',  // Compte banque
-        '411000',  // Clients
+        '512000', // Compte banque
+        '411000', // Clients
         invoice.number,
       );
     } else if (targetType === ReconciliationTargetType.EXPENSE) {
-      const expense = await this.expenseModel.findOne({
-        _id: targetId,
-        tenantId,
-      }).exec();
+      const expense = await this.expenseModel
+        .findOne({
+          _id: targetId,
+          tenantId,
+        })
+        .exec();
       if (!expense) {
         throw new NotFoundException('Dépense introuvable');
       }
       await this.expenseModel
-        .updateOne(
-          { _id: targetId, tenantId },
-          { $set: { status: 'exported' } },
-        )
+        .updateOne({ _id: targetId, tenantId }, { $set: { status: 'exported' } })
         .exec();
       // Écriture : débit 401 (fournisseurs), crédit 512 (banque)
       await this.createBankReconciliationEntries(
@@ -179,18 +171,21 @@ export class ReconciliationService {
         date,
         reference,
         amount,
-        '401000',  // Fournisseurs
-        '512000',  // Banque
+        '401000', // Fournisseurs
+        '512000', // Banque
         expense.supplier,
       );
-    } else if (targetType === ReconciliationTargetType.PAYROLL || targetType === ReconciliationTargetType.TAX) {
+    } else if (
+      targetType === ReconciliationTargetType.PAYROLL ||
+      targetType === ReconciliationTargetType.TAX
+    ) {
       // Paie / TVA : même logique écriture banque (512) vs charge (421 ou 431)
       await this.createBankReconciliationEntries(
         tenantId,
         date,
         reference,
         amount,
-        '421000',  // Personnel - rémunérations dues
+        '421000', // Personnel - rémunérations dues
         '512000',
         `Paie/TVA ${targetId}`,
       );

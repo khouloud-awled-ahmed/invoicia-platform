@@ -54,12 +54,15 @@ export class EmailService {
     // TODO: Implémenter l'envoi réel d'email (nodemailer, SendGrid, etc.)
     this.logger.log(`Email de demande de signature envoyé à ${recipient.email}`);
     this.logger.debug(`URL de signature: ${signUrl}`);
-    
+
     // Pour l'instant, on log seulement
     // await this.sendEmail(emailContent);
   }
 
-  async sendEnvelopeCompletedEmail(envelope: EnvelopeDocument, recipient: Recipient): Promise<void> {
+  async sendEnvelopeCompletedEmail(
+    envelope: EnvelopeDocument,
+    recipient: Recipient,
+  ): Promise<void> {
     const downloadUrl = `${process.env.FRONTEND_URL || 'http://localhost:3002'}/envelopes/${envelope._id}/download`;
 
     const emailContent = {
@@ -106,7 +109,11 @@ export class EmailService {
     // await this.sendEmail(emailContent);
   }
 
-  async sendEnvelopeRefusedEmail(envelope: EnvelopeDocument, recipient: Recipient, refusingRecipient: Recipient): Promise<void> {
+  async sendEnvelopeRefusedEmail(
+    envelope: EnvelopeDocument,
+    recipient: Recipient,
+    refusingRecipient: Recipient,
+  ): Promise<void> {
     const emailContent = {
       to: recipient.email,
       subject: `Document refusé : ${envelope.title}`,
@@ -147,7 +154,10 @@ export class EmailService {
     // await this.sendEmail(emailContent);
   }
 
-  async sendEnvelopeRefusedNotificationToCreator(envelope: EnvelopeDocument, refusingRecipient: Recipient): Promise<void> {
+  async sendEnvelopeRefusedNotificationToCreator(
+    envelope: EnvelopeDocument,
+    refusingRecipient: Recipient,
+  ): Promise<void> {
     // Récupérer l'email du créateur depuis le système d'utilisateurs
     // Pour l'instant, on log seulement
     this.logger.log(`Notification de refus envoyée au créateur de l'enveloppe ${envelope._id}`);

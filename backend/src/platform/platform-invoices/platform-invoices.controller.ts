@@ -47,7 +47,7 @@ export class PlatformInvoicesController {
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${invoice.invoiceNumber}.pdf"`);
-    
+
     const fileStream = fs.createReadStream(invoice.pdfPath);
     fileStream.pipe(res);
   }

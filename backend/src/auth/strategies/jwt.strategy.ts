@@ -14,7 +14,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   ) {
     const jwtSecret = configService.get<string>('JWT_SECRET');
     if (!jwtSecret) {
-      throw new Error('JWT_SECRET must be defined in environment variables. Please set it in your .env file.');
+      throw new Error(
+        'JWT_SECRET must be defined in environment variables. Please set it in your .env file.',
+      );
     }
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -29,13 +31,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException();
     }
     // Retourner un objet avec tenantId pour que les contrôleurs puissent l'utiliser
-    return { 
-      userId: user._id.toString(), 
+    return {
+      userId: user._id.toString(),
       id: user._id.toString(),
-      email: user.email, 
-      role: user.role, 
-      tenantId: user.tenantId?.toString() || null 
+      email: user.email,
+      role: user.role,
+      tenantId: user.tenantId?.toString() || null,
     };
   }
 }
-

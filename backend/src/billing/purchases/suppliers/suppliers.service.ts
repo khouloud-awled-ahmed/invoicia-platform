@@ -5,19 +5,18 @@ import { Supplier, SupplierDocument } from '../../../suppliers/schemas/supplier.
 
 @Injectable()
 export class SuppliersService {
-  constructor(
-    @InjectModel(Supplier.name) private supplierModel: Model<SupplierDocument>,
-  ) {}
+  constructor(@InjectModel(Supplier.name) private supplierModel: Model<SupplierDocument>) {}
 
   // ─── STATS (for Fournisseurs dashboard) ───────────────────────
   async getStats(tenantId: string) {
     const suppliers = await this.supplierModel.find({ tenantId }).exec();
-    const active = suppliers.filter(s => s.status === 'active').length;
-    const inactive = suppliers.filter(s => s.status === 'inactive').length;
+    const active = suppliers.filter((s) => s.status === 'active').length;
+    const inactive = suppliers.filter((s) => s.status === 'inactive').length;
 
     // Count all intervenants linked
     const totalIntervenants = suppliers.reduce(
-      (sum, s) => sum + (s.intervenantIds?.length || 0), 0
+      (sum, s) => sum + (s.intervenantIds?.length || 0),
+      0,
     );
 
     return {

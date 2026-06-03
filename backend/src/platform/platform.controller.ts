@@ -73,7 +73,10 @@ export class PlatformController {
   @Patch('tenants/:id/status')
   async updateStatus(
     @Param('id') id: string,
-    @Body() body: { subscriptionStatus: 'ACTIVE' | 'PENDING_PAYMENT' | 'SUSPENDED' | 'TRIAL' | 'CANCELLED' },
+    @Body()
+    body: {
+      subscriptionStatus: 'ACTIVE' | 'PENDING_PAYMENT' | 'SUSPENDED' | 'TRIAL' | 'CANCELLED';
+    },
     @CurrentUser() user: any,
   ) {
     if (user.role !== 'PLATFORM_ADMIN') {
@@ -85,7 +88,14 @@ export class PlatformController {
   @Patch('tenants/:id')
   async updateTenant(
     @Param('id') id: string,
-    @Body() body: { name?: string; email?: string; adminEmail?: string; planId?: string; subscriptionStatus?: string },
+    @Body()
+    body: {
+      name?: string;
+      email?: string;
+      adminEmail?: string;
+      planId?: string;
+      subscriptionStatus?: string;
+    },
     @CurrentUser() user: any,
   ) {
     if (user.role !== 'PLATFORM_ADMIN') {
@@ -174,7 +184,7 @@ export class PlatformController {
 
     // Activer l'abonnement
     const tenant = await this.platformService.updateTenantStatus(id, 'ACTIVE');
-    
+
     // Générer la facture finale (le service gère déjà l'envoi de l'email)
     const invoice = await this.platformInvoicesService.generateFinalInvoiceForTransfer(id);
 

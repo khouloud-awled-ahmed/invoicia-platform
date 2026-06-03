@@ -1,4 +1,14 @@
-import { IsOptional, IsEmail, IsEnum, IsArray, IsNumber, IsBoolean, IsObject, IsString, ValidateNested } from 'class-validator';
+import {
+  IsOptional,
+  IsEmail,
+  IsEnum,
+  IsArray,
+  IsNumber,
+  IsBoolean,
+  IsObject,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 class AddressDto {
@@ -239,4 +249,3 @@ export class UpdateTenantDto {
   @IsBoolean()
   isConfigured?: boolean;
 }
-

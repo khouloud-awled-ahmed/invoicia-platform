@@ -1,4 +1,18 @@
-import { Controller, Req, Get, Post, Body, Patch, Param, Delete, UseGuards, BadRequestException, Logger, UseInterceptors, UploadedFile } from '@nestjs/common';
+import {
+  Controller,
+  Req,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  BadRequestException,
+  Logger,
+  UseInterceptors,
+  UploadedFile,
+} from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { EmployeesService } from './employees.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -76,46 +90,55 @@ export class EmployeesController {
     try {
       const result = await this.documentParser.analyze(file, 'CV', user.tenantId);
 
-// Accept CV even if format unknown - extract from rawText
-const rawTextFallback = result.rawText || '';
-const emailFallback = rawTextFallback.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z]{2,})/)?.[1];
-const nameFallback = rawTextFallback.split('\n').slice(0,3).filter(l => l.trim().length > 2 && l.trim().length < 60).join(' ').trim().substring(0, 60);
-if (result.status === 'LEARNING_NEEDED') {
-  const saved = await this.employeesService.createCV(user.tenantId, {
-    fileName: file.originalname || 'document',
-    name: nameFallback || undefined,
-    email: emailFallback || undefined,
-    rawText: rawTextFallback,
-  });
-  const nameParts = (saved.name || '').trim().split(/\s+/);
-  return {
-    id: saved._id.toString(),
-    fileName: saved.fileName,
-    name: saved.name,
-    email: saved.email,
-    rawText: saved.rawText?.substring(0, 500),
-    createdAt: (saved as any).createdAt,
-    extractedData: {
-      firstName: nameParts[0] || '',
-      lastName: nameParts.slice(1).join(' ') || '',
-      email: emailFallback || '',
-      phone: rawTextFallback.match(/(?:\+216|0)[0-9\s]{8,}/)?.[0]?.trim() || '',
-      title: '',
-      summary: '',
-      yearsOfExperience: 0,
-      city: '',
-      skills: [],
-      experiences: [],
-      education: [],
-      certifications: [],
-      languages: [],
-    },
-  };
-}
+      // Accept CV even if format unknown - extract from rawText
+      const rawTextFallback = result.rawText || '';
+      const emailFallback = rawTextFallback.match(
+        /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z]{2,})/,
+      )?.[1];
+      const nameFallback = rawTextFallback
+        .split('\n')
+        .slice(0, 3)
+        .filter((l) => l.trim().length > 2 && l.trim().length < 60)
+        .join(' ')
+        .trim()
+        .substring(0, 60);
+      if (result.status === 'LEARNING_NEEDED') {
+        const saved = await this.employeesService.createCV(user.tenantId, {
+          fileName: file.originalname || 'document',
+          name: nameFallback || undefined,
+          email: emailFallback || undefined,
+          rawText: rawTextFallback,
+        });
+        const nameParts = (saved.name || '').trim().split(/\s+/);
+        return {
+          id: saved._id.toString(),
+          fileName: saved.fileName,
+          name: saved.name,
+          email: saved.email,
+          rawText: saved.rawText?.substring(0, 500),
+          createdAt: (saved as any).createdAt,
+          extractedData: {
+            firstName: nameParts[0] || '',
+            lastName: nameParts.slice(1).join(' ') || '',
+            email: emailFallback || '',
+            phone: rawTextFallback.match(/(?:\+216|0)[0-9\s]{8,}/)?.[0]?.trim() || '',
+            title: '',
+            summary: '',
+            yearsOfExperience: 0,
+            city: '',
+            skills: [],
+            experiences: [],
+            education: [],
+            certifications: [],
+            languages: [],
+          },
+        };
+      }
 
-if (result.status !== 'SUCCESS' || !result.data) {
-  throw new BadRequestException('Impossible de lire le contenu du fichier.');
-}      const data = result.data as {
+      if (result.status !== 'SUCCESS' || !result.data) {
+        throw new BadRequestException('Impossible de lire le contenu du fichier.');
+      }
+      const data = result.data as {
         firstName?: string;
         lastName?: string;
         email?: string;
@@ -129,8 +152,8 @@ if (result.status !== 'SUCCESS' || !result.data) {
       // Extract email from rawText if not found by AI
       const emailFromText = rawText.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z]{2,})/)?.[1];
       const finalEmail = data.email || emailFromText || undefined;
-      // Extract name from rawText if not found by AI  
-      const nameFromText = rawText.split('\n').slice(0,3).join(' ').trim().substring(0,50);
+      // Extract name from rawText if not found by AI
+      const nameFromText = rawText.split('\n').slice(0, 3).join(' ').trim().substring(0, 50);
       const finalName = name || nameFromText || undefined;
 
       const saved = await this.employeesService.createCV(user.tenantId, {
@@ -157,7 +180,13 @@ if (result.status !== 'SUCCESS' || !result.data) {
           summary: (data as any).summary || '',
           yearsOfExperience: 0,
           city: '',
-          skills: (data as any).skills?.map((s: string) => ({ name: s, category: 'Technique', level: 3, years: 1 })) || [],
+          skills:
+            (data as any).skills?.map((s: string) => ({
+              name: s,
+              category: 'Technique',
+              level: 3,
+              years: 1,
+            })) || [],
           experiences: (data as any).experiences || [],
           education: (data as any).education || [],
           certifications: [],
@@ -177,4 +206,3 @@ if (result.status !== 'SUCCESS' || !result.data) {
     return { answer };
   }
 }
-

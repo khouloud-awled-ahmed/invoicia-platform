@@ -10,7 +10,8 @@ export class DashboardController {
 
   @Get('summary')
   async getSummary(@CurrentUser() user: any, @Query('months') months?: string) {
-    if (!user.tenantId) return { employees: 0, totalRevenue: 0, pendingInvoices: 0, treasuryBalance: 0, expenses: 0 };
+    if (!user.tenantId)
+      return { employees: 0, totalRevenue: 0, pendingInvoices: 0, treasuryBalance: 0, expenses: 0 };
     return this.dashboardService.getSummary(user.tenantId, months ? parseInt(months) : 0);
   }
 
@@ -35,7 +36,10 @@ export class DashboardController {
   @Get('expenses-by-category')
   async getExpensesByCategory(@CurrentUser() user: any, @Query('months') months?: string) {
     if (!user.tenantId) return [];
-    return this.dashboardService.getExpensesByCategory(user.tenantId, months ? parseInt(months) : 0);
+    return this.dashboardService.getExpensesByCategory(
+      user.tenantId,
+      months ? parseInt(months) : 0,
+    );
   }
 
   @Get('cash-flow')

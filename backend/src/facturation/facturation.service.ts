@@ -12,8 +12,11 @@ export class FacturationService {
   ) {}
 
   async getPendingLines(tenantId: string) {
-    const lines = await this.craModel.find({ tenantId, status: 'VALIDATED' }).sort({ date: -1 }).exec();
-    return lines.map(l => ({
+    const lines = await this.craModel
+      .find({ tenantId, status: 'VALIDATED' })
+      .sort({ date: -1 })
+      .exec();
+    return lines.map((l) => ({
       id: l._id.toString(),
       projectName: l.projectName,
       consultant: l.intervenantName,
@@ -33,7 +36,13 @@ export class FacturationService {
       { $group: { _id: null, total: { $sum: '$amount' } } },
     ]);
     const invoiced = await this.craModel.aggregate([
-      { $match: { tenantId, status: 'INVOICED', updatedAt: { $gte: startOfMonth, $lte: endOfMonth } } },
+      {
+        $match: {
+          tenantId,
+          status: 'INVOICED',
+          updatedAt: { $gte: startOfMonth, $lte: endOfMonth },
+        },
+      },
       { $group: { _id: null, total: { $sum: '$amount' } } },
     ]);
     const totalPending = pending[0]?.total ?? 0;
@@ -46,8 +55,11 @@ export class FacturationService {
   }
 
   async generateInvoices(craLineIds: string[], tenantId: string) {
-    const lines = await this.craModel.find({ _id: { $in: craLineIds }, tenantId, status: 'VALIDATED' }).exec();
-    if (lines.length !== craLineIds.length) throw new NotFoundException('One or more CRA lines not found');
+    const lines = await this.craModel
+      .find({ _id: { $in: craLineIds }, tenantId, status: 'VALIDATED' })
+      .exec();
+    if (lines.length !== craLineIds.length)
+      throw new NotFoundException('One or more CRA lines not found');
 
     // Group lines by project
     const byProject: Record<string, typeof lines> = {};
@@ -73,7 +85,7 @@ export class FacturationService {
 
     const createdInvoices = [];
     for (const [projectName, projectLines] of Object.entries(byProject)) {
-      const items = projectLines.map(l => ({
+      const items = projectLines.map((l) => ({
         article: `CRA - ${l.intervenantName}`,
         description: `${l.hours}h x ${l.rate}€/h - ${new Date(l.date).toLocaleDateString('fr-FR')}`,
         quantity: l.hours,
@@ -113,7 +125,7 @@ export class FacturationService {
     // Mark CRA lines as invoiced
     await this.craModel.updateMany(
       { _id: { $in: craLineIds }, tenantId },
-      { $set: { status: 'INVOICED' } }
+      { $set: { status: 'INVOICED' } },
     );
 
     return { invoiceCount: createdInvoices.length };

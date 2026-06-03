@@ -27,7 +27,7 @@ export class ParsingTemplate {
     hasHeader?: boolean;
     delimiter?: string;
     encoding?: string;
-    
+
     // Pour INVOICE (factures)
     invoiceNumberPattern?: string; // Regex pour trouver le numéro
     datePattern?: string; // Regex pour trouver la date
@@ -35,7 +35,7 @@ export class ParsingTemplate {
     totalTVAPattern?: string; // Regex pour trouver TVA
     totalTTCPattern?: string; // Regex pour trouver Total TTC
     supplierPattern?: string; // Regex pour trouver le fournisseur
-    
+
     // Pour CV (candidats)
     emailPattern?: string; // Regex pour email
     phonePattern?: string; // Regex pour téléphone

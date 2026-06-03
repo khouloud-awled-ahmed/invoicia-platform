@@ -1,11 +1,11 @@
 /**
  * Script de seeding de la base de données
- * 
- * Usage: 
+ *
+ * Usage:
  *   npm run seed
  *   ou
  *   ts-node src/scripts/seed-database.ts
- * 
+ *
  * Ce script crée les utilisateurs initiaux si ils n'existent pas :
  * - Super Admin (admin@invocia.io)
  * - Client Test (client@test.com)
@@ -23,7 +23,7 @@ async function seedDatabase() {
   console.log('🌱 Démarrage du seeding de la base de données...\n');
 
   const app = await NestFactory.createApplicationContext(AppModule);
-  
+
   const userModel = app.get<Model<UserDocument>>(getModelToken(User.name));
   const tenantModel = app.get<Model<TenantDocument>>(getModelToken(Tenant.name));
 
@@ -32,13 +32,13 @@ async function seedDatabase() {
     console.log('📝 Vérification du Super Admin...');
     const adminEmail = 'admin@invocia.io';
     const adminPassword = 'admin123';
-    
+
     let adminUser = await userModel.findOne({ email: adminEmail }).exec();
-    
+
     if (!adminUser) {
       console.log('   → Création du Super Admin...');
       const hashedAdminPassword = await bcrypt.hash(adminPassword, 10);
-      
+
       adminUser = new userModel({
         name: 'Super Admin',
         email: adminEmail,
@@ -48,7 +48,7 @@ async function seedDatabase() {
         isActive: true,
         emailVerified: true,
       });
-      
+
       await adminUser.save();
       console.log('   ✅ Super Admin créé avec succès');
       console.log(`      Email: ${adminEmail}`);
@@ -62,16 +62,14 @@ async function seedDatabase() {
     const clientEmail = 'client@test.com';
     const clientPassword = 'client123';
     const companyName = 'Entreprise Test SAS';
-    
+
     // Vérifier si le tenant existe
-    let testTenant = await tenantModel.findOne({ 
-      $or: [
-        { name: companyName },
-        { businessName: companyName },
-        { adminEmail: clientEmail }
-      ]
-    }).exec();
-    
+    let testTenant = await tenantModel
+      .findOne({
+        $or: [{ name: companyName }, { businessName: companyName }, { adminEmail: clientEmail }],
+      })
+      .exec();
+
     if (!testTenant) {
       console.log('   → Création du Tenant "Entreprise Test SAS"...');
       testTenant = new tenantModel({
@@ -92,21 +90,21 @@ async function seedDatabase() {
           paymentMethods: [],
         },
       });
-      
+
       await testTenant.save();
       console.log('   ✅ Tenant créé avec succès');
       console.log(`      Nom: ${companyName}`);
     } else {
       console.log('   ℹ️  Tenant existe déjà');
     }
-    
+
     // Vérifier si l'utilisateur client existe
     let clientUser = await userModel.findOne({ email: clientEmail }).exec();
-    
+
     if (!clientUser) {
-      console.log('   → Création de l\'utilisateur Client Test...');
+      console.log("   → Création de l'utilisateur Client Test...");
       const hashedClientPassword = await bcrypt.hash(clientPassword, 10);
-      
+
       clientUser = new userModel({
         name: 'Client Test',
         email: clientEmail,
@@ -116,15 +114,12 @@ async function seedDatabase() {
         isActive: true,
         emailVerified: true,
       });
-      
+
       await clientUser.save();
-      
+
       // Mettre à jour le compteur d'utilisateurs du tenant
-      await tenantModel.updateOne(
-        { _id: testTenant._id },
-        { $inc: { currentUsers: 1 } }
-      ).exec();
-      
+      await tenantModel.updateOne({ _id: testTenant._id }, { $inc: { currentUsers: 1 } }).exec();
+
       console.log('   ✅ Utilisateur Client Test créé avec succès');
       console.log(`      Email: ${clientEmail}`);
       console.log(`      Password: ${clientPassword}`);
@@ -150,7 +145,6 @@ async function seedDatabase() {
     console.log(`     - Password: ${clientPassword}`);
     console.log(`     - Role: TENANT_ADMIN`);
     console.log(`     - Company: ${companyName}\n`);
-
   } catch (error) {
     console.error('❌ Erreur lors du seeding:', error);
     throw error;

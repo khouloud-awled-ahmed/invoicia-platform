@@ -12,7 +12,8 @@ export class UBLGeneratorService {
       '@xmlns': 'urn:oasis:names:specification:ubl:schema:xsd:Invoice-2',
       '@xmlns:cac': 'urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2',
       '@xmlns:cbc': 'urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2',
-      'cbc:CustomizationID': 'urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0',
+      'cbc:CustomizationID':
+        'urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0',
       'cbc:ProfileID': 'urn:fdc:peppol.eu:2017:poacc:billing:01:1.0',
       'cbc:ID': invoice.number,
       'cbc:IssueDate': invoice.date.toISOString().split('T')[0],
@@ -89,11 +90,7 @@ export class UBLGeneratorService {
         },
         'cbc:LineExtensionAmount': {
           '@currencyID': 'EUR',
-          '#text': (
-            item.quantity *
-            item.unitPrice *
-            (1 - (item.discount || 0) / 100)
-          ).toFixed(2),
+          '#text': (item.quantity * item.unitPrice * (1 - (item.discount || 0) / 100)).toFixed(2),
         },
         'cac:Item': {
           'cbc:Name': item.description,
@@ -125,7 +122,7 @@ export class UBLGeneratorService {
   private toXML(obj: any, rootName = 'Invoice'): string {
     // Conversion simplifiée en XML (en production, utiliser une bibliothèque XML)
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<${rootName}`;
-    
+
     if (obj['@xmlns']) {
       xml += ` xmlns="${obj['@xmlns']}"`;
       delete obj['@xmlns'];
@@ -138,11 +135,11 @@ export class UBLGeneratorService {
       xml += ` xmlns:cbc="${obj['@xmlns:cbc']}"`;
       delete obj['@xmlns:cbc'];
     }
-    
+
     xml += '>\n';
     xml += this.objectToXML(obj, '');
     xml += `</${rootName}>`;
-    
+
     return xml;
   }
 
@@ -150,7 +147,7 @@ export class UBLGeneratorService {
     let xml = '';
     for (const [key, value] of Object.entries(obj)) {
       if (key.startsWith('@')) continue;
-      
+
       if (Array.isArray(value)) {
         value.forEach((item) => {
           xml += `${indent}<${key}>\n`;

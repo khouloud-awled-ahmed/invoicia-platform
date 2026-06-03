@@ -2,9 +2,15 @@ import { Injectable, BadRequestException, NotFoundException } from '@nestjs/comm
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Tenant, TenantDocument } from '../../tenants/schemas/tenant.schema';
-import { SubscriptionPlan, SubscriptionPlanDocument } from '../../platform/schemas/subscription-plan.schema';
+import {
+  SubscriptionPlan,
+  SubscriptionPlanDocument,
+} from '../../platform/schemas/subscription-plan.schema';
 import { PromoCode, PromoCodeDocument } from '../schemas/promo-code.schema';
-import { PlatformSettings, PlatformSettingsDocument } from '../../platform/schemas/platform-settings.schema';
+import {
+  PlatformSettings,
+  PlatformSettingsDocument,
+} from '../../platform/schemas/platform-settings.schema';
 import { SubscribeDto } from './dto/subscribe.dto';
 import { PlatformInvoicesService } from '../../platform/platform-invoices/platform-invoices.service';
 import { PlatformInvoicePaymentMethod } from '../../platform/schemas/platform-invoice.schema';
@@ -31,7 +37,7 @@ export class SubscriptionService {
     }
 
     if (!plan.isActive) {
-      throw new BadRequestException('Ce plan n\'est plus actif');
+      throw new BadRequestException("Ce plan n'est plus actif");
     }
 
     // Calculer le prix avec code promo
@@ -39,10 +45,12 @@ export class SubscriptionService {
     let promoCode = null;
 
     if (subscribeDto.promoCode) {
-      promoCode = await this.promoCodeModel.findOne({
-        code: subscribeDto.promoCode.toUpperCase(),
-        isActive: true,
-      }).exec();
+      promoCode = await this.promoCodeModel
+        .findOne({
+          code: subscribeDto.promoCode.toUpperCase(),
+          isActive: true,
+        })
+        .exec();
 
       if (promoCode) {
         // Vérifier expiration
@@ -96,13 +104,13 @@ export class SubscriptionService {
     if (subscribeDto.paymentMethod === 'CARD') {
       // Simuler un paiement Stripe réussi
       console.log(`[STRIPE MOCK] Paiement de ${finalPrice}€ pour le plan ${plan.name}`);
-      
+
       tenant.subscriptionStatus = 'ACTIVE';
       tenant.status = 'active';
       tenant.planId = plan._id.toString();
       tenant.modules = plan.features;
       tenant.maxUsers = plan.maxUsers;
-      
+
       // Calculer la date de fin d'abonnement (1 mois)
       const subscriptionEndsAt = new Date();
       subscriptionEndsAt.setMonth(subscriptionEndsAt.getMonth() + 1);
@@ -116,7 +124,7 @@ export class SubscriptionService {
           finalPrice,
           PlatformInvoicePaymentMethod.CARD,
           subscribeDto.promoCode,
-          promoCode ? (plan.price - finalPrice) : 0,
+          promoCode ? plan.price - finalPrice : 0,
           plan.price,
         );
         console.log(`[INVOICE] Facture générée pour le tenant ${tenant._id}`);
@@ -148,10 +156,12 @@ export class SubscriptionService {
           finalPrice,
           PlatformInvoicePaymentMethod.TRANSFER,
           subscribeDto.promoCode,
-          promoCode ? (plan.price - finalPrice) : 0,
+          promoCode ? plan.price - finalPrice : 0,
           plan.price,
         );
-        console.log(`[INVOICE] Facture pro-forma créée pour le tenant ${tenant._id} (en attente de virement)`);
+        console.log(
+          `[INVOICE] Facture pro-forma créée pour le tenant ${tenant._id} (en attente de virement)`,
+        );
       } catch (error) {
         console.error(`[INVOICE] Erreur lors de la création de la facture pro-forma:`, error);
       }
@@ -170,10 +180,12 @@ export class SubscriptionService {
   }
 
   async validatePromoCode(code: string, planId: string) {
-    const promoCode = await this.promoCodeModel.findOne({
-      code: code.toUpperCase(),
-      isActive: true,
-    }).exec();
+    const promoCode = await this.promoCodeModel
+      .findOne({
+        code: code.toUpperCase(),
+        isActive: true,
+      })
+      .exec();
 
     if (!promoCode) {
       return { valid: false, message: 'Code promo invalide' };
@@ -210,9 +222,10 @@ export class SubscriptionService {
       discount,
       discountType: promoCode.discountType,
       value: promoCode.value,
-      finalPrice: promoCode.discountType === 'PERCENT'
-        ? plan.price * (1 - promoCode.value / 100)
-        : Math.max(0, plan.price - promoCode.value),
+      finalPrice:
+        promoCode.discountType === 'PERCENT'
+          ? plan.price * (1 - promoCode.value / 100)
+          : Math.max(0, plan.price - promoCode.value),
     };
   }
 }

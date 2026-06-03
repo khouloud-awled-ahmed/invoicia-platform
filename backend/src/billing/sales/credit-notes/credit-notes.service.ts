@@ -5,9 +5,7 @@ import { CreditNote, CreditNoteDocument } from '../../../credit-notes/schemas/cr
 
 @Injectable()
 export class CreditNotesService {
-  constructor(
-    @InjectModel(CreditNote.name) private creditNoteModel: Model<CreditNoteDocument>,
-  ) {}
+  constructor(@InjectModel(CreditNote.name) private creditNoteModel: Model<CreditNoteDocument>) {}
 
   // ─── HELPERS ──────────────────────────────────────────────────
   private calculateTotals(items: any[]) {
@@ -17,7 +15,7 @@ export class CreditNotesService {
     }, 0);
     const amountTVA = items.reduce((sum, item) => {
       const lineTotal = item.quantity * item.unitPrice * (1 - (item.discount || 0) / 100);
-      return sum + (lineTotal * (item.vatRate || 19) / 100);
+      return sum + (lineTotal * (item.vatRate || 19)) / 100;
     }, 0);
     return {
       amountHT: Math.round(amountHT * 1000) / 1000,
@@ -63,7 +61,7 @@ export class CreditNotesService {
   // ─── CREATE ───────────────────────────────────────────────────
   async create(createDto: any, tenantId: string): Promise<CreditNote> {
     // Auto-generate number if frontend didn't send one
-    const number = createDto.number || await this.generateNumber(tenantId);
+    const number = createDto.number || (await this.generateNumber(tenantId));
 
     // Calculate amounts from amountHT + tvaRate if no items provided
     let totals: any = {};
@@ -168,11 +166,11 @@ export class CreditNotesService {
     const total = creditNotes.reduce((sum, cn) => sum + (cn.amountTTC || 0), 0);
 
     const statuses = ['draft', 'pending', 'validated', 'archived'];
-    const distribution = statuses.map(status => ({
+    const distribution = statuses.map((status) => ({
       status,
-      count: creditNotes.filter(cn => cn.status === status).length,
+      count: creditNotes.filter((cn) => cn.status === status).length,
       total: creditNotes
-        .filter(cn => cn.status === status)
+        .filter((cn) => cn.status === status)
         .reduce((sum, cn) => sum + (cn.amountTTC || 0), 0),
     }));
 

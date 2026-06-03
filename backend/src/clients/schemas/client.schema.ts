@@ -49,4 +49,3 @@ export class Client {
 export const ClientSchema = SchemaFactory.createForClass(Client);
 ClientSchema.index({ tenantId: 1, name: 1 });
 ClientSchema.index({ tenantId: 1, email: 1 });
-

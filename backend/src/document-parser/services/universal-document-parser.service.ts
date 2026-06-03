@@ -1,7 +1,11 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { ParsingTemplate, ParsingTemplateDocument, DocumentType } from '../schemas/parsing-template.schema';
+import {
+  ParsingTemplate,
+  ParsingTemplateDocument,
+  DocumentType,
+} from '../schemas/parsing-template.schema';
 import { parse as csvParse } from 'csv-parse/sync';
 import * as path from 'path';
 import * as mammoth from 'mammoth';
@@ -85,7 +89,7 @@ export class UniversalDocumentParserService {
   ): Promise<AnalyzeFileResult> {
     try {
       const fileType = this.detectFileType(file.originalname, file.mimetype);
-      
+
       let rawText: string;
       let rawLines: string[][];
 
@@ -94,7 +98,7 @@ export class UniversalDocumentParserService {
         rawLines = this.textToLines(rawText);
       } else if (fileType === 'CSV') {
         rawLines = await this.parseCSV(file.buffer);
-        rawText = rawLines.map(line => line.join(' ')).join('\n');
+        rawText = rawLines.map((line) => line.join(' ')).join('\n');
       } else if (fileType === 'DOCX') {
         const extracted = await this.extractTextFromDocx(file.buffer);
         rawText = extracted;
@@ -106,8 +110,10 @@ export class UniversalDocumentParserService {
       const template = await this.findTemplateBySignature(rawText, documentType, tenantId);
 
       if (template) {
-        this.logger.log(`Format reconnu: ${template.name} (${template.signature}) pour type ${documentType}`);
-        
+        this.logger.log(
+          `Format reconnu: ${template.name} (${template.signature}) pour type ${documentType}`,
+        );
+
         let data: any;
         if (documentType === 'BANK') {
           data = await this.extractBankTransactions(rawLines, template, fileType);
@@ -116,7 +122,7 @@ export class UniversalDocumentParserService {
         } else if (documentType === 'CV') {
           data = await this.extractCVData(rawText, template);
         }
-        
+
         return {
           status: 'SUCCESS',
           data,
@@ -128,7 +134,7 @@ export class UniversalDocumentParserService {
       } else {
         const documentId = `doc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         this.logger.log(`Format inconnu pour ${documentType}, documentId: ${documentId}`);
-        
+
         return {
           status: 'LEARNING_NEEDED',
           documentId,
@@ -182,11 +188,11 @@ export class UniversalDocumentParserService {
   ): Promise<ParsedBankTransaction[]> {
     const config = template.config;
     const transactions: ParsedBankTransaction[] = [];
-    const startIndex = config.hasHeader ? (config.startRow || 0) + 1 : (config.startRow || 0);
+    const startIndex = config.hasHeader ? (config.startRow || 0) + 1 : config.startRow || 0;
 
     for (let i = startIndex; i < rawLines.length; i++) {
       const line = rawLines[i];
-      
+
       const maxColumn = Math.max(
         config.dateColumn || 0,
         config.labelColumn || 0,
@@ -240,7 +246,9 @@ export class UniversalDocumentParserService {
         invoice.date = this.parseDate(dateStr, 'DD/MM/YYYY') || undefined;
       }
     } else {
-      const dateMatch = rawText.match(/(?:date|le)\s*:?\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/i);
+      const dateMatch = rawText.match(
+        /(?:date|le)\s*:?\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/i,
+      );
       if (dateMatch) invoice.date = this.parseDate(dateMatch[1], 'DD/MM/YYYY') || undefined;
     }
 
@@ -248,7 +256,9 @@ export class UniversalDocumentParserService {
       const match = rawText.match(new RegExp(config.totalHTPattern, 'i'));
       if (match) invoice.totalHT = this.parseAmount(match[1] || match[0]);
     } else {
-      const htMatch = rawText.match(/(?:total\s*ht|ht\s*total|montant\s*ht)\s*:?\s*([\d\s,\.]+)\s*€?/i);
+      const htMatch = rawText.match(
+        /(?:total\s*ht|ht\s*total|montant\s*ht)\s*:?\s*([\d\s,\.]+)\s*€?/i,
+      );
       if (htMatch) invoice.totalHT = this.parseAmount(htMatch[1]);
     }
 
@@ -264,7 +274,9 @@ export class UniversalDocumentParserService {
       const match = rawText.match(new RegExp(config.totalTTCPattern, 'i'));
       if (match) invoice.totalTTC = this.parseAmount(match[1] || match[0]);
     } else {
-      const ttcMatch = rawText.match(/(?:total\s*ttc|ttc\s*total|montant\s*ttc)\s*:?\s*([\d\s,\.]+)\s*€?/i);
+      const ttcMatch = rawText.match(
+        /(?:total\s*ttc|ttc\s*total|montant\s*ttc)\s*:?\s*([\d\s,\.]+)\s*€?/i,
+      );
       if (ttcMatch) invoice.totalTTC = this.parseAmount(ttcMatch[1]);
     }
 
@@ -342,10 +354,14 @@ export class UniversalDocumentParserService {
       const tmpIn = os.tmpdir() + '\\cv_' + Date.now() + '.pdf';
       const tmpOut = os.tmpdir() + '\\cv_' + Date.now() + '.txt';
       fs.writeFileSync(tmpIn, buffer);
-      const pop = 'C:\\Users\\k\\Downloads\\Release-26.02.0-0\\poppler-26.02.0\\Library\\bin\\pdftotext.exe';
+      const pop =
+        'C:\\Users\\k\\Downloads\\Release-26.02.0-0\\poppler-26.02.0\\Library\\bin\\pdftotext.exe';
       execSync(`"${pop}" "${tmpIn}" "${tmpOut}"`, { timeout: 30000 });
       const text = fs.readFileSync(tmpOut, 'utf8');
-      try { fs.unlinkSync(tmpIn); fs.unlinkSync(tmpOut); } catch {}
+      try {
+        fs.unlinkSync(tmpIn);
+        fs.unlinkSync(tmpOut);
+      } catch {}
       if (text && text.trim().length > 0) return text;
       throw new Error('Empty text extracted');
     } catch (error: any) {
@@ -359,11 +375,11 @@ export class UniversalDocumentParserService {
       const result = await mammoth.extractRawText({ buffer });
       const rawText = result.value;
       if (typeof rawText !== 'string') {
-        throw new Error('Extraction Word invalide: le résultat n\'est pas une chaîne');
+        throw new Error("Extraction Word invalide: le résultat n'est pas une chaîne");
       }
       return rawText;
     } catch (error: any) {
-      this.logger.error('Erreur lors de l\'extraction Word (.docx):', error);
+      this.logger.error("Erreur lors de l'extraction Word (.docx):", error);
       if (error instanceof BadRequestException) throw error;
       throw new BadRequestException('Impossible de lire ce fichier Word.');
     }
@@ -389,15 +405,20 @@ export class UniversalDocumentParserService {
   private textToLines(text: string): string[][] {
     return text
       .split('\n')
-      .filter(line => line.trim().length > 0)
-      .map(line => line.split(/\s{2,}|\t/).filter(cell => cell.trim().length > 0));
+      .filter((line) => line.trim().length > 0)
+      .map((line) => line.split(/\s{2,}|\t/).filter((cell) => cell.trim().length > 0));
   }
 
   private detectFileType(filename: string, mimetype: string): 'PDF' | 'CSV' | 'DOCX' {
     const ext = path.extname(filename).toLowerCase();
     if (ext === '.pdf' || mimetype === 'application/pdf') return 'PDF';
-    if (ext === '.csv' || mimetype === 'text/csv' || mimetype === 'application/vnd.ms-excel') return 'CSV';
-    if (ext === '.docx' || mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') return 'DOCX';
+    if (ext === '.csv' || mimetype === 'text/csv' || mimetype === 'application/vnd.ms-excel')
+      return 'CSV';
+    if (
+      ext === '.docx' ||
+      mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    )
+      return 'DOCX';
     throw new BadRequestException(`Type de fichier non supporté: ${ext || mimetype}`);
   }
 
@@ -406,7 +427,11 @@ export class UniversalDocumentParserService {
     documentType: DocumentType,
     tenantId: string,
   ): Promise<ParsingTemplateDocument | null> {
-    const templates = await this.templateModel.find({ tenantId, type: documentType, isActive: true });
+    const templates = await this.templateModel.find({
+      tenantId,
+      type: documentType,
+      isActive: true,
+    });
     for (const template of templates) {
       if (text.toUpperCase().includes(template.signature.toUpperCase())) return template;
     }
@@ -419,12 +444,20 @@ export class UniversalDocumentParserService {
       if (format === 'DD/MM/YYYY' || format === 'DD-MM-YYYY') {
         const parts = dateStr.split(/[\/\-]/);
         if (parts.length === 3) {
-          return new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
+          return new Date(
+            parseInt(parts[2], 10),
+            parseInt(parts[1], 10) - 1,
+            parseInt(parts[0], 10),
+          );
         }
       } else if (format === 'YYYY-MM-DD') {
         const parts = dateStr.split('-');
         if (parts.length === 3) {
-          return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+          return new Date(
+            parseInt(parts[0], 10),
+            parseInt(parts[1], 10) - 1,
+            parseInt(parts[2], 10),
+          );
         }
       }
       const date = new Date(dateStr);
@@ -436,7 +469,10 @@ export class UniversalDocumentParserService {
   }
 
   private parseAmount(amountStr: string): number {
-    let cleaned = amountStr.trim().replace(/\u00A0/g, ' ').replace(/\s/g, '');
+    let cleaned = amountStr
+      .trim()
+      .replace(/\u00A0/g, ' ')
+      .replace(/\s/g, '');
     if (cleaned.includes(',') && !cleaned.includes('.')) {
       cleaned = cleaned.replace(/\./g, '').replace(',', '.');
     } else if (cleaned.includes(',')) {

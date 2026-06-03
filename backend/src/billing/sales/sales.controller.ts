@@ -59,11 +59,7 @@ export class SalesController {
   }
 
   @Get('invoices/:id/download')
-  async downloadPdf(
-    @Param('id') id: string,
-    @CurrentUser() user: any,
-    @Res() res: Response,
-  ) {
+  async downloadPdf(@Param('id') id: string, @CurrentUser() user: any, @Res() res: Response) {
     const invoice = await this.salesService.findOneInvoice(id, user.tenantId);
     if (!invoice) throw new NotFoundException('Facture introuvable');
     const tenant = await this.tenantModel.findById(user.tenantId).exec();
@@ -94,7 +90,7 @@ export class SalesController {
   remove(@Param('id') id: string, @CurrentUser() user: any) {
     return this.salesService.removeInvoice(id, user.tenantId);
   }
-    @Patch('invoices/:id/validate')
+  @Patch('invoices/:id/validate')
   validateInvoice(@Param('id') id: string, @CurrentUser() user: any) {
     return this.salesService.changeInvoiceStatus(id, 'validated', user.tenantId);
   }
@@ -132,10 +128,7 @@ export class SalesController {
    */
   @Post('invoices/parse')
   @UseInterceptors(FileInterceptor('file'))
-  async parseInvoice(
-    @UploadedFile() file: any,
-    @CurrentUser() user: any,
-  ) {
+  async parseInvoice(@UploadedFile() file: any, @CurrentUser() user: any) {
     if (!file) {
       throw new BadRequestException('Aucun fichier fourni');
     }

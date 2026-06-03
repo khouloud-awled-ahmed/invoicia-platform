@@ -12,4 +12,3 @@ import { UserSyncService } from './user-sync.service';
   exports: [UsersService, UserSyncService],
 })
 export class UsersModule {}
-

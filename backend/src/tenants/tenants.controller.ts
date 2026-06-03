@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, UnauthorizedException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { TenantsService } from './tenants.service';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
@@ -38,7 +48,11 @@ export class TenantsController {
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
-  update(@Param('id') id: string, @Body() updateTenantDto: UpdateTenantDto, @CurrentUser() user: any) {
+  update(
+    @Param('id') id: string,
+    @Body() updateTenantDto: UpdateTenantDto,
+    @CurrentUser() user: any,
+  ) {
     if (user.role !== 'PLATFORM_ADMIN' && user.tenantId !== id) {
       throw new UnauthorizedException('You can only update your own tenant');
     }
@@ -114,7 +128,11 @@ export class TenantsController {
 
   @Patch(':id/payment-methods')
   @UseGuards(JwtAuthGuard, TenantAdminGuard)
-  updatePaymentMethods(@Param('id') id: string, @Body() paymentMethods: any, @CurrentUser() user: any) {
+  updatePaymentMethods(
+    @Param('id') id: string,
+    @Body() paymentMethods: any,
+    @CurrentUser() user: any,
+  ) {
     // Vérifier que l'utilisateur modifie son propre tenant
     if (user.tenantId !== id && user.role !== 'PLATFORM_ADMIN') {
       throw new Error('You can only update your own tenant payment methods');
@@ -132,4 +150,3 @@ export class TenantsController {
     return this.tenantsService.getPaymentMethods(id);
   }
 }
-

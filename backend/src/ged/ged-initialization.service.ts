@@ -2,13 +2,17 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { GEDFolder, GEDFolderDocument } from './schemas/ged-folder.schema';
-import { GEDClassificationRule, GEDClassificationRuleDocument } from './schemas/ged-classification-rule.schema';
+import {
+  GEDClassificationRule,
+  GEDClassificationRuleDocument,
+} from './schemas/ged-classification-rule.schema';
 
 @Injectable()
 export class GEDInitializationService {
   constructor(
     @InjectModel(GEDFolder.name) private folderModel: Model<GEDFolderDocument>,
-    @InjectModel(GEDClassificationRule.name) private ruleModel: Model<GEDClassificationRuleDocument>,
+    @InjectModel(GEDClassificationRule.name)
+    private ruleModel: Model<GEDClassificationRuleDocument>,
   ) {}
 
   async initializeDefaultStructure(tenantId: string): Promise<void> {

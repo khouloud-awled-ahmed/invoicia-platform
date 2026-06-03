@@ -11,4 +11,3 @@ import { Tenant, TenantSchema } from './schemas/tenant.schema';
   exports: [TenantsService],
 })
 export class TenantsModule {}
-

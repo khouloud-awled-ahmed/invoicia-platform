@@ -8,7 +8,7 @@ export class Offre {
   @Prop({ required: true }) typeContrat: string;
   @Prop() localisation: string;
   @Prop() description: string;
-  @Prop({ enum: ['ouverte','en_cours','pourvue','annulee'], default: 'ouverte' }) statut: string;
+  @Prop({ enum: ['ouverte', 'en_cours', 'pourvue', 'annulee'], default: 'ouverte' }) statut: string;
   @Prop({ default: 0 }) candidatures: number;
   @Prop() datePublication: string;
   @Prop({ required: true }) tenantId: string;

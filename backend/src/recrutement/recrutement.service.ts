@@ -12,7 +12,11 @@ export class RecrutementService {
     return this.offreModel.find({ tenantId }).sort({ createdAt: -1 }).exec();
   }
   async updateStatus(id: string, statut: string, tenantId: string) {
-    const o = await this.offreModel.findOneAndUpdate({ _id: id, tenantId }, { statut }, { new: true });
+    const o = await this.offreModel.findOneAndUpdate(
+      { _id: id, tenantId },
+      { statut },
+      { new: true },
+    );
     if (!o) throw new NotFoundException();
     return o;
   }

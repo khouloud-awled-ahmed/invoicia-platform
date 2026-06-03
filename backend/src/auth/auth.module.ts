@@ -21,7 +21,9 @@ import { VerificationModule } from './verification/verification.module';
       useFactory: async (configService: ConfigService) => {
         const jwtSecret = configService.get<string>('JWT_SECRET');
         if (!jwtSecret) {
-          throw new Error('JWT_SECRET must be defined in environment variables. Please set it in your .env file.');
+          throw new Error(
+            'JWT_SECRET must be defined in environment variables. Please set it in your .env file.',
+          );
         }
         return {
           secret: jwtSecret,
@@ -42,4 +44,3 @@ import { VerificationModule } from './verification/verification.module';
   exports: [AuthService],
 })
 export class AuthModule {}
-

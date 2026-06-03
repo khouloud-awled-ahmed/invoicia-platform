@@ -20,18 +20,8 @@ import { User, UserSchema } from '../users/schemas/user.schema';
     IntervenantsModule,
     UsersModule,
   ],
-  controllers: [
-    ProjectsController,
-    ProjectAssignmentsController,
-  ],
-  providers: [
-    ProjectsService,
-    ProjectAssignmentsService,
-  ],
-  exports: [
-    ProjectsService,
-    ProjectAssignmentsService,
-  ],
+  controllers: [ProjectsController, ProjectAssignmentsController],
+  providers: [ProjectsService, ProjectAssignmentsService],
+  exports: [ProjectsService, ProjectAssignmentsService],
 })
 export class ProjectsModule {}
-

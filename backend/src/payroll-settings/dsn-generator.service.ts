@@ -32,13 +32,13 @@ export class DSNGeneratorService {
     const payrollSettings = tenant.payrollSettings || {};
     const identifier = payrollSettings.matriculeFiscal || (tenant as any).matriculeFiscal;
     if (!identifier) {
-      throw new NotFoundException('Les paramètres de paie ne sont pas configurés (Matricule Fiscal manquant)');
+      throw new NotFoundException(
+        'Les paramètres de paie ne sont pas configurés (Matricule Fiscal manquant)',
+      );
     }
 
     // Récupérer les employés actifs
-    const employees = await this.employeeModel
-      .find({ tenantId, status: 'active' })
-      .exec();
+    const employees = await this.employeeModel.find({ tenantId, status: 'active' }).exec();
 
     // Récupérer les organismes sociaux
     const socialOrgs = await this.socialOrgModel.find({ tenantId }).exec();
@@ -106,13 +106,18 @@ export class DSNGeneratorService {
    */
   private generateBlock11(tenant: Tenant, payrollSettings: any): string {
     // Tunisie : Matricule Fiscal (ex: 1234567/A/B/M/000) ; pour compatibilité format DSN on utilise un identifiant normalisé
-    const mf = (payrollSettings.matriculeFiscal || (tenant as any).matriculeFiscal || '').replace(/\s/g, '');
+    const mf = (payrollSettings.matriculeFiscal || (tenant as any).matriculeFiscal || '').replace(
+      /\s/g,
+      '',
+    );
     const siretCompat = mf.padEnd(14, ' ').substring(0, 14);
     const nic = (payrollSettings.nic || '').padStart(5, '0');
     const apeCode = (payrollSettings.apeCode || '').padEnd(5, ' ');
     const cnssId = (payrollSettings.affiliationCNSS || '').padEnd(20, ' ');
 
-    const raisonSociale = (tenant.businessName || tenant.name || '').substring(0, 50).padEnd(50, ' ');
+    const raisonSociale = (tenant.businessName || tenant.name || '')
+      .substring(0, 50)
+      .padEnd(50, ' ');
     return `11|${siretCompat}|${nic}|${apeCode}|${cnssId}|${raisonSociale}`;
   }
 
@@ -123,13 +128,13 @@ export class DSNGeneratorService {
   private generateBlock30(employee: EmployeeDocument): string {
     // NIR (Numéro d'Inscription au Répertoire) - 15 caractères, placeholder si non disponible
     const nir = '0'.padStart(15, '0');
-    
+
     // Nom en majuscules, limité à 38 caractères
     const nom = (employee.lastName || '').toUpperCase().substring(0, 38).padEnd(38, ' ');
-    
+
     // Prénom, limité à 38 caractères
     const prenom = (employee.firstName || '').substring(0, 38).padEnd(38, ' ');
-    
+
     // Date de naissance au format JJMMAAAA
     const dateNaissance = employee.birthDate
       ? this.formatDateDDMMYYYY(employee.birthDate)
@@ -145,12 +150,14 @@ export class DSNGeneratorService {
    */
   private generateBlock40(employee: EmployeeDocument): string {
     // Numéro de contrat (généré à partir de l'ID de l'employé)
-    const numeroContrat = ((employee as any)._id?.toString() || '').substring(0, 10).padEnd(10, ' ');
-    
+    const numeroContrat = ((employee as any)._id?.toString() || '')
+      .substring(0, 10)
+      .padEnd(10, ' ');
+
     // Type de contrat : 01 = CDI, 02 = CDD, 03 = Intérim, etc.
     // Par défaut CDI si non spécifié
     const typeContrat = '01';
-    
+
     // Date de début au format JJMMAAAA
     const dateDebut = employee.hireDate
       ? this.formatDateDDMMYYYY(employee.hireDate)
@@ -169,11 +176,15 @@ export class DSNGeneratorService {
    */
   private generateBlock70(employee: EmployeeDocument, socialOrg: SocialOrg): string {
     // Numéro de contrat (même que bloc 40)
-    const numeroContrat = ((employee as any)._id?.toString() || '').substring(0, 10).padEnd(10, ' ');
-    
+    const numeroContrat = ((employee as any)._id?.toString() || '')
+      .substring(0, 10)
+      .padEnd(10, ' ');
+
     // Code organisme (utilise le contractId du SocialOrg ou un code par défaut)
-    const codeOrganisme = (socialOrg.contractId || socialOrg.name.substring(0, 5).toUpperCase()).padEnd(5, ' ');
-    
+    const codeOrganisme = (
+      socialOrg.contractId || socialOrg.name.substring(0, 5).toUpperCase()
+    ).padEnd(5, ' ');
+
     // Numéro d'affiliation
     const numeroAffiliation = (socialOrg.affiliationId || '').padEnd(20, ' ');
 

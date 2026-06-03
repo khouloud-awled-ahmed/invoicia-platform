@@ -56,4 +56,3 @@ export const CreditNoteSchema = SchemaFactory.createForClass(CreditNote);
 // Index unique composé : le numéro d'avoir doit être unique par tenant (pas globalement)
 CreditNoteSchema.index({ tenantId: 1, number: 1 }, { unique: true });
 CreditNoteSchema.index({ tenantId: 1, relatedInvoiceId: 1 });
-

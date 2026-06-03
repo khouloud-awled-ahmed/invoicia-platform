@@ -8,9 +8,7 @@ import { EmailService } from './email.service';
 import { CertificateService } from './certificate.service';
 
 @Module({
-  imports: [
-    MongooseModule.forFeature([{ name: Envelope.name, schema: EnvelopeSchema }]),
-  ],
+  imports: [MongooseModule.forFeature([{ name: Envelope.name, schema: EnvelopeSchema }])],
   controllers: [EnvelopesController],
   providers: [EnvelopesService, WorkflowEngine, EmailService, CertificateService],
   exports: [EnvelopesService],

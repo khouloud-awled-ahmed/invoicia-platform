@@ -1,7 +1,10 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { BankParserTemplate, BankParserTemplateDocument } from '../schemas/bank-parser-template.schema';
+import {
+  BankParserTemplate,
+  BankParserTemplateDocument,
+} from '../schemas/bank-parser-template.schema';
 import { parse as csvParse } from 'csv-parse/sync';
 import * as path from 'path';
 
@@ -45,7 +48,7 @@ export class BankFileParserService {
     try {
       // Déterminer le type de fichier
       const fileType = this.detectFileType(file.originalname, file.mimetype);
-      
+
       // Extraire le texte brut
       let rawText: string;
       let rawLines: string[][];
@@ -56,7 +59,7 @@ export class BankFileParserService {
       } else {
         // CSV
         rawLines = await this.parseCSV(file.buffer);
-        rawText = rawLines.map(line => line.join(' ')).join('\n');
+        rawText = rawLines.map((line) => line.join(' ')).join('\n');
       }
 
       // Chercher une signature connue
@@ -66,7 +69,7 @@ export class BankFileParserService {
         // Format connu : extraire automatiquement
         this.logger.log(`Format reconnu: ${template.name} (${template.signature})`);
         const transactions = await this.extractTransactions(rawLines, template.config, fileType);
-        
+
         return {
           status: 'SUCCESS',
           transactions,
@@ -84,7 +87,7 @@ export class BankFileParserService {
         };
       }
     } catch (error) {
-      this.logger.error('Erreur lors de l\'analyse du fichier:', error);
+      this.logger.error("Erreur lors de l'analyse du fichier:", error);
       throw new BadRequestException(`Erreur lors de l'analyse: ${error.message}`);
     }
   }
@@ -133,9 +136,11 @@ export class BankFileParserService {
       const data = await pdfParse(buffer);
       return data.text;
     } catch (error: any) {
-      this.logger.error('Erreur lors de l\'extraction PDF:', error);
+      this.logger.error("Erreur lors de l'extraction PDF:", error);
       if (error.message?.includes('Cannot find module') || error.message?.includes('pdf-parse')) {
-        throw new BadRequestException('Module pdf-parse non installé. Exécutez: npm install pdf-parse');
+        throw new BadRequestException(
+          'Module pdf-parse non installé. Exécutez: npm install pdf-parse',
+        );
       }
       throw new BadRequestException(`Impossible d'extraire le texte du PDF: ${error.message}`);
     }
@@ -149,7 +154,7 @@ export class BankFileParserService {
       const text = buffer.toString('utf-8');
       // Détecter le délimiteur (semicolon ou comma)
       const delimiter = text.includes(';') ? ';' : ',';
-      
+
       const records = csvParse(text, {
         delimiter,
         skip_empty_lines: true,
@@ -161,7 +166,9 @@ export class BankFileParserService {
     } catch (error: any) {
       this.logger.error('Erreur lors du parsing CSV:', error);
       if (error.message?.includes('Cannot find module') || error.message?.includes('csv-parse')) {
-        throw new BadRequestException('Module csv-parse non installé. Exécutez: npm install csv-parse');
+        throw new BadRequestException(
+          'Module csv-parse non installé. Exécutez: npm install csv-parse',
+        );
       }
       throw new BadRequestException(`Impossible de parser le fichier CSV: ${error.message}`);
     }
@@ -173,8 +180,8 @@ export class BankFileParserService {
   private textToLines(text: string): string[][] {
     return text
       .split('\n')
-      .filter(line => line.trim().length > 0)
-      .map(line => line.split(/\s{2,}|\t/).filter(cell => cell.trim().length > 0));
+      .filter((line) => line.trim().length > 0)
+      .map((line) => line.split(/\s{2,}|\t/).filter((cell) => cell.trim().length > 0));
   }
 
   /**
@@ -226,7 +233,7 @@ export class BankFileParserService {
 
     for (let i = startIndex; i < rawLines.length; i++) {
       const line = rawLines[i];
-      
+
       // Vérifier que la ligne a assez de colonnes
       const maxColumn = Math.max(config.dateColumn, config.labelColumn, config.amountColumn);
       if (line.length <= maxColumn) {

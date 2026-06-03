@@ -138,11 +138,14 @@ export class AttachmentsService {
     return attachment;
   }
 
-  async getFileStream(attachmentId: string, tenantId: string): Promise<{ stream: NodeJS.ReadableStream; attachment: Attachment }> {
+  async getFileStream(
+    attachmentId: string,
+    tenantId: string,
+  ): Promise<{ stream: NodeJS.ReadableStream; attachment: Attachment }> {
     const attachment = await this.findOne(attachmentId, tenantId);
     const fileId = new ObjectId(attachment.gridFsFileId);
     const bucket = this.getGridFSBucket();
-    
+
     // Vérifier que le fichier existe dans GridFS
     const files = await bucket.find({ _id: fileId }).toArray();
     if (files.length === 0) {
@@ -169,7 +172,7 @@ export class AttachmentsService {
   async deleteByEntity(entityType: string, entityId: string, tenantId: string): Promise<void> {
     const attachments = await this.findAll(entityType, entityId, tenantId);
     const bucket = this.getGridFSBucket();
-    
+
     for (const attachment of attachments) {
       try {
         const fileId = new ObjectId(attachment.gridFsFileId);
@@ -183,4 +186,3 @@ export class AttachmentsService {
     await this.attachmentModel.deleteMany({ tenantId, entityType, entityId }).exec();
   }
 }
-

@@ -10,7 +10,8 @@ export class Formation {
   @Prop() employeeId: string;
   @Prop() employe: string;
   @Prop() description: string;
-  @Prop({ enum: ['planifiee','en_cours','terminee','annulee'], default: 'planifiee' }) statut: string;
+  @Prop({ enum: ['planifiee', 'en_cours', 'terminee', 'annulee'], default: 'planifiee' })
+  statut: string;
   @Prop({ required: true }) tenantId: string;
 }
 export const FormationSchema = SchemaFactory.createForClass(Formation);

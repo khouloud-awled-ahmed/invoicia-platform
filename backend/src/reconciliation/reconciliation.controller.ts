@@ -27,10 +27,7 @@ export class ReconciliationController {
    * Rapproche une ligne bancaire avec un justificatif et crée l'écriture comptable.
    */
   @Post('match')
-  async match(
-    @CurrentUser() user: any,
-    @Body() dto: MatchReconciliationDto,
-  ) {
+  async match(@CurrentUser() user: any, @Body() dto: MatchReconciliationDto) {
     if (!user.tenantId) {
       throw new BadRequestException('Tenant ID is required');
     }

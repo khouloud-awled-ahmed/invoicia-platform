@@ -12,7 +12,11 @@ export class FormationsService {
     return this.formationModel.find({ tenantId }).sort({ createdAt: -1 }).exec();
   }
   async updateStatus(id: string, statut: string, tenantId: string) {
-    const f = await this.formationModel.findOneAndUpdate({ _id: id, tenantId }, { statut }, { new: true });
+    const f = await this.formationModel.findOneAndUpdate(
+      { _id: id, tenantId },
+      { statut },
+      { new: true },
+    );
     if (!f) throw new NotFoundException();
     return f;
   }

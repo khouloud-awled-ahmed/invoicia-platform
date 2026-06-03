@@ -8,11 +8,7 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 
 @Global()
 @Module({
-  imports: [
-    MongooseModule.forFeature([
-      { name: LogEntry.name, schema: LogEntrySchema },
-    ]),
-  ],
+  imports: [MongooseModule.forFeature([{ name: LogEntry.name, schema: LogEntrySchema }])],
   controllers: [LogsController],
   providers: [
     LogsService,

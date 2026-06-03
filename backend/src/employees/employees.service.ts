@@ -63,7 +63,7 @@ export class EmployeesService {
 
   async update(id: string, updateDto: any, tenantId: string): Promise<Employee> {
     const employee = await this.findOne(id, tenantId);
-    
+
     const updated = await this.employeeModel
       .findOneAndUpdate({ _id: id, tenantId }, updateDto, { new: true })
       .exec();
@@ -117,4 +117,3 @@ export class EmployeesService {
     return this.cvModel.find({ tenantId }).sort({ createdAt: -1 }).exec();
   }
 }
-

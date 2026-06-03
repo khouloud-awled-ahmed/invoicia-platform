@@ -2,7 +2,10 @@ import { Injectable, BadRequestException, NotFoundException } from '@nestjs/comm
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User, UserDocument } from '../../users/schemas/user.schema';
-import { PlatformSettings, PlatformSettingsDocument } from '../../platform/schemas/platform-settings.schema';
+import {
+  PlatformSettings,
+  PlatformSettingsDocument,
+} from '../../platform/schemas/platform-settings.schema';
 
 interface OTPStorage {
   code: string;
@@ -138,7 +141,10 @@ export class VerificationService {
     return Math.floor(100000 + Math.random() * 900000).toString();
   }
 
-  async getVerificationSettings(): Promise<{ requireEmailVerification: boolean; requirePhoneVerification: boolean }> {
+  async getVerificationSettings(): Promise<{
+    requireEmailVerification: boolean;
+    requirePhoneVerification: boolean;
+  }> {
     const settings = await this.settingsModel.findOne({ id: 'platform' }).exec();
     return {
       requireEmailVerification: settings?.requireEmailVerification ?? true,

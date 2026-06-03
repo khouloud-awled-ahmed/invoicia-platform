@@ -12,7 +12,7 @@ export class Bulletin {
   @Prop({ required: true }) irpp: number;
   @Prop({ default: 0 }) autresRetenues: number;
   @Prop({ required: true }) salaireNet: number;
-  @Prop({ enum: ['draft','validated','paid'], default: 'draft' }) status: string;
+  @Prop({ enum: ['draft', 'validated', 'paid'], default: 'draft' }) status: string;
   @Prop({ required: true }) tenantId: string;
 }
 export const BulletinSchema = SchemaFactory.createForClass(Bulletin);

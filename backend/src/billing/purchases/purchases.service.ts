@@ -5,9 +5,7 @@ import { Expense, ExpenseDocument } from './schemas/expense.schema';
 
 @Injectable()
 export class PurchasesService {
-  constructor(
-    @InjectModel(Expense.name) private expenseModel: Model<ExpenseDocument>,
-  ) {}
+  constructor(@InjectModel(Expense.name) private expenseModel: Model<ExpenseDocument>) {}
 
   // ─── DASHBOARD ────────────────────────────────────────────────
   async getDashboard(tenantId: string) {
@@ -18,11 +16,11 @@ export class PurchasesService {
 
     const totalAll = expenses.reduce((sum, e) => sum + (e.amountTTC || 0), 0);
     const thisMonth = expenses
-      .filter(e => new Date(e.date) >= startOfMonth)
+      .filter((e) => new Date(e.date) >= startOfMonth)
       .reduce((sum, e) => sum + (e.amountTTC || 0), 0);
 
-    const pending = expenses.filter(e => e.status === 'pending').length;
-    const verified = expenses.filter(e => e.status === 'verified').length;
+    const pending = expenses.filter((e) => e.status === 'pending').length;
+    const verified = expenses.filter((e) => e.status === 'verified').length;
 
     // Top 5 categories
     const categoryMap: Record<string, number> = {};
@@ -41,7 +39,7 @@ export class PurchasesService {
     const recentActivity = [...expenses]
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       .slice(0, 5)
-      .map(e => ({
+      .map((e) => ({
         id: (e as any)._id,
         supplier: e.supplier,
         category: e.category,
@@ -54,7 +52,7 @@ export class PurchasesService {
       totalFull: Math.round(totalAll * 1000) / 1000,
       totalInvoices: expenses.length,
       thisMonth: Math.round(thisMonth * 1000) / 1000,
-      thisMonthCount: expenses.filter(e => new Date(e.date) >= startOfMonth).length,
+      thisMonthCount: expenses.filter((e) => new Date(e.date) >= startOfMonth).length,
       pending,
       verified,
       top5Categories,

@@ -5,11 +5,7 @@ import { AttachmentsController } from './attachments.controller';
 import { Attachment, AttachmentSchema } from './schemas/attachment.schema';
 
 @Module({
-  imports: [
-    MongooseModule.forFeature([
-      { name: Attachment.name, schema: AttachmentSchema },
-    ]),
-  ],
+  imports: [MongooseModule.forFeature([{ name: Attachment.name, schema: AttachmentSchema }])],
   controllers: [AttachmentsController],
   providers: [AttachmentsService],
   exports: [AttachmentsService],

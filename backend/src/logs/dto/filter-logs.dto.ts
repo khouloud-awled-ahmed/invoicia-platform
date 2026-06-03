@@ -1,4 +1,13 @@
-import { IsOptional, IsEnum, IsBoolean, IsDateString, IsString, IsInt, Min, Max } from 'class-validator';
+import {
+  IsOptional,
+  IsEnum,
+  IsBoolean,
+  IsDateString,
+  IsString,
+  IsInt,
+  Min,
+  Max,
+} from 'class-validator';
 import { LogLevel, LogCategory, LogSource } from '../schemas/log-entry.schema';
 
 export class FilterLogsDto {

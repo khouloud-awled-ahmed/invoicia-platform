@@ -42,7 +42,7 @@ export class AuthService {
     const payload = { email: user.email, sub: user._id, role: user.role, tenantId: user.tenantId };
     return {
       access_token: this.jwtService.sign(payload),
-       user:{
+      user: {
         id: user._id,
         name: user.name,
         email: user.email,
@@ -58,22 +58,24 @@ export class AuthService {
   async register(registerDto: RegisterDto) {
     // Validation : companyName est obligatoire si tenantId n'est pas fourni
     if (!registerDto.tenantId && !registerDto.companyName) {
-      throw new BadRequestException('Le nom de l\'entreprise est obligatoire');
+      throw new BadRequestException("Le nom de l'entreprise est obligatoire");
     }
 
     // Validation : companyName ne doit pas être vide si fourni
     if (registerDto.companyName && registerDto.companyName.trim() === '') {
-      throw new BadRequestException('Le nom de l\'entreprise ne peut pas être vide');
+      throw new BadRequestException("Le nom de l'entreprise ne peut pas être vide");
     }
 
-    const existingUser = await this.userModel.findOne({ email: registerDto.email.toLowerCase() }).exec();
+    const existingUser = await this.userModel
+      .findOne({ email: registerDto.email.toLowerCase() })
+      .exec();
     if (existingUser) {
       throw new UnauthorizedException('Un utilisateur avec cet email existe déjà');
     }
 
     // Si c'est une inscription SaaS, créer le Tenant d'abord
     let tenantId = registerDto.tenantId;
-    
+
     if (!tenantId && registerDto.companyName) {
       try {
         // Créer un nouveau Tenant pour cette entreprise
@@ -94,12 +96,14 @@ export class AuthService {
             paymentMethods: [],
           },
         });
-        
+
         const savedTenant = await tenant.save();
         tenantId = savedTenant._id.toString();
       } catch (error: any) {
         console.error('Erreur lors de la création du tenant:', error);
-        throw new BadRequestException('Erreur lors de la création de l\'entreprise: ' + (error.message || 'Erreur inconnue'));
+        throw new BadRequestException(
+          "Erreur lors de la création de l'entreprise: " + (error.message || 'Erreur inconnue'),
+        );
       }
     }
 
@@ -117,18 +121,20 @@ export class AuthService {
     });
 
     await user.save();
-    
+
     // Mettre à jour le compteur d'utilisateurs du tenant
     if (tenantId) {
-      await this.tenantModel.updateOne(
-        { _id: tenantId },
-        { $inc: { currentUsers: 1 } }
-      ).exec();
+      await this.tenantModel.updateOne({ _id: tenantId }, { $inc: { currentUsers: 1 } }).exec();
     }
 
     const { password, ...result } = user.toObject();
 
-    const payload = { email: result.email, sub: result._id, role: result.role, tenantId: result.tenantId };
+    const payload = {
+      email: result.email,
+      sub: result._id,
+      role: result.role,
+      tenantId: result.tenantId,
+    };
     return {
       access_token: this.jwtService.sign(payload),
       user: {
@@ -176,16 +182,20 @@ export class AuthService {
   }
 
   async resetPassword(email: string, token: string, newPassword: string) {
-    console.log('[RESET PASSWORD] Attempt:', { email, tokenLength: token?.length, newPasswordLength: newPassword?.length });
-    
+    console.log('[RESET PASSWORD] Attempt:', {
+      email,
+      tokenLength: token?.length,
+      newPasswordLength: newPassword?.length,
+    });
+
     const normalizedEmail = email.toLowerCase();
     const user = await this.userModel.findOne({ email: normalizedEmail }).exec();
-    
+
     if (!user) {
       console.log('[RESET PASSWORD] User not found:', normalizedEmail);
       throw new BadRequestException('Lien de réinitialisation invalide ou expiré');
     }
-    
+
     if (!user.resetPasswordTokenHash || !user.resetPasswordExpiresAt) {
       console.log('[RESET PASSWORD] No reset token found for user:', normalizedEmail);
       throw new BadRequestException('Lien de réinitialisation invalide ou expiré');
@@ -200,12 +210,12 @@ export class AuthService {
     }
 
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-    console.log('[RESET PASSWORD] Token comparison:', { 
-      providedHash: tokenHash.substring(0, 10) + '...', 
+    console.log('[RESET PASSWORD] Token comparison:', {
+      providedHash: tokenHash.substring(0, 10) + '...',
       storedHash: user.resetPasswordTokenHash.substring(0, 10) + '...',
-      match: tokenHash === user.resetPasswordTokenHash
+      match: tokenHash === user.resetPasswordTokenHash,
     });
-    
+
     if (tokenHash !== user.resetPasswordTokenHash) {
       console.log('[RESET PASSWORD] Token mismatch for user:', normalizedEmail);
       throw new BadRequestException('Lien de réinitialisation invalide ou expiré');
@@ -220,4 +230,3 @@ export class AuthService {
     return { message: 'Mot de passe réinitialisé avec succès' };
   }
 }
-

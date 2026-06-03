@@ -10,7 +10,7 @@ export class Evaluation {
   @Prop({ required: true }) score: number;
   @Prop() objectifs: string;
   @Prop() commentaires: string;
-  @Prop({ enum: ['draft','completed'], default: 'completed' }) statut: string;
+  @Prop({ enum: ['draft', 'completed'], default: 'completed' }) statut: string;
   @Prop({ required: true }) tenantId: string;
 }
 export const EvaluationSchema = SchemaFactory.createForClass(Evaluation);

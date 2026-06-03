@@ -17,7 +17,7 @@ export class Opportunity {
   @Prop({ required: true })
   probability: number;
 
-  @Prop({ default: 'lead', enum: ['lead','qualified','proposal','negotiation','won','lost'] })
+  @Prop({ default: 'lead', enum: ['lead', 'qualified', 'proposal', 'negotiation', 'won', 'lost'] })
   stage: string;
 
   @Prop()

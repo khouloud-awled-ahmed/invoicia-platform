@@ -22,7 +22,8 @@ export class InvoiceEmailService {
       return;
     }
 
-    const companyName = platformSettings.invoiceCompanyName || platformSettings.companyName || 'Invoicia';
+    const companyName =
+      platformSettings.invoiceCompanyName || platformSettings.companyName || 'Invoicia';
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3003';
     const downloadUrl = `${frontendUrl}${invoice.pdfUrl}`;
 
@@ -102,7 +103,7 @@ export class InvoiceEmailService {
     // Pour l'instant, on log seulement
     this.logger.log(`[EMAIL] Facture ${invoice.invoiceNumber} envoyée à ${recipientEmail}`);
     this.logger.debug(`URL de téléchargement: ${downloadUrl}`);
-    
+
     // Simuler l'envoi
     await new Promise((resolve) => setTimeout(resolve, 500));
 

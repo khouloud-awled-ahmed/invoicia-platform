@@ -5,11 +5,7 @@ import { AbsencesService } from './absences.service';
 import { Absence, AbsenceSchema } from './schemas/absence.schema';
 
 @Module({
-  imports: [
-    MongooseModule.forFeature([
-      { name: Absence.name, schema: AbsenceSchema },
-    ]),
-  ],
+  imports: [MongooseModule.forFeature([{ name: Absence.name, schema: AbsenceSchema }])],
   controllers: [AbsencesController],
   providers: [AbsencesService],
   exports: [AbsencesService],

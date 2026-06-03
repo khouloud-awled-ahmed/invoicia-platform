@@ -36,10 +36,7 @@ export class PayrollSettingsController {
   }
 
   @Patch('settings')
-  async updateSettings(
-    @CurrentUser() user: any,
-    @Body() updateDto: UpdatePayrollSettingsDto,
-  ) {
+  async updateSettings(@CurrentUser() user: any, @Body() updateDto: UpdatePayrollSettingsDto) {
     if (!user.tenantId) {
       throw new BadRequestException('Tenant ID is required');
     }
@@ -47,10 +44,7 @@ export class PayrollSettingsController {
   }
 
   @Post('social-orgs')
-  async createSocialOrg(
-    @CurrentUser() user: any,
-    @Body() createDto: CreateSocialOrgDto,
-  ) {
+  async createSocialOrg(@CurrentUser() user: any, @Body() createDto: CreateSocialOrgDto) {
     if (!user.tenantId) {
       throw new BadRequestException('Tenant ID is required');
     }

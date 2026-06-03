@@ -1,4 +1,13 @@
-import { IsNotEmpty, IsEmail, IsString, IsArray, IsOptional, IsEnum, IsNumber, Min } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsEmail,
+  IsString,
+  IsArray,
+  IsOptional,
+  IsEnum,
+  IsNumber,
+  Min,
+} from 'class-validator';
 
 export class CreateTenantDto {
   @IsNotEmpty()

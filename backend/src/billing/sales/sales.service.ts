@@ -49,19 +49,17 @@ export class SalesService {
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
     const totalCA = invoices
-      .filter(i => !['cancelled', 'archived'].includes(i.status))
+      .filter((i) => !['cancelled', 'archived'].includes(i.status))
       .reduce((sum, i) => sum + (i.amountTTC || 0), 0);
 
     const thisMonth = invoices
       .filter(
-        i =>
-          new Date(i.date) >= startOfMonth &&
-          !['cancelled', 'archived'].includes(i.status),
+        (i) => new Date(i.date) >= startOfMonth && !['cancelled', 'archived'].includes(i.status),
       )
       .reduce((sum, i) => sum + (i.amountTTC || 0), 0);
 
-    const pending = invoices.filter(i => i.status === 'pending').length;
-    const validated = invoices.filter(i => i.status === 'validated').length;
+    const pending = invoices.filter((i) => i.status === 'pending').length;
+    const validated = invoices.filter((i) => i.status === 'validated').length;
 
     // Top 5 clients by revenue
     const clientMap: Record<string, number> = {};
@@ -76,17 +74,16 @@ export class SalesService {
       .map(([client, total]) => ({
         client,
         total: Math.round(total * 1000) / 1000,
-        percentage:
-          totalCA > 0 ? Math.round((total / totalCA) * 1000) / 10 : 0,
+        percentage: totalCA > 0 ? Math.round((total / totalCA) * 1000) / 10 : 0,
       }));
 
     // Status distribution
     const statuses = ['draft', 'pending', 'validated', 'paid', 'cancelled', 'archived'];
-    const statusDistribution = statuses.map(status => ({
+    const statusDistribution = statuses.map((status) => ({
       status,
-      count: invoices.filter(i => i.status === status).length,
+      count: invoices.filter((i) => i.status === status).length,
       total: invoices
-        .filter(i => i.status === status)
+        .filter((i) => i.status === status)
         .reduce((sum, i) => sum + (i.amountTTC || 0), 0),
     }));
 
@@ -94,7 +91,7 @@ export class SalesService {
       totalCA: Math.round(totalCA * 1000) / 1000,
       totalInvoices: invoices.length,
       thisMonth: Math.round(thisMonth * 1000) / 1000,
-      thisMonthCount: invoices.filter(i => new Date(i.date) >= startOfMonth).length,
+      thisMonthCount: invoices.filter((i) => new Date(i.date) >= startOfMonth).length,
       pending,
       validated,
       top5Clients,
@@ -137,14 +134,18 @@ export class SalesService {
 
     // Normalize French status to English
     const statusMap: Record<string, string> = {
-      "Brouillon": "draft", "En attente": "pending", "Validée": "validated",
-      "Payée": "paid", "Annulée": "cancelled", "Archivée": "archived",
+      Brouillon: 'draft',
+      'En attente': 'pending',
+      Validée: 'validated',
+      Payée: 'paid',
+      Annulée: 'cancelled',
+      Archivée: 'archived',
     };
     if (createInvoiceDto.status && statusMap[createInvoiceDto.status]) {
       (createInvoiceDto as any).status = statusMap[createInvoiceDto.status];
     }
 
-    const normalizedItems = createInvoiceDto.items.map(item => ({
+    const normalizedItems = createInvoiceDto.items.map((item) => ({
       ...item,
       article: item.article || item.description || 'Article',
       description: item.description || item.article || '',
@@ -213,11 +214,15 @@ export class SalesService {
   }
 
   // ─── UPDATE ───────────────────────────────────────────────────
-  async updateInvoice(id: string, updateInvoiceDto: UpdateInvoiceDto, tenantId: string): Promise<Invoice> {
+  async updateInvoice(
+    id: string,
+    updateInvoiceDto: UpdateInvoiceDto,
+    tenantId: string,
+  ): Promise<Invoice> {
     let extra: any = {};
 
     if (updateInvoiceDto.items) {
-      const normalizedItems = updateInvoiceDto.items.map(item => ({
+      const normalizedItems = updateInvoiceDto.items.map((item) => ({
         ...item,
         article: item.article || item.description || 'Article',
         quantity: item.quantity || 1,
@@ -266,9 +271,7 @@ export class SalesService {
     };
 
     if (!allowed[invoice.status]?.includes(status)) {
-      throw new BadRequestException(
-        `Transition "${invoice.status}" → "${status}" non autorisée`,
-      );
+      throw new BadRequestException(`Transition "${invoice.status}" → "${status}" non autorisée`);
     }
 
     const updated = await this.invoiceModel

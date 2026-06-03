@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Invoice, InvoiceDocument } from '../sales/schemas/invoice.schema';
@@ -56,9 +61,9 @@ export class PlatformAgreementService {
 
     return {
       enabled: isEnabled,
-      configured: !!(tenant?.metadata?.platformAgreementConfig),
+      configured: !!tenant?.metadata?.platformAgreementConfig,
       platform: tenant?.metadata?.platformAgreementConfig?.platform || null,
-      credentialsConfigured: !!(tenant?.metadata?.platformAgreementConfig?.apiKey),
+      credentialsConfigured: !!tenant?.metadata?.platformAgreementConfig?.apiKey,
     };
   }
 

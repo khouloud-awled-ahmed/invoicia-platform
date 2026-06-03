@@ -5,9 +5,7 @@ import { Absence, AbsenceDocument } from './schemas/absence.schema';
 
 @Injectable()
 export class AbsencesService {
-  constructor(
-    @InjectModel(Absence.name) private absenceModel: Model<AbsenceDocument>,
-  ) {}
+  constructor(@InjectModel(Absence.name) private absenceModel: Model<AbsenceDocument>) {}
 
   // ─── CREATE ───────────────────────────────────────────────────
   async create(dto: any, tenantId: string): Promise<Absence> {
@@ -22,9 +20,10 @@ export class AbsencesService {
       throw new BadRequestException('La date de fin doit être après la date de début');
     }
 
-    const days = Math.max(1, Math.ceil(
-      (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
-    ) + 1);
+    const days = Math.max(
+      1,
+      Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1,
+    );
 
     const absence = new this.absenceModel({
       ...dto,
@@ -101,16 +100,16 @@ export class AbsencesService {
   async getStats(tenantId: string) {
     const absences = await this.absenceModel.find({ tenantId }).exec();
 
-    const pending = absences.filter(a => a.status === 'pending').length;
-    const approved = absences.filter(a => a.status === 'approved').length;
-    const rejected = absences.filter(a => a.status === 'rejected').length;
+    const pending = absences.filter((a) => a.status === 'pending').length;
+    const approved = absences.filter((a) => a.status === 'approved').length;
+    const rejected = absences.filter((a) => a.status === 'rejected').length;
     const totalDays = absences
-      .filter(a => a.status === 'approved')
+      .filter((a) => a.status === 'approved')
       .reduce((sum, a) => sum + a.days, 0);
 
     // By type
     const byType: Record<string, number> = {};
-    for (const a of absences.filter(ab => ab.status === 'approved')) {
+    for (const a of absences.filter((ab) => ab.status === 'approved')) {
       byType[a.type] = (byType[a.type] || 0) + a.days;
     }
 
