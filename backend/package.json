@@ -33,6 +33,7 @@
     "@nestjs/mongoose": "^10.0.2",
     "@nestjs/passport": "^10.0.3",
     "@nestjs/platform-express": "^10.3.0",
+    "@nestjs/swagger": "^7.4.0",
     "@types/qrcode": "^1.5.6",
     "axios": "^1.16.1",
     "bcrypt": "^5.1.1",
