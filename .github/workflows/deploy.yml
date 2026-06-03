@@ -28,6 +28,11 @@ jobs:
           npm run lint -- --max-warnings=100
         continue-on-error: true
 
+      - name: Run tests
+        run: |
+          cd backend
+          npx jest --config test/jest-e2e.json
+
       - name: Build backend
         run: |
           cd backend
@@ -35,4 +40,4 @@ jobs:
           ./node_modules/.bin/nest build
 
       - name: Build success
-        run: echo "✅ Build and lint completed!"
+        run: echo "✅ Tests, lint and build completed!"
