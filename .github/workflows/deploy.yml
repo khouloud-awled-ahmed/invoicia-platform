@@ -21,6 +21,11 @@ jobs:
           cd backend
           npm install
 
+      - name: Lint code
+        run: |
+          cd backend
+          npm run lint
+
       - name: Build backend
         run: |
           cd backend
@@ -28,4 +33,4 @@ jobs:
           ./node_modules/.bin/nest build
 
       - name: Build success
-        run: echo "✅ Build completed successfully!"
+        run: echo "✅ Build and lint completed!"
