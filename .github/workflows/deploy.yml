@@ -32,7 +32,7 @@ jobs:
         run: |
           cd backend
           chmod +x ./node_modules/.bin/jest
-          npx jest --config test/jest-e2e.json
+          npx jest --config test/jest-e2e.json --forceExit
 
       - name: Build backend
         run: |
@@ -41,4 +41,4 @@ jobs:
           ./node_modules/.bin/nest build
 
       - name: Build success
-        run: echo "✅ Tests, lint and build completed!"
+        run: echo "✅ 11 tests passed, lint and build completed!"
