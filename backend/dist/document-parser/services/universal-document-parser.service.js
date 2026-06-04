@@ -37,7 +37,7 @@ let UniversalDocumentParserService = UniversalDocumentParserService_1 = class Un
             }
             else if (fileType === 'CSV') {
                 rawLines = await this.parseCSV(file.buffer);
-                rawText = rawLines.map(line => line.join(' ')).join('\n');
+                rawText = rawLines.map((line) => line.join(' ')).join('\n');
             }
             else if (fileType === 'DOCX') {
                 const extracted = await this.extractTextFromDocx(file.buffer);
@@ -108,7 +108,7 @@ let UniversalDocumentParserService = UniversalDocumentParserService_1 = class Un
     async extractBankTransactions(rawLines, template, fileType) {
         const config = template.config;
         const transactions = [];
-        const startIndex = config.hasHeader ? (config.startRow || 0) + 1 : (config.startRow || 0);
+        const startIndex = config.hasHeader ? (config.startRow || 0) + 1 : config.startRow || 0;
         for (let i = startIndex; i < rawLines.length; i++) {
             const line = rawLines[i];
             const maxColumn = Math.max(config.dateColumn || 0, config.labelColumn || 0, config.amountColumn || 0);
@@ -282,12 +282,12 @@ let UniversalDocumentParserService = UniversalDocumentParserService_1 = class Un
             const result = await mammoth.extractRawText({ buffer });
             const rawText = result.value;
             if (typeof rawText !== 'string') {
-                throw new Error('Extraction Word invalide: le résultat n\'est pas une chaîne');
+                throw new Error("Extraction Word invalide: le résultat n'est pas une chaîne");
             }
             return rawText;
         }
         catch (error) {
-            this.logger.error('Erreur lors de l\'extraction Word (.docx):', error);
+            this.logger.error("Erreur lors de l'extraction Word (.docx):", error);
             if (error instanceof common_1.BadRequestException)
                 throw error;
             throw new common_1.BadRequestException('Impossible de lire ce fichier Word.');
@@ -313,8 +313,8 @@ let UniversalDocumentParserService = UniversalDocumentParserService_1 = class Un
     textToLines(text) {
         return text
             .split('\n')
-            .filter(line => line.trim().length > 0)
-            .map(line => line.split(/\s{2,}|\t/).filter(cell => cell.trim().length > 0));
+            .filter((line) => line.trim().length > 0)
+            .map((line) => line.split(/\s{2,}|\t/).filter((cell) => cell.trim().length > 0));
     }
     detectFileType(filename, mimetype) {
         const ext = path.extname(filename).toLowerCase();
@@ -322,12 +322,17 @@ let UniversalDocumentParserService = UniversalDocumentParserService_1 = class Un
             return 'PDF';
         if (ext === '.csv' || mimetype === 'text/csv' || mimetype === 'application/vnd.ms-excel')
             return 'CSV';
-        if (ext === '.docx' || mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+        if (ext === '.docx' ||
+            mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
             return 'DOCX';
         throw new common_1.BadRequestException(`Type de fichier non supporté: ${ext || mimetype}`);
     }
     async findTemplateBySignature(text, documentType, tenantId) {
-        const templates = await this.templateModel.find({ tenantId, type: documentType, isActive: true });
+        const templates = await this.templateModel.find({
+            tenantId,
+            type: documentType,
+            isActive: true,
+        });
         for (const template of templates) {
             if (text.toUpperCase().includes(template.signature.toUpperCase()))
                 return template;
@@ -359,7 +364,10 @@ let UniversalDocumentParserService = UniversalDocumentParserService_1 = class Un
         }
     }
     parseAmount(amountStr) {
-        let cleaned = amountStr.trim().replace(/\u00A0/g, ' ').replace(/\s/g, '');
+        let cleaned = amountStr
+            .trim()
+            .replace(/\u00A0/g, ' ')
+            .replace(/\s/g, '');
         if (cleaned.includes(',') && !cleaned.includes('.')) {
             cleaned = cleaned.replace(/\./g, '').replace(',', '.');
         }

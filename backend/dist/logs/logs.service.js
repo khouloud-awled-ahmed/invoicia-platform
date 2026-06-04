@@ -66,13 +66,7 @@ let LogsService = LogsService_1 = class LogsService {
         }
         const skip = (page - 1) * limit;
         const [logs, total] = await Promise.all([
-            this.logEntryModel
-                .find(query)
-                .sort({ createdAt: -1 })
-                .skip(skip)
-                .limit(limit)
-                .lean()
-                .exec(),
+            this.logEntryModel.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).lean().exec(),
             this.logEntryModel.countDocuments(query).exec(),
         ]);
         return { logs: logs, total };
@@ -81,12 +75,15 @@ let LogsService = LogsService_1 = class LogsService {
         return this.logEntryModel.findById(id).lean().exec();
     }
     async markAsResolved(id, resolvedBy, notes) {
-        return this.logEntryModel.findByIdAndUpdate(id, {
+        return this.logEntryModel
+            .findByIdAndUpdate(id, {
             resolved: true,
             resolvedBy,
             resolvedAt: new Date(),
             notes,
-        }, { new: true }).lean().exec();
+        }, { new: true })
+            .lean()
+            .exec();
     }
     async getStats(timeRange = '24h') {
         const now = new Date();
@@ -99,18 +96,15 @@ let LogsService = LogsService_1 = class LogsService {
         const query = { createdAt: { $gte: startDate } };
         const [total, byLevel, byCategory, bySource, unresolved] = await Promise.all([
             this.logEntryModel.countDocuments(query).exec(),
-            this.logEntryModel.aggregate([
-                { $match: query },
-                { $group: { _id: '$level', count: { $sum: 1 } } },
-            ]).exec(),
-            this.logEntryModel.aggregate([
-                { $match: query },
-                { $group: { _id: '$category', count: { $sum: 1 } } },
-            ]).exec(),
-            this.logEntryModel.aggregate([
-                { $match: query },
-                { $group: { _id: '$source', count: { $sum: 1 } } },
-            ]).exec(),
+            this.logEntryModel
+                .aggregate([{ $match: query }, { $group: { _id: '$level', count: { $sum: 1 } } }])
+                .exec(),
+            this.logEntryModel
+                .aggregate([{ $match: query }, { $group: { _id: '$category', count: { $sum: 1 } } }])
+                .exec(),
+            this.logEntryModel
+                .aggregate([{ $match: query }, { $group: { _id: '$source', count: { $sum: 1 } } }])
+                .exec(),
             this.logEntryModel.countDocuments({ ...query, resolved: false }).exec(),
         ]);
         const errors = byLevel.find((item) => item._id === log_entry_schema_1.LogLevel.ERROR)?.count || 0;
@@ -137,10 +131,12 @@ let LogsService = LogsService_1 = class LogsService {
     async deleteOldLogs(daysToKeep = 90) {
         const cutoffDate = new Date();
         cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
-        const result = await this.logEntryModel.deleteMany({
+        const result = await this.logEntryModel
+            .deleteMany({
             createdAt: { $lt: cutoffDate },
             resolved: true,
-        }).exec();
+        })
+            .exec();
         return result.deletedCount;
     }
 };

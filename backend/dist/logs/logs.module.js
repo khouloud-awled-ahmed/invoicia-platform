@@ -20,11 +20,7 @@ exports.LogsModule = LogsModule;
 exports.LogsModule = LogsModule = __decorate([
     (0, common_1.Global)(),
     (0, common_1.Module)({
-        imports: [
-            mongoose_1.MongooseModule.forFeature([
-                { name: log_entry_schema_1.LogEntry.name, schema: log_entry_schema_1.LogEntrySchema },
-            ]),
-        ],
+        imports: [mongoose_1.MongooseModule.forFeature([{ name: log_entry_schema_1.LogEntry.name, schema: log_entry_schema_1.LogEntrySchema }])],
         controllers: [logs_controller_1.LogsController],
         providers: [
             logs_service_1.LogsService,

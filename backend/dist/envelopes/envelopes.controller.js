@@ -48,7 +48,7 @@ let EnvelopesController = class EnvelopesController {
     }
     async addFields(id, body, user, req) {
         const tenantId = user.tenantId || req.user?.tenantId;
-        const fields = Array.isArray(body) ? body : (body.fields || []);
+        const fields = Array.isArray(body) ? body : body.fields || [];
         return this.envelopesService.addFields(id, fields, tenantId);
     }
     async send(id, user, req) {
@@ -60,7 +60,11 @@ let EnvelopesController = class EnvelopesController {
         if (!email) {
             throw new common_1.BadRequestException('Email query parameter is required');
         }
-        const ipAddress = req.ip || req.connection?.remoteAddress || req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
+        const ipAddress = req.ip ||
+            req.connection?.remoteAddress ||
+            req.headers['x-forwarded-for'] ||
+            req.socket?.remoteAddress ||
+            'unknown';
         const userAgent = req.headers['user-agent'] || 'unknown';
         return this.envelopesService.sign(id, signDto, email, ipAddress, userAgent);
     }
@@ -68,7 +72,11 @@ let EnvelopesController = class EnvelopesController {
         if (!email) {
             throw new common_1.BadRequestException('Email query parameter is required');
         }
-        const ipAddress = req.ip || req.connection?.remoteAddress || req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
+        const ipAddress = req.ip ||
+            req.connection?.remoteAddress ||
+            req.headers['x-forwarded-for'] ||
+            req.socket?.remoteAddress ||
+            'unknown';
         const userAgent = req.headers['user-agent'] || 'unknown';
         return this.envelopesService.refuse(id, refuseDto, email, ipAddress, userAgent);
     }

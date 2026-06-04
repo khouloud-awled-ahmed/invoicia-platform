@@ -123,7 +123,16 @@ __decorate([
 ], Tenant.prototype, "moduleFlags", void 0);
 __decorate([
     (0, mongoose_1.Prop)({
-        enum: ['INCOMPLETE', 'TRIAL', 'ACTIVE', 'PAST_DUE', 'CANCELED', 'PENDING_PAYMENT', 'SUSPENDED', 'CANCELLED'],
+        enum: [
+            'INCOMPLETE',
+            'TRIAL',
+            'ACTIVE',
+            'PAST_DUE',
+            'CANCELED',
+            'PENDING_PAYMENT',
+            'SUSPENDED',
+            'CANCELLED',
+        ],
         default: 'INCOMPLETE',
     }),
     __metadata("design:type", String)

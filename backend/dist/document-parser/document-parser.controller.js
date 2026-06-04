@@ -41,13 +41,27 @@ let DocumentParserController = class DocumentParserController {
         const content = [
             isImage
                 ? { type: 'image', source: { type: 'base64', media_type: mimeType, data: base64 } }
-                : { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } },
-            { type: 'text', text: 'Analyse cette facture et retourne UNIQUEMENT un JSON: {"invoiceNumber":"","date":"YYYY-MM-DD","dueDate":"YYYY-MM-DD","clientName":"","clientAddress":"","clientEmail":"","totalHT":0,"totalTVA":0,"totalTTC":0,"currency":"TND","items":[{"description":"","quantity":1,"unitPrice":0,"vatRate":19}]}. JSON uniquement sans markdown.' },
+                : {
+                    type: 'document',
+                    source: { type: 'base64', media_type: 'application/pdf', data: base64 },
+                },
+            {
+                type: 'text',
+                text: 'Analyse cette facture et retourne UNIQUEMENT un JSON: {"invoiceNumber":"","date":"YYYY-MM-DD","dueDate":"YYYY-MM-DD","clientName":"","clientAddress":"","clientEmail":"","totalHT":0,"totalTVA":0,"totalTTC":0,"currency":"TND","items":[{"description":"","quantity":1,"unitPrice":0,"vatRate":19}]}. JSON uniquement sans markdown.',
+            },
         ];
         const res = await fetch('https://api.anthropic.com/v1/messages', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
-            body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 2000, messages: [{ role: 'user', content }] }),
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': apiKey,
+                'anthropic-version': '2023-06-01',
+            },
+            body: JSON.stringify({
+                model: 'claude-sonnet-4-6',
+                max_tokens: 2000,
+                messages: [{ role: 'user', content }],
+            }),
         });
         if (!res.ok)
             throw new common_1.BadRequestException('Erreur API Claude');
@@ -61,7 +75,7 @@ let DocumentParserController = class DocumentParserController {
         }
     }
     async learnFormat(templateName, user) {
-        return { message: "ok" };
+        return { message: 'ok' };
     }
     async getTemplates(type, user) {
         return await this.parserService.getTemplates(user.tenantId, type);

@@ -399,7 +399,7 @@ export function GEDManagement() {
               <div className="space-y-4">
                 <div>
                   <Label>Fichier *</Label>
-                  <Input type="file" onChange={e => setUploadFile(e.target.files?.[0] || null)} />
+                  <input type="file" onChange={e => setUploadFile(e.target.files?.[0] || null)} className="w-full border rounded p-2 text-sm cursor-pointer" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" />
                 </div>
                 <div>
                   <Label>Dossier de destination</Label>

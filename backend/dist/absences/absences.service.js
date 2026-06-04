@@ -92,14 +92,14 @@ let AbsencesService = class AbsencesService {
     }
     async getStats(tenantId) {
         const absences = await this.absenceModel.find({ tenantId }).exec();
-        const pending = absences.filter(a => a.status === 'pending').length;
-        const approved = absences.filter(a => a.status === 'approved').length;
-        const rejected = absences.filter(a => a.status === 'rejected').length;
+        const pending = absences.filter((a) => a.status === 'pending').length;
+        const approved = absences.filter((a) => a.status === 'approved').length;
+        const rejected = absences.filter((a) => a.status === 'rejected').length;
         const totalDays = absences
-            .filter(a => a.status === 'approved')
+            .filter((a) => a.status === 'approved')
             .reduce((sum, a) => sum + a.days, 0);
         const byType = {};
-        for (const a of absences.filter(ab => ab.status === 'approved')) {
+        for (const a of absences.filter((ab) => ab.status === 'approved')) {
             byType[a.type] = (byType[a.type] || 0) + a.days;
         }
         return {

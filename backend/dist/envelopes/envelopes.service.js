@@ -53,12 +53,14 @@ let EnvelopesService = EnvelopesService_1 = class EnvelopesService {
             currentRoutingOrder: 1,
             createdBy: userId,
             tenantId,
-            auditTrail: [{
+            auditTrail: [
+                {
                     timestamp: new Date(),
                     action: 'ENVELOPE_CREATED',
                     actorEmail: userId,
                     metadata: { title: createEnvelopeDto.title },
-                }],
+                },
+            ],
         });
         return envelope.save();
     }
@@ -77,10 +79,13 @@ let EnvelopesService = EnvelopesService_1 = class EnvelopesService {
         return envelope;
     }
     async findByRecipientEmail(email) {
-        return this.envelopeModel.find({
+        return this.envelopeModel
+            .find({
             'recipients.email': email,
             status: { $in: [envelope_schema_1.EnvelopeStatus.SENT, envelope_schema_1.EnvelopeStatus.IN_PROGRESS] },
-        }).sort({ createdAt: -1 }).exec();
+        })
+            .sort({ createdAt: -1 })
+            .exec();
     }
     async update(id, updateEnvelopeDto, tenantId) {
         const envelope = await this.findOne(id, tenantId);
@@ -95,7 +100,7 @@ let EnvelopesService = EnvelopesService_1 = class EnvelopesService {
     async addFields(id, fields, tenantId) {
         const envelope = await this.findOne(id, tenantId);
         if (envelope.status !== envelope_schema_1.EnvelopeStatus.DRAFT) {
-            throw new common_1.BadRequestException('Impossible d\'ajouter des champs à une enveloppe non brouillon');
+            throw new common_1.BadRequestException("Impossible d'ajouter des champs à une enveloppe non brouillon");
         }
         const newFields = fields.map((field) => ({
             ...field,
@@ -116,10 +121,10 @@ let EnvelopesService = EnvelopesService_1 = class EnvelopesService {
             throw new common_1.BadRequestException('Seules les enveloppes en brouillon peuvent être envoyées');
         }
         if (envelope.fields.length === 0) {
-            throw new common_1.BadRequestException('Impossible d\'envoyer une enveloppe sans champs de signature');
+            throw new common_1.BadRequestException("Impossible d'envoyer une enveloppe sans champs de signature");
         }
         if (envelope.recipients.length === 0) {
-            throw new common_1.BadRequestException('Impossible d\'envoyer une enveloppe sans signataires');
+            throw new common_1.BadRequestException("Impossible d'envoyer une enveloppe sans signataires");
         }
         envelope.status = envelope_schema_1.EnvelopeStatus.SENT;
         envelope.currentRoutingOrder = 1;
@@ -134,16 +139,18 @@ let EnvelopesService = EnvelopesService_1 = class EnvelopesService {
         return envelope;
     }
     async sign(id, signDto, recipientEmail, ipAddress, userAgent) {
-        const envelope = await this.envelopeModel.findOne({
+        const envelope = await this.envelopeModel
+            .findOne({
             _id: id,
             'recipients.email': recipientEmail,
-        }).exec();
+        })
+            .exec();
         if (!envelope) {
             throw new common_1.NotFoundException(`Enveloppe avec l'ID ${id} non trouvée ou vous n'êtes pas autorisé`);
         }
         const recipient = envelope.recipients.find((r) => r.email === recipientEmail);
         if (!recipient) {
-            throw new common_1.ForbiddenException('Vous n\'êtes pas autorisé à signer cette enveloppe maintenant');
+            throw new common_1.ForbiddenException("Vous n'êtes pas autorisé à signer cette enveloppe maintenant");
         }
         if (recipient.status === envelope_schema_1.RecipientStatus.SIGNED) {
             throw new common_1.BadRequestException('Cette enveloppe a déjà été signée par vous');
@@ -151,10 +158,10 @@ let EnvelopesService = EnvelopesService_1 = class EnvelopesService {
         if (recipient.securityCode && signDto.securityCode !== recipient.securityCode) {
             throw new common_1.ForbiddenException('Code de sécurité invalide');
         }
-        const recipientFields = envelope.fields.filter(f => f.assignedRecipientId === recipient.id);
-        const requiredFields = recipientFields.filter(f => f.required);
-        const filledFields = signDto.fieldValues.map(fv => fv.fieldId);
-        const missingRequiredFields = requiredFields.filter(f => !filledFields.includes(f.id));
+        const recipientFields = envelope.fields.filter((f) => f.assignedRecipientId === recipient.id);
+        const requiredFields = recipientFields.filter((f) => f.required);
+        const filledFields = signDto.fieldValues.map((fv) => fv.fieldId);
+        const missingRequiredFields = requiredFields.filter((f) => !filledFields.includes(f.id));
         signDto.fieldValues.forEach((fieldValue) => {
             const field = envelope.fields.find((f) => f.id === fieldValue.fieldId && f.assignedRecipientId === recipient.id);
             if (field) {
@@ -163,7 +170,8 @@ let EnvelopesService = EnvelopesService_1 = class EnvelopesService {
                     field.value = '[Signature]';
                 }
                 else {
-                    field.value = fieldValue.value || fieldValue.signatureData || field.defaultValue?.toString();
+                    field.value =
+                        fieldValue.value || fieldValue.signatureData || field.defaultValue?.toString();
                 }
                 field.signedAt = new Date();
                 field.signedBy = recipientEmail;
@@ -209,16 +217,18 @@ let EnvelopesService = EnvelopesService_1 = class EnvelopesService {
         return envelope.save();
     }
     async refuse(id, refuseDto, recipientEmail, ipAddress, userAgent) {
-        const envelope = await this.envelopeModel.findOne({
+        const envelope = await this.envelopeModel
+            .findOne({
             _id: id,
             'recipients.email': recipientEmail,
-        }).exec();
+        })
+            .exec();
         if (!envelope) {
             throw new common_1.NotFoundException(`Enveloppe avec l'ID ${id} non trouvée ou vous n'êtes pas autorisé`);
         }
         const recipient = envelope.recipients.find((r) => r.email === recipientEmail);
         if (!recipient) {
-            throw new common_1.ForbiddenException('Vous n\'êtes pas autorisé à refuser cette enveloppe maintenant');
+            throw new common_1.ForbiddenException("Vous n'êtes pas autorisé à refuser cette enveloppe maintenant");
         }
         if (recipient.securityCode && refuseDto.securityCode !== recipient.securityCode) {
             throw new common_1.ForbiddenException('Code de sécurité invalide');
@@ -257,7 +267,7 @@ let EnvelopesService = EnvelopesService_1 = class EnvelopesService {
             throw new common_1.NotFoundException(`Enveloppe avec l'ID ${id} non trouvée`);
         }
         if (envelope.status !== envelope_schema_1.EnvelopeStatus.COMPLETED) {
-            throw new common_1.BadRequestException('Le document n\'est pas encore signé');
+            throw new common_1.BadRequestException("Le document n'est pas encore signé");
         }
         const signedFileUrl = envelope.documents?.[0]?.signedFileUrl;
         if (!signedFileUrl) {
@@ -283,7 +293,7 @@ let EnvelopesService = EnvelopesService_1 = class EnvelopesService {
             throw new common_1.NotFoundException(`Enveloppe avec l'ID ${id} non trouvée`);
         }
         if (envelope.status !== envelope_schema_1.EnvelopeStatus.COMPLETED) {
-            throw new common_1.BadRequestException('Le document n\'est pas encore signé');
+            throw new common_1.BadRequestException("Le document n'est pas encore signé");
         }
         const certificateUrl = envelope.certificateUrl;
         if (!certificateUrl) {

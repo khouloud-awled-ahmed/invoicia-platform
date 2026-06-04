@@ -28,7 +28,7 @@ let CreditNotesService = class CreditNotesService {
         }, 0);
         const amountTVA = items.reduce((sum, item) => {
             const lineTotal = item.quantity * item.unitPrice * (1 - (item.discount || 0) / 100);
-            return sum + (lineTotal * (item.vatRate || 19) / 100);
+            return sum + (lineTotal * (item.vatRate || 19)) / 100;
         }, 0);
         return {
             amountHT: Math.round(amountHT * 1000) / 1000,
@@ -63,7 +63,7 @@ let CreditNotesService = class CreditNotesService {
         return { number };
     }
     async create(createDto, tenantId) {
-        const number = createDto.number || await this.generateNumber(tenantId);
+        const number = createDto.number || (await this.generateNumber(tenantId));
         let totals = {};
         if (createDto.items && createDto.items.length > 0) {
             totals = this.calculateTotals(createDto.items);
@@ -152,11 +152,11 @@ let CreditNotesService = class CreditNotesService {
         const creditNotes = await this.creditNoteModel.find({ tenantId }).exec();
         const total = creditNotes.reduce((sum, cn) => sum + (cn.amountTTC || 0), 0);
         const statuses = ['draft', 'pending', 'validated', 'archived'];
-        const distribution = statuses.map(status => ({
+        const distribution = statuses.map((status) => ({
             status,
-            count: creditNotes.filter(cn => cn.status === status).length,
+            count: creditNotes.filter((cn) => cn.status === status).length,
             total: creditNotes
-                .filter(cn => cn.status === status)
+                .filter((cn) => cn.status === status)
                 .reduce((sum, cn) => sum + (cn.amountTTC || 0), 0),
         }));
         return {

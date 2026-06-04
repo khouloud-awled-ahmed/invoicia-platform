@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const core_1 = require("@nestjs/core");
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
+const swagger_1 = require("@nestjs/swagger");
 const path_1 = require("path");
 const app_module_1 = require("./app.module");
 async function bootstrap() {
@@ -29,39 +30,34 @@ async function bootstrap() {
                 enableImplicitConversion: true,
             },
             exceptionFactory: (errors) => {
-                const messages = errors.map(error => {
+                const messages = errors.map((error) => {
                     const constraints = error.constraints || {};
                     return Object.values(constraints).join(', ');
                 });
                 const errorMessage = messages.join('; ') || 'Erreur de validation';
-                console.error('[VALIDATION ERROR]', JSON.stringify(errors, null, 2));
-                console.error('[VALIDATION ERROR MESSAGE]', errorMessage);
                 return new common_1.BadRequestException(errorMessage);
             },
         }));
         app.setGlobalPrefix('api');
+        const config = new swagger_1.DocumentBuilder()
+            .setTitle('Invoicia API')
+            .setDescription('Invoicia SaaS Multi-Tenant Platform API Documentation')
+            .setVersion('1.0')
+            .addBearerAuth()
+            .build();
+        const document = swagger_1.SwaggerModule.createDocument(app, config);
+        swagger_1.SwaggerModule.setup('api/docs', app, document);
         await app.listen(port);
         console.log('');
         console.log('═══════════════════════════════════════════════════════════');
         console.log('🚀 Application is running on: http://localhost:' + port + '/api');
+        console.log('📚 Swagger docs available at: http://localhost:' + port + '/api/docs');
         console.log('═══════════════════════════════════════════════════════════');
         console.log('');
     }
     catch (error) {
-        console.error('');
-        console.error('═══════════════════════════════════════════════════════════');
         console.error('❌ ERREUR DE CONNEXION À LA BASE DE DONNÉES');
-        console.error('═══════════════════════════════════════════════════════════');
-        console.error('');
-        if (error.message && error.message.includes('ECONNREFUSED')) {
-            console.error('🔍 Problème détecté : MongoDB n\'est pas accessible');
-            const dbUri = process.env.DB_URI || 'mongodb://localhost:27017/invoicia';
-            console.error('      DB_URI actuel : ' + dbUri);
-        }
-        else {
-            console.error('Erreur détectée :', error.message);
-        }
-        console.error('═══════════════════════════════════════════════════════════');
+        console.error('Erreur détectée :', error.message);
         process.exit(1);
     }
 }

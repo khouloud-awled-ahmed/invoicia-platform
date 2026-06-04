@@ -17,7 +17,9 @@ let AccountingModule = class AccountingModule {
 exports.AccountingModule = AccountingModule;
 exports.AccountingModule = AccountingModule = __decorate([
     (0, common_1.Module)({
-        imports: [mongoose_1.MongooseModule.forFeature([{ name: accounting_entry_schema_1.AccountingEntry.name, schema: accounting_entry_schema_1.AccountingEntrySchema }])],
+        imports: [
+            mongoose_1.MongooseModule.forFeature([{ name: accounting_entry_schema_1.AccountingEntry.name, schema: accounting_entry_schema_1.AccountingEntrySchema }]),
+        ],
         controllers: [accounting_controller_1.AccountingController],
         providers: [accounting_service_1.AccountingService],
         exports: [accounting_service_1.AccountingService],

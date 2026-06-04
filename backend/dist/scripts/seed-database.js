@@ -40,13 +40,11 @@ async function seedDatabase() {
         const clientEmail = 'client@test.com';
         const clientPassword = 'client123';
         const companyName = 'Entreprise Test SAS';
-        let testTenant = await tenantModel.findOne({
-            $or: [
-                { name: companyName },
-                { businessName: companyName },
-                { adminEmail: clientEmail }
-            ]
-        }).exec();
+        let testTenant = await tenantModel
+            .findOne({
+            $or: [{ name: companyName }, { businessName: companyName }, { adminEmail: clientEmail }],
+        })
+            .exec();
         if (!testTenant) {
             console.log('   → Création du Tenant "Entreprise Test SAS"...');
             testTenant = new tenantModel({
@@ -76,7 +74,7 @@ async function seedDatabase() {
         }
         let clientUser = await userModel.findOne({ email: clientEmail }).exec();
         if (!clientUser) {
-            console.log('   → Création de l\'utilisateur Client Test...');
+            console.log("   → Création de l'utilisateur Client Test...");
             const hashedClientPassword = await bcrypt.hash(clientPassword, 10);
             clientUser = new userModel({
                 name: 'Client Test',

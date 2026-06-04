@@ -44,7 +44,7 @@ let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(pas
             id: user._id.toString(),
             email: user.email,
             role: user.role,
-            tenantId: user.tenantId?.toString() || null
+            tenantId: user.tenantId?.toString() || null,
         };
     }
 };

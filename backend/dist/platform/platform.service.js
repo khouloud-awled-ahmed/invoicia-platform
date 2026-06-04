@@ -53,11 +53,15 @@ let PlatformService = class PlatformService {
         };
     }
     async createTenant(createTenantDto) {
-        const existingUser = await this.userModel.findOne({ email: createTenantDto.adminEmail.toLowerCase() }).exec();
+        const existingUser = await this.userModel
+            .findOne({ email: createTenantDto.adminEmail.toLowerCase() })
+            .exec();
         if (existingUser) {
             throw new common_1.BadRequestException(`Un utilisateur avec l'email ${createTenantDto.adminEmail} existe déjà`);
         }
-        const existingTenant = await this.tenantModel.findOne({ matriculeFiscal: createTenantDto.matriculeFiscal }).exec();
+        const existingTenant = await this.tenantModel
+            .findOne({ matriculeFiscal: createTenantDto.matriculeFiscal })
+            .exec();
         if (existingTenant) {
             throw new common_1.BadRequestException(`Un tenant avec le Matricule Fiscal ${createTenantDto.matriculeFiscal} existe déjà`);
         }
@@ -91,7 +95,9 @@ let PlatformService = class PlatformService {
             isActive: true,
         });
         await adminUser.save();
-        await this.tenantModel.updateOne({ _id: savedTenant._id }, { $inc: { currentUsers: 1 } }).exec();
+        await this.tenantModel
+            .updateOne({ _id: savedTenant._id }, { $inc: { currentUsers: 1 } })
+            .exec();
         return {
             id: savedTenant._id.toString(),
             name: savedTenant.name,

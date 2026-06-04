@@ -35,9 +35,11 @@ let IntervenantsService = IntervenantsService_1 = class IntervenantsService {
         if (savedIntervenant.type === 'externe' && savedIntervenant.canSubmitCRA) {
             try {
                 const user = await this.userSyncService.createUserFromIntervenant(savedIntervenant.email, savedIntervenant.firstName, savedIntervenant.lastName, tenantId);
-                await this.intervenantModel.findByIdAndUpdate(savedIntervenant._id, {
+                await this.intervenantModel
+                    .findByIdAndUpdate(savedIntervenant._id, {
                     $set: { metadata: { ...savedIntervenant.metadata, userId: user._id.toString() } },
-                }).exec();
+                })
+                    .exec();
             }
             catch (error) {
                 this.logger.error('Erreur lors de la création automatique du User pour intervenant:', error);
@@ -81,15 +83,19 @@ let IntervenantsService = IntervenantsService_1 = class IntervenantsService {
     async generateCRAAccessToken(id, tenantId) {
         const intervenant = await this.findOne(id, tenantId);
         const token = `cra_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-        await this.intervenantModel.findOneAndUpdate({ _id: id, tenantId }, { craAccessToken: token, canSubmitCRA: true }, { new: true }).exec();
+        await this.intervenantModel
+            .findOneAndUpdate({ _id: id, tenantId }, { craAccessToken: token, canSubmitCRA: true }, { new: true })
+            .exec();
         return token;
     }
     async findByCRAToken(token) {
-        return this.intervenantModel.findOne({
+        return this.intervenantModel
+            .findOne({
             craAccessToken: token,
             canSubmitCRA: true,
-            status: 'active'
-        }).exec();
+            status: 'active',
+        })
+            .exec();
     }
 };
 exports.IntervenantsService = IntervenantsService;

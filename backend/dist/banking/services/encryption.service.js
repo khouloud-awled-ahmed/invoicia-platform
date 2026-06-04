@@ -47,12 +47,7 @@ let EncryptionService = EncryptionService_1 = class EncryptionService {
             let encrypted = cipher.update(text, 'utf8', 'hex');
             encrypted += cipher.final('hex');
             const tag = cipher.getAuthTag();
-            const result = Buffer.concat([
-                salt,
-                iv,
-                tag,
-                Buffer.from(encrypted, 'hex'),
-            ]);
+            const result = Buffer.concat([salt, iv, tag, Buffer.from(encrypted, 'hex')]);
             return result.toString('base64');
         }
         catch (error) {

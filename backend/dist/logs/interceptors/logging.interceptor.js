@@ -31,8 +31,13 @@ let LoggingInterceptor = class LoggingInterceptor {
             const duration = Date.now() - startTime;
             const statusCode = response.statusCode;
             if (statusCode >= 400 || duration > 1000) {
-                this.logsService.createLog({
-                    level: statusCode >= 500 ? log_entry_schema_1.LogLevel.ERROR : statusCode >= 400 ? log_entry_schema_1.LogLevel.WARN : log_entry_schema_1.LogLevel.INFO,
+                this.logsService
+                    .createLog({
+                    level: statusCode >= 500
+                        ? log_entry_schema_1.LogLevel.ERROR
+                        : statusCode >= 400
+                            ? log_entry_schema_1.LogLevel.WARN
+                            : log_entry_schema_1.LogLevel.INFO,
                     category: log_entry_schema_1.LogCategory.API,
                     source: log_entry_schema_1.LogSource.BACKEND,
                     message: `${method} ${url} - ${statusCode} (${duration}ms)`,
@@ -46,13 +51,15 @@ let LoggingInterceptor = class LoggingInterceptor {
                         statusCode,
                         duration,
                     },
-                }).catch(() => {
+                })
+                    .catch(() => {
                 });
             }
         }), (0, operators_1.catchError)((error) => {
             const duration = Date.now() - startTime;
             const statusCode = error instanceof common_1.HttpException ? error.getStatus() : common_1.HttpStatus.INTERNAL_SERVER_ERROR;
-            this.logsService.createLog({
+            this.logsService
+                .createLog({
                 level: log_entry_schema_1.LogLevel.ERROR,
                 category: statusCode >= 500 ? log_entry_schema_1.LogCategory.TECHNICAL : log_entry_schema_1.LogCategory.API,
                 source: log_entry_schema_1.LogSource.BACKEND,
@@ -74,7 +81,8 @@ let LoggingInterceptor = class LoggingInterceptor {
                     code: error.code,
                     details: error.response || error,
                 },
-            }).catch(() => {
+            })
+                .catch(() => {
             });
             return (0, rxjs_1.throwError)(() => error);
         }));

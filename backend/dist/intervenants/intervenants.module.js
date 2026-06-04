@@ -19,9 +19,7 @@ exports.IntervenantsModule = IntervenantsModule;
 exports.IntervenantsModule = IntervenantsModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            mongoose_1.MongooseModule.forFeature([
-                { name: intervenant_schema_1.Intervenant.name, schema: intervenant_schema_1.IntervenantSchema },
-            ]),
+            mongoose_1.MongooseModule.forFeature([{ name: intervenant_schema_1.Intervenant.name, schema: intervenant_schema_1.IntervenantSchema }]),
             users_module_1.UsersModule,
         ],
         controllers: [intervenants_controller_1.IntervenantsController],

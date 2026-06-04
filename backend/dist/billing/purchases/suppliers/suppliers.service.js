@@ -23,8 +23,8 @@ let SuppliersService = class SuppliersService {
     }
     async getStats(tenantId) {
         const suppliers = await this.supplierModel.find({ tenantId }).exec();
-        const active = suppliers.filter(s => s.status === 'active').length;
-        const inactive = suppliers.filter(s => s.status === 'inactive').length;
+        const active = suppliers.filter((s) => s.status === 'active').length;
+        const inactive = suppliers.filter((s) => s.status === 'inactive').length;
         const totalIntervenants = suppliers.reduce((sum, s) => sum + (s.intervenantIds?.length || 0), 0);
         return {
             total: suppliers.length,

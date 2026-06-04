@@ -27,10 +27,10 @@ let PurchasesService = class PurchasesService {
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const totalAll = expenses.reduce((sum, e) => sum + (e.amountTTC || 0), 0);
         const thisMonth = expenses
-            .filter(e => new Date(e.date) >= startOfMonth)
+            .filter((e) => new Date(e.date) >= startOfMonth)
             .reduce((sum, e) => sum + (e.amountTTC || 0), 0);
-        const pending = expenses.filter(e => e.status === 'pending').length;
-        const verified = expenses.filter(e => e.status === 'verified').length;
+        const pending = expenses.filter((e) => e.status === 'pending').length;
+        const verified = expenses.filter((e) => e.status === 'verified').length;
         const categoryMap = {};
         for (const exp of expenses) {
             categoryMap[exp.category] = (categoryMap[exp.category] || 0) + (exp.amountTTC || 0);
@@ -45,7 +45,7 @@ let PurchasesService = class PurchasesService {
         const recentActivity = [...expenses]
             .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
             .slice(0, 5)
-            .map(e => ({
+            .map((e) => ({
             id: e._id,
             supplier: e.supplier,
             category: e.category,
@@ -57,7 +57,7 @@ let PurchasesService = class PurchasesService {
             totalFull: Math.round(totalAll * 1000) / 1000,
             totalInvoices: expenses.length,
             thisMonth: Math.round(thisMonth * 1000) / 1000,
-            thisMonthCount: expenses.filter(e => new Date(e.date) >= startOfMonth).length,
+            thisMonthCount: expenses.filter((e) => new Date(e.date) >= startOfMonth).length,
             pending,
             verified,
             top5Categories,

@@ -38,7 +38,7 @@ let BankFileParserService = BankFileParserService_1 = class BankFileParserServic
             }
             else {
                 rawLines = await this.parseCSV(file.buffer);
-                rawText = rawLines.map(line => line.join(' ')).join('\n');
+                rawText = rawLines.map((line) => line.join(' ')).join('\n');
             }
             const template = await this.findTemplateBySignature(rawText, tenantId);
             if (template) {
@@ -62,7 +62,7 @@ let BankFileParserService = BankFileParserService_1 = class BankFileParserServic
             }
         }
         catch (error) {
-            this.logger.error('Erreur lors de l\'analyse du fichier:', error);
+            this.logger.error("Erreur lors de l'analyse du fichier:", error);
             throw new common_1.BadRequestException(`Erreur lors de l'analyse: ${error.message}`);
         }
     }
@@ -90,7 +90,7 @@ let BankFileParserService = BankFileParserService_1 = class BankFileParserServic
             return data.text;
         }
         catch (error) {
-            this.logger.error('Erreur lors de l\'extraction PDF:', error);
+            this.logger.error("Erreur lors de l'extraction PDF:", error);
             if (error.message?.includes('Cannot find module') || error.message?.includes('pdf-parse')) {
                 throw new common_1.BadRequestException('Module pdf-parse non installé. Exécutez: npm install pdf-parse');
             }
@@ -120,8 +120,8 @@ let BankFileParserService = BankFileParserService_1 = class BankFileParserServic
     textToLines(text) {
         return text
             .split('\n')
-            .filter(line => line.trim().length > 0)
-            .map(line => line.split(/\s{2,}|\t/).filter(cell => cell.trim().length > 0));
+            .filter((line) => line.trim().length > 0)
+            .map((line) => line.split(/\s{2,}|\t/).filter((cell) => cell.trim().length > 0));
     }
     detectFileType(filename, mimetype) {
         const ext = path.extname(filename).toLowerCase();

@@ -17,11 +17,7 @@ let AttachmentsModule = class AttachmentsModule {
 exports.AttachmentsModule = AttachmentsModule;
 exports.AttachmentsModule = AttachmentsModule = __decorate([
     (0, common_1.Module)({
-        imports: [
-            mongoose_1.MongooseModule.forFeature([
-                { name: attachment_schema_1.Attachment.name, schema: attachment_schema_1.AttachmentSchema },
-            ]),
-        ],
+        imports: [mongoose_1.MongooseModule.forFeature([{ name: attachment_schema_1.Attachment.name, schema: attachment_schema_1.AttachmentSchema }])],
         controllers: [attachments_controller_1.AttachmentsController],
         providers: [attachments_service_1.AttachmentsService],
         exports: [attachments_service_1.AttachmentsService],

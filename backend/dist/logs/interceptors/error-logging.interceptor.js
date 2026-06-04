@@ -22,7 +22,8 @@ let ErrorLoggingInterceptor = class ErrorLoggingInterceptor {
         return next.handle().pipe((0, operators_1.catchError)((error) => {
             const request = context.switchToHttp().getRequest();
             const { method, url, ip, headers, user } = request;
-            this.logsService.createLog({
+            this.logsService
+                .createLog({
                 level: log_entry_schema_1.LogLevel.ERROR,
                 category: log_entry_schema_1.LogCategory.TECHNICAL,
                 source: log_entry_schema_1.LogSource.BACKEND,
@@ -42,7 +43,8 @@ let ErrorLoggingInterceptor = class ErrorLoggingInterceptor {
                     code: error.code,
                     details: error,
                 },
-            }).catch(() => {
+            })
+                .catch(() => {
             });
             throw error;
         }));

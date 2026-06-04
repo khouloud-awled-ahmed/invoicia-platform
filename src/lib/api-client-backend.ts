@@ -952,6 +952,8 @@ async rejectAbsence(id: string) {
   async createWebhook(data: any) { return this.request('/webhooks', { method: 'POST', body: JSON.stringify(data) }); }
   async updateWebhook(id: string, data: any) { return this.request('/webhooks/' + id, { method: 'PUT', body: JSON.stringify(data) }); }
   async deleteWebhook(id: string) { return this.request('/webhooks/' + id, { method: 'DELETE' }); }
+  async getInvoices() { return this.request<any[]>('/billing/sales/invoices'); }
+  async markInvoiceAsPaid(id: string) { return this.request<any>('/billing/sales/invoices/' + id + '/pay', { method: 'PATCH' }); }
   async getUsers() {
     return this.request<any[]>('/users');
   }

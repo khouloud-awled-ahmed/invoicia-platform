@@ -8,7 +8,7 @@ export class Attachment {
   @Prop({ required: true })
   tenantId: string;
 
-  @Prop({ required: true, enum: ['invoice', 'purchase_invoice', 'credit_note', 'tenant_logo'] })
+  @Prop({ required: true, enum: ['invoice', 'purchase_invoice', 'credit_note', 'tenant_logo', 'ged'] })
   entityType: string;
 
   @Prop({ required: true })

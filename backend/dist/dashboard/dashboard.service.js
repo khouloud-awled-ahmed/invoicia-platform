@@ -56,7 +56,13 @@ let DashboardService = class DashboardService {
             expQuery.createdAt = dateQuery;
         const expenses = await this.expenseModel.find(expQuery).exec();
         const totalExpenses = expenses.reduce((sum, exp) => sum + (exp.amountTTC || 0), 0);
-        return { employees: employeesCount, totalRevenue, pendingInvoices, treasuryBalance, expenses: totalExpenses };
+        return {
+            employees: employeesCount,
+            totalRevenue,
+            pendingInvoices,
+            treasuryBalance,
+            expenses: totalExpenses,
+        };
     }
     async getRevenueByMonth(tenantId, months = 12) {
         const actualMonths = months === 0 ? 12 : months;
@@ -64,9 +70,13 @@ let DashboardService = class DashboardService {
         dateFrom.setMonth(dateFrom.getMonth() - (actualMonths - 1));
         dateFrom.setDate(1);
         dateFrom.setHours(0, 0, 0, 0);
-        const invoices = await this.invoiceModel.find({
-            tenantId, status: 'paid', createdAt: { $gte: dateFrom },
-        }).exec();
+        const invoices = await this.invoiceModel
+            .find({
+            tenantId,
+            status: 'paid',
+            createdAt: { $gte: dateFrom },
+        })
+            .exec();
         const monthsMap = {};
         for (let i = 0; i < actualMonths; i++) {
             const d = new Date();
@@ -74,7 +84,7 @@ let DashboardService = class DashboardService {
             const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
             monthsMap[key] = 0;
         }
-        invoices.forEach(inv => {
+        invoices.forEach((inv) => {
             const d = new Date(inv.createdAt);
             const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
             if (monthsMap[key] !== undefined)
@@ -89,7 +99,7 @@ let DashboardService = class DashboardService {
             query.createdAt = { $gte: dateFilter };
         const invoices = await this.invoiceModel.find(query).exec();
         const clientMap = {};
-        invoices.forEach(inv => {
+        invoices.forEach((inv) => {
             const clientId = inv.clientId?.toString() || 'unknown';
             const clientName = inv.clientName || 'Client inconnu';
             if (!clientMap[clientId])
@@ -97,7 +107,9 @@ let DashboardService = class DashboardService {
             clientMap[clientId].total += inv.amountTTC || 0;
             clientMap[clientId].count += 1;
         });
-        return Object.values(clientMap).sort((a, b) => b.total - a.total).slice(0, 5);
+        return Object.values(clientMap)
+            .sort((a, b) => b.total - a.total)
+            .slice(0, 5);
     }
     async getInvoiceStats(tenantId, months = 0) {
         const dateFilter = this.getDateFilter(months);
@@ -105,14 +117,27 @@ let DashboardService = class DashboardService {
         if (dateFilter)
             query.createdAt = { $gte: dateFilter };
         const all = await this.invoiceModel.find(query).exec();
-        const paid = all.filter(i => i.status === 'paid').length;
-        const pending = all.filter(i => ['pending', 'validated'].includes(i.status)).length;
-        const overdue = all.filter(i => i.status === 'overdue').length;
-        const draft = all.filter(i => i.status === 'draft').length;
+        const paid = all.filter((i) => i.status === 'paid').length;
+        const pending = all.filter((i) => ['pending', 'validated'].includes(i.status)).length;
+        const overdue = all.filter((i) => i.status === 'overdue').length;
+        const draft = all.filter((i) => i.status === 'draft').length;
         const paymentRate = all.length > 0 ? Math.round((paid / all.length) * 100) : 0;
-        const totalRevenue = all.filter(i => i.status === 'paid').reduce((s, i) => s + (i.amountTTC || 0), 0);
-        const pendingRevenue = all.filter(i => ['pending', 'validated'].includes(i.status)).reduce((s, i) => s + (i.amountTTC || 0), 0);
-        return { total: all.length, paid, pending, overdue, draft, paymentRate, totalRevenue, pendingRevenue };
+        const totalRevenue = all
+            .filter((i) => i.status === 'paid')
+            .reduce((s, i) => s + (i.amountTTC || 0), 0);
+        const pendingRevenue = all
+            .filter((i) => ['pending', 'validated'].includes(i.status))
+            .reduce((s, i) => s + (i.amountTTC || 0), 0);
+        return {
+            total: all.length,
+            paid,
+            pending,
+            overdue,
+            draft,
+            paymentRate,
+            totalRevenue,
+            pendingRevenue,
+        };
     }
     async getExpensesByCategory(tenantId, months = 0) {
         const dateFilter = this.getDateFilter(months);
@@ -121,11 +146,13 @@ let DashboardService = class DashboardService {
             query.createdAt = { $gte: dateFilter };
         const expenses = await this.expenseModel.find(query).exec();
         const catMap = {};
-        expenses.forEach(exp => {
+        expenses.forEach((exp) => {
             const cat = exp.category || 'Autre';
             catMap[cat] = (catMap[cat] || 0) + (exp.amountTTC || 0);
         });
-        return Object.entries(catMap).map(([category, total]) => ({ category, total })).sort((a, b) => b.total - a.total);
+        return Object.entries(catMap)
+            .map(([category, total]) => ({ category, total }))
+            .sort((a, b) => b.total - a.total);
     }
     async getCashFlow(tenantId, months = 6) {
         const actualMonths = months === 0 ? 6 : Math.min(months, 12);
@@ -138,14 +165,24 @@ let DashboardService = class DashboardService {
         const dateFrom = new Date();
         dateFrom.setMonth(dateFrom.getMonth() - (actualMonths - 1));
         dateFrom.setDate(1);
-        const invoices = await this.invoiceModel.find({ tenantId, status: 'paid', createdAt: { $gte: dateFrom } }).exec();
-        const expenses = await this.expenseModel.find({ tenantId, createdAt: { $gte: dateFrom } }).exec();
-        return monthsList.map(month => {
+        const invoices = await this.invoiceModel
+            .find({ tenantId, status: 'paid', createdAt: { $gte: dateFrom } })
+            .exec();
+        const expenses = await this.expenseModel
+            .find({ tenantId, createdAt: { $gte: dateFrom } })
+            .exec();
+        return monthsList.map((month) => {
             const income = invoices
-                .filter(inv => { const d = new Date(inv.createdAt); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}` === month; })
+                .filter((inv) => {
+                const d = new Date(inv.createdAt);
+                return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}` === month;
+            })
                 .reduce((s, i) => s + (i.amountTTC || 0), 0);
             const expense = expenses
-                .filter(exp => { const d = new Date(exp.createdAt); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}` === month; })
+                .filter((exp) => {
+                const d = new Date(exp.createdAt);
+                return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}` === month;
+            })
                 .reduce((s, e) => s + (e.amountTTC || 0), 0);
             return { month, income, expense, net: income - expense };
         });
@@ -160,17 +197,47 @@ let DashboardService = class DashboardService {
         const totalExp = expenses.reduce((s, e) => s + e.total, 0);
         const fallback = [];
         if (invStats.overdue > 0)
-            fallback.push({ type: 'danger', title: 'Factures en retard', message: `${invStats.overdue} facture(s) impayee(s) - relancez vos clients`, action: 'Voir factures' });
+            fallback.push({
+                type: 'danger',
+                title: 'Factures en retard',
+                message: `${invStats.overdue} facture(s) impayee(s) - relancez vos clients`,
+                action: 'Voir factures',
+            });
         if (invStats.totalRevenue < totalExp)
-            fallback.push({ type: 'warning', title: 'Tresorerie negative', message: `Depenses (${totalExp.toLocaleString()} DT) superieures aux revenus (${invStats.totalRevenue.toLocaleString()} DT)`, action: 'Reduire couts' });
+            fallback.push({
+                type: 'warning',
+                title: 'Tresorerie negative',
+                message: `Depenses (${totalExp.toLocaleString()} DT) superieures aux revenus (${invStats.totalRevenue.toLocaleString()} DT)`,
+                action: 'Reduire couts',
+            });
         if (invStats.paymentRate < 50 && invStats.total > 0)
-            fallback.push({ type: 'warning', title: 'Taux de paiement faible', message: `Seulement ${invStats.paymentRate}% de vos factures sont payees`, action: 'Relancer clients' });
+            fallback.push({
+                type: 'warning',
+                title: 'Taux de paiement faible',
+                message: `Seulement ${invStats.paymentRate}% de vos factures sont payees`,
+                action: 'Relancer clients',
+            });
         if (clients.length > 0)
-            fallback.push({ type: 'info', title: 'Meilleur client', message: `${clients[0].name} genere ${clients[0].total.toLocaleString()} DT de revenus`, action: 'Voir client' });
+            fallback.push({
+                type: 'info',
+                title: 'Meilleur client',
+                message: `${clients[0].name} genere ${clients[0].total.toLocaleString()} DT de revenus`,
+                action: 'Voir client',
+            });
         if (invStats.pending > 0)
-            fallback.push({ type: 'info', title: 'Revenus en attente', message: `${invStats.pendingRevenue.toLocaleString()} DT en attente sur ${invStats.pending} facture(s)`, action: 'Suivre' });
+            fallback.push({
+                type: 'info',
+                title: 'Revenus en attente',
+                message: `${invStats.pendingRevenue.toLocaleString()} DT en attente sur ${invStats.pending} facture(s)`,
+                action: 'Suivre',
+            });
         if (fallback.length === 0)
-            fallback.push({ type: 'success', title: 'Bonne sante financiere', message: 'Aucun probleme detecte - continuez sur cette lancee!', action: 'Voir rapport' });
+            fallback.push({
+                type: 'success',
+                title: 'Bonne sante financiere',
+                message: 'Aucun probleme detecte - continuez sur cette lancee!',
+                action: 'Voir rapport',
+            });
         return fallback;
     }
 };

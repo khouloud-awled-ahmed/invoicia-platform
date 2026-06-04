@@ -39,10 +39,7 @@ let ProjectAssignmentsService = class ProjectAssignmentsService {
             userId,
             projectId,
             status: 'ACTIVE',
-            $or: [
-                { endDate: { $gte: startDate } },
-                { endDate: null },
-            ],
+            $or: [{ endDate: { $gte: startDate } }, { endDate: null }],
         })
             .exec();
         if (conflictingAssignment) {

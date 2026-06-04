@@ -61,12 +61,14 @@ let AuthService = class AuthService {
     }
     async register(registerDto) {
         if (!registerDto.tenantId && !registerDto.companyName) {
-            throw new common_1.BadRequestException('Le nom de l\'entreprise est obligatoire');
+            throw new common_1.BadRequestException("Le nom de l'entreprise est obligatoire");
         }
         if (registerDto.companyName && registerDto.companyName.trim() === '') {
-            throw new common_1.BadRequestException('Le nom de l\'entreprise ne peut pas être vide');
+            throw new common_1.BadRequestException("Le nom de l'entreprise ne peut pas être vide");
         }
-        const existingUser = await this.userModel.findOne({ email: registerDto.email.toLowerCase() }).exec();
+        const existingUser = await this.userModel
+            .findOne({ email: registerDto.email.toLowerCase() })
+            .exec();
         if (existingUser) {
             throw new common_1.UnauthorizedException('Un utilisateur avec cet email existe déjà');
         }
@@ -95,7 +97,7 @@ let AuthService = class AuthService {
             }
             catch (error) {
                 console.error('Erreur lors de la création du tenant:', error);
-                throw new common_1.BadRequestException('Erreur lors de la création de l\'entreprise: ' + (error.message || 'Erreur inconnue'));
+                throw new common_1.BadRequestException("Erreur lors de la création de l'entreprise: " + (error.message || 'Erreur inconnue'));
             }
         }
         if (!tenantId) {
@@ -114,7 +116,12 @@ let AuthService = class AuthService {
             await this.tenantModel.updateOne({ _id: tenantId }, { $inc: { currentUsers: 1 } }).exec();
         }
         const { password, ...result } = user.toObject();
-        const payload = { email: result.email, sub: result._id, role: result.role, tenantId: result.tenantId };
+        const payload = {
+            email: result.email,
+            sub: result._id,
+            role: result.role,
+            tenantId: result.tenantId,
+        };
         return {
             access_token: this.jwtService.sign(payload),
             user: {
@@ -145,7 +152,11 @@ let AuthService = class AuthService {
         return { message: 'Si un compte existe, un email de réinitialisation a été envoyé.' };
     }
     async resetPassword(email, token, newPassword) {
-        console.log('[RESET PASSWORD] Attempt:', { email, tokenLength: token?.length, newPasswordLength: newPassword?.length });
+        console.log('[RESET PASSWORD] Attempt:', {
+            email,
+            tokenLength: token?.length,
+            newPasswordLength: newPassword?.length,
+        });
         const normalizedEmail = email.toLowerCase();
         const user = await this.userModel.findOne({ email: normalizedEmail }).exec();
         if (!user) {
@@ -167,7 +178,7 @@ let AuthService = class AuthService {
         console.log('[RESET PASSWORD] Token comparison:', {
             providedHash: tokenHash.substring(0, 10) + '...',
             storedHash: user.resetPasswordTokenHash.substring(0, 10) + '...',
-            match: tokenHash === user.resetPasswordTokenHash
+            match: tokenHash === user.resetPasswordTokenHash,
         });
         if (tokenHash !== user.resetPasswordTokenHash) {
             console.log('[RESET PASSWORD] Token mismatch for user:', normalizedEmail);

@@ -38,11 +38,7 @@ let ReconciliationService = class ReconciliationService {
                 .sort({ dueDate: 1 })
                 .lean()
                 .exec(),
-            this.expenseModel
-                .find({ tenantId, status: 'verified' })
-                .sort({ date: 1 })
-                .lean()
-                .exec(),
+            this.expenseModel.find({ tenantId, status: 'verified' }).sort({ date: 1 }).lean().exec(),
         ]);
         return {
             invoices: invoices.map((inv) => ({
@@ -68,10 +64,12 @@ let ReconciliationService = class ReconciliationService {
         };
     }
     async match(tenantId, bankTransactionId, targetId, targetType) {
-        const tx = await this.bankTransactionModel.findOne({
+        const tx = await this.bankTransactionModel
+            .findOne({
             _id: bankTransactionId,
             tenantId,
-        }).exec();
+        })
+            .exec();
         if (!tx) {
             throw new common_1.NotFoundException('Transaction bancaire introuvable');
         }
@@ -82,10 +80,12 @@ let ReconciliationService = class ReconciliationService {
         const date = tx.date instanceof Date ? tx.date : new Date(tx.date);
         const reference = `Rapprochement ${tx.label || tx._id}`;
         if (targetType === match_reconciliation_dto_1.ReconciliationTargetType.INVOICE) {
-            const invoice = await this.invoiceModel.findOne({
+            const invoice = await this.invoiceModel
+                .findOne({
                 _id: targetId,
                 tenantId,
-            }).exec();
+            })
+                .exec();
             if (!invoice) {
                 throw new common_1.NotFoundException('Facture introuvable');
             }
@@ -95,10 +95,12 @@ let ReconciliationService = class ReconciliationService {
             await this.createBankReconciliationEntries(tenantId, date, reference, amount, '512000', '411000', invoice.number);
         }
         else if (targetType === match_reconciliation_dto_1.ReconciliationTargetType.EXPENSE) {
-            const expense = await this.expenseModel.findOne({
+            const expense = await this.expenseModel
+                .findOne({
                 _id: targetId,
                 tenantId,
-            }).exec();
+            })
+                .exec();
             if (!expense) {
                 throw new common_1.NotFoundException('Dépense introuvable');
             }
@@ -107,7 +109,8 @@ let ReconciliationService = class ReconciliationService {
                 .exec();
             await this.createBankReconciliationEntries(tenantId, date, reference, amount, '401000', '512000', expense.supplier);
         }
-        else if (targetType === match_reconciliation_dto_1.ReconciliationTargetType.PAYROLL || targetType === match_reconciliation_dto_1.ReconciliationTargetType.TAX) {
+        else if (targetType === match_reconciliation_dto_1.ReconciliationTargetType.PAYROLL ||
+            targetType === match_reconciliation_dto_1.ReconciliationTargetType.TAX) {
             await this.createBankReconciliationEntries(tenantId, date, reference, amount, '421000', '512000', `Paie/TVA ${targetId}`);
         }
         else {

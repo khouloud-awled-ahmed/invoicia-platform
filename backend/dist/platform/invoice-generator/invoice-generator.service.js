@@ -80,7 +80,12 @@ let InvoiceGeneratorService = InvoiceGeneratorService_1 = class InvoiceGenerator
                     page.drawText(addr.line2, { x: 50, y: yPosition, size: 10, font: helveticaFont });
                     yPosition -= 12;
                 }
-                page.drawText(`${addr.postalCode} ${addr.city}`, { x: 50, y: yPosition, size: 10, font: helveticaFont });
+                page.drawText(`${addr.postalCode} ${addr.city}`, {
+                    x: 50,
+                    y: yPosition,
+                    size: 10,
+                    font: helveticaFont,
+                });
                 yPosition -= 12;
                 page.drawText(addr.country, { x: 50, y: yPosition, size: 10, font: helveticaFont });
                 yPosition -= 12;
@@ -143,7 +148,10 @@ let InvoiceGeneratorService = InvoiceGeneratorService_1 = class InvoiceGenerator
                 font: helveticaBoldFont,
             });
             yPosition -= 20;
-            const tenantName = invoice.tenantSnapshot?.businessName || invoice.tenantSnapshot?.name || tenant.businessName || tenant.name;
+            const tenantName = invoice.tenantSnapshot?.businessName ||
+                invoice.tenantSnapshot?.name ||
+                tenant.businessName ||
+                tenant.name;
             page.drawText(tenantName, {
                 x: 50,
                 y: yPosition,
@@ -159,7 +167,12 @@ let InvoiceGeneratorService = InvoiceGeneratorService_1 = class InvoiceGenerator
                     page.drawText(addr.line2, { x: 50, y: yPosition, size: 10, font: helveticaFont });
                     yPosition -= 12;
                 }
-                page.drawText(`${addr.postalCode} ${addr.city}`, { x: 50, y: yPosition, size: 10, font: helveticaFont });
+                page.drawText(`${addr.postalCode} ${addr.city}`, {
+                    x: 50,
+                    y: yPosition,
+                    size: 10,
+                    font: helveticaFont,
+                });
                 yPosition -= 12;
                 page.drawText(addr.country, { x: 50, y: yPosition, size: 10, font: helveticaFont });
                 yPosition -= 12;

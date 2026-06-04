@@ -16,8 +16,11 @@ async function seed() {
             projectId: 'project-1',
             projectName: 'Refonte Site Web',
             date: new Date('2025-11-18'),
-            hours: 7, rate: 500, amount: 3500,
-            status: 'VALIDATED', tenantId,
+            hours: 7,
+            rate: 500,
+            amount: 3500,
+            status: 'VALIDATED',
+            tenantId,
         },
         {
             intervenantId: 'intervenant-2',
@@ -25,8 +28,11 @@ async function seed() {
             projectId: 'project-2',
             projectName: 'Application Mobile CRM',
             date: new Date('2025-11-18'),
-            hours: 8, rate: 550, amount: 4400,
-            status: 'VALIDATED', tenantId,
+            hours: 8,
+            rate: 550,
+            amount: 4400,
+            status: 'VALIDATED',
+            tenantId,
         },
     ]);
     console.log('CRA seed done!');

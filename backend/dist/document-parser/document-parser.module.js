@@ -18,9 +18,7 @@ exports.DocumentParserModule = DocumentParserModule;
 exports.DocumentParserModule = DocumentParserModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            mongoose_1.MongooseModule.forFeature([
-                { name: parsing_template_schema_1.ParsingTemplate.name, schema: parsing_template_schema_1.ParsingTemplateSchema },
-            ]),
+            mongoose_1.MongooseModule.forFeature([{ name: parsing_template_schema_1.ParsingTemplate.name, schema: parsing_template_schema_1.ParsingTemplateSchema }]),
         ],
         controllers: [document_parser_controller_1.DocumentParserController],
         providers: [universal_document_parser_service_1.UniversalDocumentParserService],

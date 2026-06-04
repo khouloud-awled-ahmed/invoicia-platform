@@ -80,7 +80,13 @@ let EmployeesController = EmployeesController_1 = class EmployeesController {
             const result = await this.documentParser.analyze(file, 'CV', user.tenantId);
             const rawTextFallback = result.rawText || '';
             const emailFallback = rawTextFallback.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z]{2,})/)?.[1];
-            const nameFallback = rawTextFallback.split('\n').slice(0, 3).filter(l => l.trim().length > 2 && l.trim().length < 60).join(' ').trim().substring(0, 60);
+            const nameFallback = rawTextFallback
+                .split('\n')
+                .slice(0, 3)
+                .filter((l) => l.trim().length > 2 && l.trim().length < 60)
+                .join(' ')
+                .trim()
+                .substring(0, 60);
             if (result.status === 'LEARNING_NEEDED') {
                 const saved = await this.employeesService.createCV(user.tenantId, {
                     fileName: file.originalname || 'document',
@@ -147,7 +153,12 @@ let EmployeesController = EmployeesController_1 = class EmployeesController {
                     summary: data.summary || '',
                     yearsOfExperience: 0,
                     city: '',
-                    skills: data.skills?.map((s) => ({ name: s, category: 'Technique', level: 3, years: 1 })) || [],
+                    skills: data.skills?.map((s) => ({
+                        name: s,
+                        category: 'Technique',
+                        level: 3,
+                        years: 1,
+                    })) || [],
                     experiences: data.experiences || [],
                     education: data.education || [],
                     certifications: [],

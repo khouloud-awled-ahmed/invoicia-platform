@@ -60,8 +60,8 @@ let WorkflowEngine = WorkflowEngine_1 = class WorkflowEngine {
             this.logger.log(`Email envoyé au signataire suivant: ${nextRecipient.email} (ordre ${nextOrder})`);
         }
         else {
-            const allSigners = envelope.recipients.filter(r => r.role === envelope_schema_1.RecipientRole.SIGNER);
-            const allSigned = allSigners.every(r => r.status === envelope_schema_1.RecipientStatus.SIGNED);
+            const allSigners = envelope.recipients.filter((r) => r.role === envelope_schema_1.RecipientRole.SIGNER);
+            const allSigned = allSigners.every((r) => r.status === envelope_schema_1.RecipientStatus.SIGNED);
             if (allSigned) {
                 await this.processEnvelopeCompleted(envelope);
             }

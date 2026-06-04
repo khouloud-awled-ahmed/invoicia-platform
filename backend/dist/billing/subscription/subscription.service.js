@@ -40,15 +40,17 @@ let SubscriptionService = class SubscriptionService {
             throw new common_1.NotFoundException('Plan non trouvé');
         }
         if (!plan.isActive) {
-            throw new common_1.BadRequestException('Ce plan n\'est plus actif');
+            throw new common_1.BadRequestException("Ce plan n'est plus actif");
         }
         let finalPrice = plan.price;
         let promoCode = null;
         if (subscribeDto.promoCode) {
-            promoCode = await this.promoCodeModel.findOne({
+            promoCode = await this.promoCodeModel
+                .findOne({
                 code: subscribeDto.promoCode.toUpperCase(),
                 isActive: true,
-            }).exec();
+            })
+                .exec();
             if (promoCode) {
                 if (promoCode.expirationDate && new Date() > promoCode.expirationDate) {
                     throw new common_1.BadRequestException('Code promo expiré');
@@ -98,7 +100,7 @@ let SubscriptionService = class SubscriptionService {
             subscriptionEndsAt.setMonth(subscriptionEndsAt.getMonth() + 1);
             tenant.subscriptionEndsAt = subscriptionEndsAt;
             try {
-                await this.platformInvoicesService.createInvoice(tenant._id.toString(), plan._id.toString(), finalPrice, platform_invoice_schema_1.PlatformInvoicePaymentMethod.CARD, subscribeDto.promoCode, promoCode ? (plan.price - finalPrice) : 0, plan.price);
+                await this.platformInvoicesService.createInvoice(tenant._id.toString(), plan._id.toString(), finalPrice, platform_invoice_schema_1.PlatformInvoicePaymentMethod.CARD, subscribeDto.promoCode, promoCode ? plan.price - finalPrice : 0, plan.price);
                 console.log(`[INVOICE] Facture générée pour le tenant ${tenant._id}`);
             }
             catch (error) {
@@ -117,7 +119,7 @@ let SubscriptionService = class SubscriptionService {
             trialEndsAt.setDate(trialEndsAt.getDate() + trialDays);
             tenant.trialEndsAt = trialEndsAt;
             try {
-                await this.platformInvoicesService.createInvoice(tenant._id.toString(), plan._id.toString(), finalPrice, platform_invoice_schema_1.PlatformInvoicePaymentMethod.TRANSFER, subscribeDto.promoCode, promoCode ? (plan.price - finalPrice) : 0, plan.price);
+                await this.platformInvoicesService.createInvoice(tenant._id.toString(), plan._id.toString(), finalPrice, platform_invoice_schema_1.PlatformInvoicePaymentMethod.TRANSFER, subscribeDto.promoCode, promoCode ? plan.price - finalPrice : 0, plan.price);
                 console.log(`[INVOICE] Facture pro-forma créée pour le tenant ${tenant._id} (en attente de virement)`);
             }
             catch (error) {
@@ -135,10 +137,12 @@ let SubscriptionService = class SubscriptionService {
         };
     }
     async validatePromoCode(code, planId) {
-        const promoCode = await this.promoCodeModel.findOne({
+        const promoCode = await this.promoCodeModel
+            .findOne({
             code: code.toUpperCase(),
             isActive: true,
-        }).exec();
+        })
+            .exec();
         if (!promoCode) {
             return { valid: false, message: 'Code promo invalide' };
         }

@@ -32,18 +32,9 @@ exports.ProjectsModule = ProjectsModule = __decorate([
             intervenants_module_1.IntervenantsModule,
             users_module_1.UsersModule,
         ],
-        controllers: [
-            projects_controller_1.ProjectsController,
-            project_assignments_controller_1.ProjectAssignmentsController,
-        ],
-        providers: [
-            projects_service_1.ProjectsService,
-            project_assignments_service_1.ProjectAssignmentsService,
-        ],
-        exports: [
-            projects_service_1.ProjectsService,
-            project_assignments_service_1.ProjectAssignmentsService,
-        ],
+        controllers: [projects_controller_1.ProjectsController, project_assignments_controller_1.ProjectAssignmentsController],
+        providers: [projects_service_1.ProjectsService, project_assignments_service_1.ProjectAssignmentsService],
+        exports: [projects_service_1.ProjectsService, project_assignments_service_1.ProjectAssignmentsService],
     })
 ], ProjectsModule);
 //# sourceMappingURL=projects.module.js.map

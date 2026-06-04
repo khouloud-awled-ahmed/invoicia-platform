@@ -23,7 +23,7 @@ let WebhooksService = class WebhooksService {
     }
     async findAll(tenantId) {
         const docs = await this.webhookModel.find({ tenantId }).lean();
-        return docs.map(d => ({ ...d, id: d._id?.toString() }));
+        return docs.map((d) => ({ ...d, id: d._id?.toString() }));
     }
     async create(tenantId, dto) {
         const secret = Math.random().toString(36).substring(2, 15);

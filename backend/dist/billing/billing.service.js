@@ -27,8 +27,12 @@ let BillingService = class BillingService {
             throw new common_1.ForbiddenException('Tenant not found');
         }
         const billingEnabled = tenant.billingSettings?.enabled || tenant.features?.includes('billing') || false;
-        const structuredFormatsEnabled = tenant.billingSettings?.structuredFormatsEnabled || tenant.features?.includes('structured-formats') || false;
-        const platformAgreementEnabled = tenant.billingSettings?.platformAgreementEnabled || tenant.features?.includes('platform-agreement') || false;
+        const structuredFormatsEnabled = tenant.billingSettings?.structuredFormatsEnabled ||
+            tenant.features?.includes('structured-formats') ||
+            false;
+        const platformAgreementEnabled = tenant.billingSettings?.platformAgreementEnabled ||
+            tenant.features?.includes('platform-agreement') ||
+            false;
         return {
             enabled: billingEnabled,
             structuredFormats: {
@@ -37,7 +41,7 @@ let BillingService = class BillingService {
             },
             platformAgreement: {
                 enabled: platformAgreementEnabled,
-                configured: !!(tenant.metadata?.platformAgreementConfig),
+                configured: !!tenant.metadata?.platformAgreementConfig,
                 platform: tenant.metadata?.platformAgreementConfig?.platform || null,
             },
         };

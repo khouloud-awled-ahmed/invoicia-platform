@@ -62,11 +62,11 @@ let BankingAggregatorService = BankingAggregatorService_1 = class BankingAggrega
             };
         }
         if (!tenantId) {
-            throw new common_1.BadRequestException('Le module bancaire n\'est pas configuré. Veuillez contacter votre administrateur.');
+            throw new common_1.BadRequestException("Le module bancaire n'est pas configuré. Veuillez contacter votre administrateur.");
         }
         const bankingConfig = await this.tenantsService.getBankingConfig(tenantId);
         if (!bankingConfig || !bankingConfig.isActive || bankingConfig.provider !== provider) {
-            throw new common_1.BadRequestException('Le module bancaire n\'est pas configuré. Veuillez contacter votre administrateur.');
+            throw new common_1.BadRequestException("Le module bancaire n'est pas configuré. Veuillez contacter votre administrateur.");
         }
         return {
             clientId: this.encryptionService.decrypt(bankingConfig.clientId),
@@ -84,7 +84,7 @@ let BankingAggregatorService = BankingAggregatorService_1 = class BankingAggrega
             this.configService.get('GOCARDLESS_API_URL') ||
             'https://bankaccountdata.gocardless.com';
         if (!envClientId || !envClientSecret) {
-            throw new common_1.BadRequestException('Le module bancaire n\'est pas configuré (clés API manquantes dans .env)');
+            throw new common_1.BadRequestException("Le module bancaire n'est pas configuré (clés API manquantes dans .env)");
         }
         let apiUrl = `${envBaseUrl}/api/v2/institutions/?country=${country}`;
         if (envBaseUrl.includes('/api/v2')) {
@@ -93,7 +93,7 @@ let BankingAggregatorService = BankingAggregatorService_1 = class BankingAggrega
         const response = await fetch(apiUrl, {
             method: 'GET',
             headers: {
-                'Authorization': `Bearer ${envClientId}`,
+                Authorization: `Bearer ${envClientId}`,
                 'Content-Type': 'application/json',
             },
         });
@@ -117,7 +117,7 @@ let BankingAggregatorService = BankingAggregatorService_1 = class BankingAggrega
         const { institutionId, provider } = dto;
         const isActive = await this.isBankingServiceActive(tenantId, provider);
         if (!isActive) {
-            throw new common_1.BadRequestException('Le module bancaire n\'est pas configuré. Veuillez contacter votre administrateur.');
+            throw new common_1.BadRequestException("Le module bancaire n'est pas configuré. Veuillez contacter votre administrateur.");
         }
         const config = await this.getBankingConfig(tenantId, provider);
         const state = `${tenantId}-${Date.now()}-${Math.random().toString(36).substring(7)}`;
@@ -153,7 +153,7 @@ let BankingAggregatorService = BankingAggregatorService_1 = class BankingAggrega
             throw new common_1.NotFoundException(`Connexion bancaire ${connectionId} introuvable`);
         }
         if (!connection.isActive) {
-            throw new common_1.BadRequestException('La connexion bancaire n\'est plus active');
+            throw new common_1.BadRequestException("La connexion bancaire n'est plus active");
         }
         if (connection.expiresAt && connection.expiresAt < new Date()) {
             await this.refreshAccessToken(connection);
@@ -170,11 +170,13 @@ let BankingAggregatorService = BankingAggregatorService_1 = class BankingAggrega
         }
         const accounts = await this.fetchAccountsFromProvider(connection);
         for (const account of accounts) {
-            await this.bankAccountModel.findOneAndUpdate({ externalId: account.externalId, tenantId: connection.tenantId }, {
+            await this.bankAccountModel
+                .findOneAndUpdate({ externalId: account.externalId, tenantId: connection.tenantId }, {
                 ...account,
                 connectionId: connection._id.toString(),
                 lastSyncAt: new Date(),
-            }, { upsert: true, new: true }).exec();
+            }, { upsert: true, new: true })
+                .exec();
         }
     }
     async generateGoCardlessUrl(tenantId, institutionId, state, config) {
@@ -248,13 +250,15 @@ let BankingAggregatorService = BankingAggregatorService_1 = class BankingAggrega
         if (!response.ok) {
             const error = await response.text();
             this.logger.error(`Erreur GoCardless token exchange: ${error}`);
-            throw new common_1.BadRequestException('Erreur lors de l\'échange du code GoCardless');
+            throw new common_1.BadRequestException("Erreur lors de l'échange du code GoCardless");
         }
         const data = await response.json();
         return {
             accessToken: data.access,
             refreshToken: data.refresh,
-            expiresAt: data.access_expires ? new Date(Date.now() + data.access_expires * 1000) : undefined,
+            expiresAt: data.access_expires
+                ? new Date(Date.now() + data.access_expires * 1000)
+                : undefined,
             provider: bank_connection_schema_1.BankingProvider.GOCARDLESS,
             institutionId: data.institution_id || '',
             institutionName: data.institution_name,
@@ -284,7 +288,7 @@ let BankingAggregatorService = BankingAggregatorService_1 = class BankingAggrega
         if (!response.ok) {
             const error = await response.text();
             this.logger.error(`Erreur Bridge token exchange: ${error}`);
-            throw new common_1.BadRequestException('Erreur lors de l\'échange du code Bridge');
+            throw new common_1.BadRequestException("Erreur lors de l'échange du code Bridge");
         }
         const data = await response.json();
         return {
@@ -297,7 +301,8 @@ let BankingAggregatorService = BankingAggregatorService_1 = class BankingAggrega
         };
     }
     async createOrUpdateConnection(tenantId, tokens) {
-        return await this.bankConnectionModel.findOneAndUpdate({ tenantId, institutionId: tokens.institutionId, provider: tokens.provider }, {
+        return await this.bankConnectionModel
+            .findOneAndUpdate({ tenantId, institutionId: tokens.institutionId, provider: tokens.provider }, {
             tenantId,
             provider: tokens.provider,
             institutionId: tokens.institutionId,
@@ -306,7 +311,8 @@ let BankingAggregatorService = BankingAggregatorService_1 = class BankingAggrega
             refreshToken: tokens.refreshToken,
             expiresAt: tokens.expiresAt,
             isActive: true,
-        }, { upsert: true, new: true }).exec();
+        }, { upsert: true, new: true })
+            .exec();
     }
     async refreshAccessToken(connection) {
         if (!connection.refreshToken) {
@@ -358,7 +364,9 @@ let BankingAggregatorService = BankingAggregatorService_1 = class BankingAggrega
         return {
             accessToken: data.access,
             refreshToken: data.refresh,
-            expiresAt: data.access_expires ? new Date(Date.now() + data.access_expires * 1000) : undefined,
+            expiresAt: data.access_expires
+                ? new Date(Date.now() + data.access_expires * 1000)
+                : undefined,
         };
     }
     async refreshBridgeToken(refreshToken, tenantId) {
@@ -397,11 +405,12 @@ let BankingAggregatorService = BankingAggregatorService_1 = class BankingAggrega
         return [];
     }
     async fetchGoCardlessAccounts(connection) {
-        const baseUrl = this.configService.get('GOCARDLESS_BASE_URL') || 'https://bankaccountdata.gocardless.com';
+        const baseUrl = this.configService.get('GOCARDLESS_BASE_URL') ||
+            'https://bankaccountdata.gocardless.com';
         const response = await fetch(`${baseUrl}/accounts/`, {
             method: 'GET',
             headers: {
-                'Authorization': `Bearer ${connection.accessToken}`,
+                Authorization: `Bearer ${connection.accessToken}`,
             },
         });
         if (!response.ok) {
@@ -426,7 +435,7 @@ let BankingAggregatorService = BankingAggregatorService_1 = class BankingAggrega
         const response = await fetch(`${baseUrl}/accounts`, {
             method: 'GET',
             headers: {
-                'Authorization': `Bearer ${connection.accessToken}`,
+                Authorization: `Bearer ${connection.accessToken}`,
                 'Client-Id': clientId,
             },
         });
@@ -455,11 +464,12 @@ let BankingAggregatorService = BankingAggregatorService_1 = class BankingAggrega
         return [];
     }
     async fetchGoCardlessTransactions(connection) {
-        const baseUrl = this.configService.get('GOCARDLESS_BASE_URL') || 'https://bankaccountdata.gocardless.com';
+        const baseUrl = this.configService.get('GOCARDLESS_BASE_URL') ||
+            'https://bankaccountdata.gocardless.com';
         const accountsResponse = await fetch(`${baseUrl}/accounts/`, {
             method: 'GET',
             headers: {
-                'Authorization': `Bearer ${connection.accessToken}`,
+                Authorization: `Bearer ${connection.accessToken}`,
             },
         });
         if (!accountsResponse.ok) {
@@ -471,7 +481,7 @@ let BankingAggregatorService = BankingAggregatorService_1 = class BankingAggrega
             const transactionsResponse = await fetch(`${baseUrl}/accounts/${account.id}/transactions/`, {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${connection.accessToken}`,
+                    Authorization: `Bearer ${connection.accessToken}`,
                 },
             });
             if (transactionsResponse.ok) {
@@ -488,7 +498,7 @@ let BankingAggregatorService = BankingAggregatorService_1 = class BankingAggrega
         const response = await fetch(`${baseUrl}/transactions`, {
             method: 'GET',
             headers: {
-                'Authorization': `Bearer ${connection.accessToken}`,
+                Authorization: `Bearer ${connection.accessToken}`,
                 'Client-Id': clientId,
             },
         });

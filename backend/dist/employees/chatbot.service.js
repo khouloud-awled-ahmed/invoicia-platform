@@ -39,12 +39,12 @@ let ChatbotService = ChatbotService_1 = class ChatbotService {
                 this.clientModel.find({ tenantId }).limit(20).lean(),
             ]);
             const context = {
-                candidates: cvs.map(cv => ({
+                candidates: cvs.map((cv) => ({
                     name: cv.name || cv.fileName,
                     email: cv.email,
                     rawText: cv.rawText?.substring(0, 300),
                 })),
-                employees: employees.map(e => ({
+                employees: employees.map((e) => ({
                     name: `${e.firstName} ${e.lastName}`,
                     position: e.position,
                     department: e.department,

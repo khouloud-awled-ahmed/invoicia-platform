@@ -51,14 +51,13 @@ let SalesService = class SalesService {
         const now = new Date();
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const totalCA = invoices
-            .filter(i => !['cancelled', 'archived'].includes(i.status))
+            .filter((i) => !['cancelled', 'archived'].includes(i.status))
             .reduce((sum, i) => sum + (i.amountTTC || 0), 0);
         const thisMonth = invoices
-            .filter(i => new Date(i.date) >= startOfMonth &&
-            !['cancelled', 'archived'].includes(i.status))
+            .filter((i) => new Date(i.date) >= startOfMonth && !['cancelled', 'archived'].includes(i.status))
             .reduce((sum, i) => sum + (i.amountTTC || 0), 0);
-        const pending = invoices.filter(i => i.status === 'pending').length;
-        const validated = invoices.filter(i => i.status === 'validated').length;
+        const pending = invoices.filter((i) => i.status === 'pending').length;
+        const validated = invoices.filter((i) => i.status === 'validated').length;
         const clientMap = {};
         for (const inv of invoices) {
             if (!['cancelled', 'archived'].includes(inv.status)) {
@@ -74,18 +73,18 @@ let SalesService = class SalesService {
             percentage: totalCA > 0 ? Math.round((total / totalCA) * 1000) / 10 : 0,
         }));
         const statuses = ['draft', 'pending', 'validated', 'paid', 'cancelled', 'archived'];
-        const statusDistribution = statuses.map(status => ({
+        const statusDistribution = statuses.map((status) => ({
             status,
-            count: invoices.filter(i => i.status === status).length,
+            count: invoices.filter((i) => i.status === status).length,
             total: invoices
-                .filter(i => i.status === status)
+                .filter((i) => i.status === status)
                 .reduce((sum, i) => sum + (i.amountTTC || 0), 0),
         }));
         return {
             totalCA: Math.round(totalCA * 1000) / 1000,
             totalInvoices: invoices.length,
             thisMonth: Math.round(thisMonth * 1000) / 1000,
-            thisMonthCount: invoices.filter(i => new Date(i.date) >= startOfMonth).length,
+            thisMonthCount: invoices.filter((i) => new Date(i.date) >= startOfMonth).length,
             pending,
             validated,
             top5Clients,
@@ -118,13 +117,17 @@ let SalesService = class SalesService {
             throw new common_1.BadRequestException(`Une facture avec le numéro ${createInvoiceDto.number} existe déjà`);
         }
         const statusMap = {
-            "Brouillon": "draft", "En attente": "pending", "Validée": "validated",
-            "Payée": "paid", "Annulée": "cancelled", "Archivée": "archived",
+            Brouillon: 'draft',
+            'En attente': 'pending',
+            Validée: 'validated',
+            Payée: 'paid',
+            Annulée: 'cancelled',
+            Archivée: 'archived',
         };
         if (createInvoiceDto.status && statusMap[createInvoiceDto.status]) {
             createInvoiceDto.status = statusMap[createInvoiceDto.status];
         }
-        const normalizedItems = createInvoiceDto.items.map(item => ({
+        const normalizedItems = createInvoiceDto.items.map((item) => ({
             ...item,
             article: item.article || item.description || 'Article',
             description: item.description || item.article || '',
@@ -189,7 +192,7 @@ let SalesService = class SalesService {
     async updateInvoice(id, updateInvoiceDto, tenantId) {
         let extra = {};
         if (updateInvoiceDto.items) {
-            const normalizedItems = updateInvoiceDto.items.map(item => ({
+            const normalizedItems = updateInvoiceDto.items.map((item) => ({
                 ...item,
                 article: item.article || item.description || 'Article',
                 quantity: item.quantity || 1,

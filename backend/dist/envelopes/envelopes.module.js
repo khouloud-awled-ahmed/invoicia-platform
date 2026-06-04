@@ -20,9 +20,7 @@ let EnvelopesModule = class EnvelopesModule {
 exports.EnvelopesModule = EnvelopesModule;
 exports.EnvelopesModule = EnvelopesModule = __decorate([
     (0, common_1.Module)({
-        imports: [
-            mongoose_1.MongooseModule.forFeature([{ name: envelope_schema_1.Envelope.name, schema: envelope_schema_1.EnvelopeSchema }]),
-        ],
+        imports: [mongoose_1.MongooseModule.forFeature([{ name: envelope_schema_1.Envelope.name, schema: envelope_schema_1.EnvelopeSchema }])],
         controllers: [envelopes_controller_1.EnvelopesController],
         providers: [envelopes_service_1.EnvelopesService, workflow_engine_service_1.WorkflowEngine, email_service_1.EmailService, certificate_service_1.CertificateService],
         exports: [envelopes_service_1.EnvelopesService],

@@ -37,9 +37,7 @@ let DSNGeneratorService = DSNGeneratorService_1 = class DSNGeneratorService {
         if (!identifier) {
             throw new common_1.NotFoundException('Les paramètres de paie ne sont pas configurés (Matricule Fiscal manquant)');
         }
-        const employees = await this.employeeModel
-            .find({ tenantId, status: 'active' })
-            .exec();
+        const employees = await this.employeeModel.find({ tenantId, status: 'active' }).exec();
         const socialOrgs = await this.socialOrgModel.find({ tenantId }).exec();
         const lines = [];
         lines.push(this.generateBlock00(payrollSettings, month, year));
@@ -72,7 +70,9 @@ let DSNGeneratorService = DSNGeneratorService_1 = class DSNGeneratorService {
         const nic = (payrollSettings.nic || '').padStart(5, '0');
         const apeCode = (payrollSettings.apeCode || '').padEnd(5, ' ');
         const cnssId = (payrollSettings.affiliationCNSS || '').padEnd(20, ' ');
-        const raisonSociale = (tenant.businessName || tenant.name || '').substring(0, 50).padEnd(50, ' ');
+        const raisonSociale = (tenant.businessName || tenant.name || '')
+            .substring(0, 50)
+            .padEnd(50, ' ');
         return `11|${siretCompat}|${nic}|${apeCode}|${cnssId}|${raisonSociale}`;
     }
     generateBlock30(employee) {
@@ -85,7 +85,9 @@ let DSNGeneratorService = DSNGeneratorService_1 = class DSNGeneratorService {
         return `30|${nir}|${nom}|${prenom}|${dateNaissance}|1`;
     }
     generateBlock40(employee) {
-        const numeroContrat = (employee._id?.toString() || '').substring(0, 10).padEnd(10, ' ');
+        const numeroContrat = (employee._id?.toString() || '')
+            .substring(0, 10)
+            .padEnd(10, ' ');
         const typeContrat = '01';
         const dateDebut = employee.hireDate
             ? this.formatDateDDMMYYYY(employee.hireDate)
@@ -94,7 +96,9 @@ let DSNGeneratorService = DSNGeneratorService_1 = class DSNGeneratorService {
         return `40|${numeroContrat}|${typeContrat}|${dateDebut}|${dateFin}|0000`;
     }
     generateBlock70(employee, socialOrg) {
-        const numeroContrat = (employee._id?.toString() || '').substring(0, 10).padEnd(10, ' ');
+        const numeroContrat = (employee._id?.toString() || '')
+            .substring(0, 10)
+            .padEnd(10, ' ');
         const codeOrganisme = (socialOrg.contractId || socialOrg.name.substring(0, 5).toUpperCase()).padEnd(5, ' ');
         const numeroAffiliation = (socialOrg.affiliationId || '').padEnd(20, ' ');
         let typeAffiliation = '01';

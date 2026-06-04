@@ -17,11 +17,7 @@ let AbsencesModule = class AbsencesModule {
 exports.AbsencesModule = AbsencesModule;
 exports.AbsencesModule = AbsencesModule = __decorate([
     (0, common_1.Module)({
-        imports: [
-            mongoose_1.MongooseModule.forFeature([
-                { name: absence_schema_1.Absence.name, schema: absence_schema_1.AbsenceSchema },
-            ]),
-        ],
+        imports: [mongoose_1.MongooseModule.forFeature([{ name: absence_schema_1.Absence.name, schema: absence_schema_1.AbsenceSchema }])],
         controllers: [absences_controller_1.AbsencesController],
         providers: [absences_service_1.AbsencesService],
         exports: [absences_service_1.AbsencesService],

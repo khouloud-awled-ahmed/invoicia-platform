@@ -77,7 +77,16 @@ let BankingSettingsController = class BankingSettingsController {
     async createBankAccount(user, body) {
         if (!user.tenantId)
             throw new common_1.BadRequestException('Tenant ID is required');
-        const account = new this.bankAccountModel({ name: body.accountName || body.name, iban: body.iban, bic: body.bic, bankName: body.bankName, tenantId: user.tenantId, provider: 'MANUAL', currency: body.currency, balance: body.balance });
+        const account = new this.bankAccountModel({
+            name: body.accountName || body.name,
+            iban: body.iban,
+            bic: body.bic,
+            bankName: body.bankName,
+            tenantId: user.tenantId,
+            provider: 'MANUAL',
+            currency: body.currency,
+            balance: body.balance,
+        });
         const saved = await account.save();
         return { ...saved.toObject(), id: saved._id?.toString() };
     }
@@ -85,13 +94,17 @@ let BankingSettingsController = class BankingSettingsController {
         if (!user.tenantId) {
             throw new common_1.BadRequestException('Tenant ID is required');
         }
-        if (!body.bankAccountId || !Array.isArray(body.transactions) || body.transactions.length === 0) {
+        if (!body.bankAccountId ||
+            !Array.isArray(body.transactions) ||
+            body.transactions.length === 0) {
             throw new common_1.BadRequestException('bankAccountId and non-empty transactions array are required');
         }
-        const account = await this.bankAccountModel.findOne({
+        const account = await this.bankAccountModel
+            .findOne({
             _id: body.bankAccountId,
             tenantId: user.tenantId,
-        }).exec();
+        })
+            .exec();
         if (!account) {
             throw new common_1.BadRequestException('Compte bancaire introuvable');
         }
@@ -123,7 +136,12 @@ let BankingSettingsController = class BankingSettingsController {
         if (status === 'UNRECONCILED' || status === 'RECONCILED') {
             filter.status = status;
         }
-        const list = await this.bankTransactionModel.find(filter).sort({ date: -1 }).limit(500).lean().exec();
+        const list = await this.bankTransactionModel
+            .find(filter)
+            .sort({ date: -1 })
+            .limit(500)
+            .lean()
+            .exec();
         return list.map((t) => ({
             id: t._id.toString(),
             bankAccountId: t.bankAccountId,
@@ -221,7 +239,7 @@ let BankingSettingsController = class BankingSettingsController {
             throw new common_1.BadRequestException('Tenant ID is required');
         }
         const templates = await this.documentParser.getTemplates(user.tenantId, 'BANK');
-        return templates.map(t => ({
+        return templates.map((t) => ({
             id: t._id.toString(),
             name: t.name,
             signature: t.signature,

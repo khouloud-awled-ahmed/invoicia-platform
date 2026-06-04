@@ -17,11 +17,7 @@ let PipelineModule = class PipelineModule {
 exports.PipelineModule = PipelineModule;
 exports.PipelineModule = PipelineModule = __decorate([
     (0, common_1.Module)({
-        imports: [
-            mongoose_1.MongooseModule.forFeature([
-                { name: opportunity_schema_1.Opportunity.name, schema: opportunity_schema_1.OpportunitySchema },
-            ]),
-        ],
+        imports: [mongoose_1.MongooseModule.forFeature([{ name: opportunity_schema_1.Opportunity.name, schema: opportunity_schema_1.OpportunitySchema }])],
         controllers: [pipeline_controller_1.PipelineController],
         providers: [pipeline_service_1.PipelineService],
     })

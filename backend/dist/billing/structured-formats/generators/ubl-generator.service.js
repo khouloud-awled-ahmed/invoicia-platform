@@ -91,9 +91,7 @@ let UBLGeneratorService = class UBLGeneratorService {
                 },
                 'cbc:LineExtensionAmount': {
                     '@currencyID': 'EUR',
-                    '#text': (item.quantity *
-                        item.unitPrice *
-                        (1 - (item.discount || 0) / 100)).toFixed(2),
+                    '#text': (item.quantity * item.unitPrice * (1 - (item.discount || 0) / 100)).toFixed(2),
                 },
                 'cac:Item': {
                     'cbc:Name': item.description,

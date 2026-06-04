@@ -106,7 +106,12 @@ let GEDService = class GEDService {
         }
         if (updates.name && updates.name !== folder.name) {
             const existing = await this.folderModel
-                .findOne({ tenantId, parentId: folder.parentId || null, name: updates.name, _id: { $ne: id } })
+                .findOne({
+                tenantId,
+                parentId: folder.parentId || null,
+                name: updates.name,
+                _id: { $ne: id },
+            })
                 .exec();
             if (existing) {
                 throw new common_1.BadRequestException(`A folder with the name "${updates.name}" already exists`);
@@ -203,9 +208,7 @@ let GEDService = class GEDService {
             }
         }
         const attachment = await this.attachmentsService.upload(file, 'ged', 'document', tenantId, uploadedBy);
-        const folder = targetFolderId
-            ? await this.folderModel.findById(targetFolderId).exec()
-            : null;
+        const folder = targetFolderId ? await this.folderModel.findById(targetFolderId).exec() : null;
         const path = folder ? `${folder.path}/${file.originalname}` : `/${file.originalname}`;
         const document = new this.documentModel({
             tenantId,

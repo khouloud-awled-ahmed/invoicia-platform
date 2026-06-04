@@ -32,7 +32,9 @@ let RolesService = class RolesService {
         return role.save();
     }
     async update(id, tenantId, data) {
-        const role = await this.roleModel.findOneAndUpdate({ _id: id, tenantId }, data, { new: true }).exec();
+        const role = await this.roleModel
+            .findOneAndUpdate({ _id: id, tenantId }, data, { new: true })
+            .exec();
         if (!role)
             throw new common_1.NotFoundException('Role not found');
         return role;
@@ -46,60 +48,139 @@ let RolesService = class RolesService {
             return;
         const defaults = [
             {
-                name: 'Super Admin', slug: 'super_admin', level: 1, isSystem: true, color: '#9333ea',
+                name: 'Super Admin',
+                slug: 'super_admin',
+                level: 1,
+                isSystem: true,
+                color: '#9333ea',
                 permissions: [
                     { module: 'dashboard', actions: { view: true, create: true, edit: true, delete: true } },
                     { module: 'clients', actions: { view: true, create: true, edit: true, delete: true } },
                     { module: 'settings', actions: { view: true, create: true, edit: true, delete: true } },
                     { module: 'users', actions: { view: true, create: true, edit: true, delete: true } },
-                ]
+                ],
             },
             {
-                name: 'Admin Plateforme', slug: 'platform_admin', level: 2, isSystem: true, color: '#6366f1',
-                permissions: ['dashboard', 'sales', 'purchases', 'accounting', 'banking', 'hr', 'payroll',
-                    'projects', 'clients', 'contracts', 'ged', 'signature', 'crm', 'reporting', 'settings', 'users'
-                ].map(m => ({ module: m, actions: { view: true, create: true, edit: true, delete: true, validate: true, export: true } }))
-            },
-            {
-                name: 'Directeur / CEO', slug: 'ceo', level: 3, isSystem: false, color: '#dc2626',
+                name: 'Admin Plateforme',
+                slug: 'platform_admin',
+                level: 2,
+                isSystem: true,
+                color: '#6366f1',
                 permissions: [
-                    { module: 'dashboard', actions: { view: true, create: false, edit: false, delete: false } },
-                    { module: 'reporting', actions: { view: true, create: false, edit: false, delete: false, export: true } },
-                    { module: 'accounting', actions: { view: true, create: false, edit: false, delete: false, export: true } },
+                    'dashboard',
+                    'sales',
+                    'purchases',
+                    'accounting',
+                    'banking',
+                    'hr',
+                    'payroll',
+                    'projects',
+                    'clients',
+                    'contracts',
+                    'ged',
+                    'signature',
+                    'crm',
+                    'reporting',
+                    'settings',
+                    'users',
+                ].map((m) => ({
+                    module: m,
+                    actions: {
+                        view: true,
+                        create: true,
+                        edit: true,
+                        delete: true,
+                        validate: true,
+                        export: true,
+                    },
+                })),
+            },
+            {
+                name: 'Directeur / CEO',
+                slug: 'ceo',
+                level: 3,
+                isSystem: false,
+                color: '#dc2626',
+                permissions: [
+                    {
+                        module: 'dashboard',
+                        actions: { view: true, create: false, edit: false, delete: false },
+                    },
+                    {
+                        module: 'reporting',
+                        actions: { view: true, create: false, edit: false, delete: false, export: true },
+                    },
+                    {
+                        module: 'accounting',
+                        actions: { view: true, create: false, edit: false, delete: false, export: true },
+                    },
                     { module: 'hr', actions: { view: true, create: false, edit: false, delete: false } },
-                    { module: 'projects', actions: { view: true, create: false, edit: false, delete: false } },
+                    {
+                        module: 'projects',
+                        actions: { view: true, create: false, edit: false, delete: false },
+                    },
                     { module: 'clients', actions: { view: true, create: false, edit: false, delete: false } },
-                ]
+                ],
             },
             {
-                name: 'Comptable', slug: 'accountant', level: 5, isSystem: false, color: '#0891b2',
+                name: 'Comptable',
+                slug: 'accountant',
+                level: 5,
+                isSystem: false,
+                color: '#0891b2',
                 permissions: [
-                    { module: 'dashboard', actions: { view: true, create: false, edit: false, delete: false } },
-                    { module: 'accounting', actions: { view: true, create: true, edit: true, delete: false, export: true } },
+                    {
+                        module: 'dashboard',
+                        actions: { view: true, create: false, edit: false, delete: false },
+                    },
+                    {
+                        module: 'accounting',
+                        actions: { view: true, create: true, edit: true, delete: false, export: true },
+                    },
                     { module: 'banking', actions: { view: true, create: true, edit: true, delete: false } },
                     { module: 'sales', actions: { view: true, create: true, edit: true, delete: false } },
                     { module: 'purchases', actions: { view: true, create: true, edit: true, delete: false } },
                     { module: 'ged', actions: { view: true, create: true, edit: false, delete: false } },
-                ]
+                ],
             },
             {
-                name: 'Responsable RH', slug: 'hr_manager', level: 4, isSystem: false, color: '#ea580c',
+                name: 'Responsable RH',
+                slug: 'hr_manager',
+                level: 4,
+                isSystem: false,
+                color: '#ea580c',
                 permissions: [
-                    { module: 'dashboard', actions: { view: true, create: false, edit: false, delete: false } },
-                    { module: 'hr', actions: { view: true, create: true, edit: true, delete: true, validate: true } },
+                    {
+                        module: 'dashboard',
+                        actions: { view: true, create: false, edit: false, delete: false },
+                    },
+                    {
+                        module: 'hr',
+                        actions: { view: true, create: true, edit: true, delete: true, validate: true },
+                    },
                     { module: 'users', actions: { view: true, create: true, edit: true, delete: false } },
                     { module: 'ged', actions: { view: true, create: true, edit: true, delete: false } },
-                ]
+                ],
             },
             {
-                name: 'Responsable Commercial', slug: 'sales_manager', level: 4, isSystem: false, color: '#7c3aed',
+                name: 'Responsable Commercial',
+                slug: 'sales_manager',
+                level: 4,
+                isSystem: false,
+                color: '#7c3aed',
                 permissions: [
-                    { module: 'dashboard', actions: { view: true, create: false, edit: false, delete: false } },
-                    { module: 'sales', actions: { view: true, create: true, edit: true, delete: false, validate: true } },
+                    {
+                        module: 'dashboard',
+                        actions: { view: true, create: false, edit: false, delete: false },
+                    },
+                    {
+                        module: 'sales',
+                        actions: { view: true, create: true, edit: true, delete: false, validate: true },
+                    },
                     { module: 'clients', actions: { view: true, create: true, edit: true, delete: false } },
                     { module: 'crm', actions: { view: true, create: true, edit: true, delete: true } },
                     { module: 'projects', actions: { view: true, create: true, edit: true, delete: false } },
-                ]
+                ],
             },
         ];
         for (const role of defaults) {

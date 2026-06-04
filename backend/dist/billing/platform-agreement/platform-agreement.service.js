@@ -64,9 +64,9 @@ let PlatformAgreementService = class PlatformAgreementService {
         const tenant = await this.tenantModel.findById(tenantId).exec();
         return {
             enabled: isEnabled,
-            configured: !!(tenant?.metadata?.platformAgreementConfig),
+            configured: !!tenant?.metadata?.platformAgreementConfig,
             platform: tenant?.metadata?.platformAgreementConfig?.platform || null,
-            credentialsConfigured: !!(tenant?.metadata?.platformAgreementConfig?.apiKey),
+            credentialsConfigured: !!tenant?.metadata?.platformAgreementConfig?.apiKey,
         };
     }
     async getAvailablePlatforms() {
