@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Inject } from '@nestjs/common';
+﻿import { Injectable, NotFoundException, BadRequestException, Inject } from '@nestjs/common';
 import { InjectModel, InjectConnection } from '@nestjs/mongoose';
 import { Model, Connection } from 'mongoose';
 import { Attachment, AttachmentDocument } from './schemas/attachment.schema';
@@ -136,6 +136,16 @@ export class AttachmentsService {
       throw new NotFoundException(`Attachment with ID ${id} not found`);
     }
     return attachment;
+  }
+
+  async getStreamByGridFsId(gridFsFileId: string): Promise<NodeJS.ReadableStream> {
+    const fileId = new ObjectId(gridFsFileId);
+    const bucket = this.getGridFSBucket();
+    const files = await bucket.find({ _id: fileId }).toArray();
+    if (files.length === 0) {
+      throw new NotFoundException('File not found in storage');
+    }
+    return bucket.openDownloadStream(fileId);
   }
 
   async getFileStream(

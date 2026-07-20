@@ -1,4 +1,4 @@
-import {
+﻿import {
   Controller,
   Get,
   Post,
@@ -13,6 +13,8 @@ import {
   UploadedFile,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Res } from '@nestjs/common';
+import { Response } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { GEDService } from './ged.service';
@@ -98,6 +100,14 @@ export class GEDController {
       metadata,
       user.userId,
     );
+  }
+
+  @Get('documents/:id/download')
+  async downloadDocument(@Param('id') id: string, @CurrentUser() user: any, @Res() res: Response) {
+    const { stream, document } = await this.gedService.getDownloadStream(id, user.tenantId);
+    res.setHeader('Content-Type', document.fileType);
+    res.setHeader('Content-Disposition', `attachment; filename="${document.fileName}"`);
+    stream.pipe(res);
   }
 
   @Get('documents')

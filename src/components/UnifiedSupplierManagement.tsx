@@ -753,7 +753,7 @@ export function UnifiedSupplierManagement() {
                   <SelectValue placeholder="Sélectionner un fournisseur" />
                 </SelectTrigger>
                 <SelectContent>
-                  {suppliers.map(s => (
+                  {suppliers.filter(s => s.id && s.id !== "").map(s => (
                     <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
                   ))}
                 </SelectContent>

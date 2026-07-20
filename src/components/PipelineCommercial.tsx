@@ -18,8 +18,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-import { Plus, TrendingUp, Target, CheckCircle2, Trash2 } from "lucide-react";
+import { Plus, TrendingUp, Target, CheckCircle2, Trash2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { apiClient } from "../lib/api-client-backend";
 
 interface Opportunity {
   _id: string;
@@ -45,6 +46,8 @@ export function PipelineCommercial() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [loading, setLoading] = useState(false);
+  const [aiActions, setAiActions] = useState<Record<string, string>>({});
+  const [aiActionsLoading, setAiActionsLoading] = useState(false);
 
   const getToken = () => localStorage.getItem("token") || "";
 
@@ -60,8 +63,23 @@ export function PipelineCommercial() {
     }
   };
 
+  const fetchAIActions = async () => {
+    setAiActionsLoading(true);
+    try {
+      const data = await apiClient.getPipelineAIActions();
+      const map: Record<string, string> = {};
+      (data || []).forEach((item) => { map[item.id] = item.action; });
+      setAiActions(map);
+    } catch {
+      setAiActions({});
+    } finally {
+      setAiActionsLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchOpportunities();
+    fetchAIActions();
   }, []);
 
   const totalValue = opportunities.reduce((sum, opp) => sum + opp.amount, 0);
@@ -102,6 +120,7 @@ export function PipelineCommercial() {
       });
       if (!res.ok) throw new Error();
       await fetchOpportunities();
+      fetchAIActions();
       setForm(EMPTY_FORM);
       setIsModalOpen(false);
       toast.success("Opportunité créée avec succès !");
@@ -192,23 +211,35 @@ export function PipelineCommercial() {
               <p className="text-center text-muted-foreground py-8">Aucune opportunité pour le moment.</p>
             )}
             {opportunities.map((opp) => (
-              <div key={opp._id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
-                <div>
-                  <div className="font-medium">{opp.name}</div>
-                  <div className="text-sm text-muted-foreground">{opp.client}</div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <div className="font-semibold text-green-600">{formatCurrency(opp.amount)}</div>
-                    <Badge variant="outline">{opp.probability}%</Badge>
+              <div key={opp._id} className="p-4 border rounded-lg hover:bg-gray-50">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium">{opp.name}</div>
+                    <div className="text-sm text-muted-foreground">{opp.client}</div>
                   </div>
-                  <button
-                    onClick={() => handleDelete(opp._id)}
-                    className="text-red-400 hover:text-red-600"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <div className="font-semibold text-green-600">{formatCurrency(opp.amount)}</div>
+                      <Badge variant="outline">{opp.probability}%</Badge>
+                    </div>
+                    <button
+                      onClick={() => handleDelete(opp._id)}
+                      className="text-red-400 hover:text-red-600"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
+                {(aiActionsLoading || aiActions[opp._id]) && (
+                  <div className="mt-3 pt-3 border-t flex items-center gap-2 text-xs">
+                    <Sparkles className="w-3.5 h-3.5 text-purple-600 flex-shrink-0" />
+                    {aiActionsLoading ? (
+                      <span className="text-muted-foreground italic">Analyse en cours...</span>
+                    ) : (
+                      <span className="text-purple-700 font-medium">{aiActions[opp._id]}</span>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>

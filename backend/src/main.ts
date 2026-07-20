@@ -5,6 +5,8 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { join } from 'path';
 import { AppModule } from './app.module';
+import { LoggingInterceptor } from './logs/interceptors/logging.interceptor';
+import { LogsService } from './logs/logs.service';
 async function bootstrap() {
   try {
     const app = await NestFactory.create<NestExpressApplication>(AppModule, {
@@ -40,6 +42,8 @@ async function bootstrap() {
       }),
     );
     app.setGlobalPrefix('api');
+    const logsService = app.get(LogsService);
+    app.useGlobalInterceptors(new LoggingInterceptor(logsService));
     // Swagger setup
     const config = new DocumentBuilder()
       .setTitle('Invoicia API')

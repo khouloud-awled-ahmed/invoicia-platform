@@ -123,6 +123,10 @@ export function BankImportPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isLearning, setIsLearning] = useState(false);
   const [bankAccounts, setBankAccounts] = useState<Array<{ id: string; name?: string; iban?: string; [k: string]: any }>>([]);
+
+  useEffect(() => {
+    apiClient.getBankAccounts().then((list) => setBankAccounts(list || [])).catch(() => setBankAccounts([]));
+  }, []);
   const [selectedBankAccountId, setSelectedBankAccountId] = useState<string>("");
   const [isSaving, setIsSaving] = useState(false);
   
@@ -177,17 +181,8 @@ export function BankImportPage() {
           "Ce format de fichier bancaire est inconnu. Voulez-vous apprendre à l'IA comment le lire ?"
         );
         
-        if (shouldLearn) {
-          // Stocker les données pour l'apprentissage
-          const documentData = {
-            documentId: result.documentId,
-            rawData: result.rawData,
-            rawText: result.rawText,
-            type: 'BANK',
-          };
-          localStorage.setItem('pending_learning', JSON.stringify(documentData));
-          window.location.href = '/settings/ai-lab';
-          return;
+        if (false) {
+          // Ancienne redirection cassée vers /settings/ai-lab (page inexistante), désactivée
         } else {
           // Mode mapping manuel - extraire les lignes brutes
           const rawData: string[][] = [];
@@ -358,6 +353,28 @@ export function BankImportPage() {
       toast.error(error?.message || "Erreur lors de l'apprentissage du format");
     } finally {
       setIsLearning(false);
+    }
+  };
+
+  const handleSaveToBank = async () => {
+    if (!selectedBankAccountId || !analyzeResult?.transactions) {
+      toast.error("Veuillez sélectionner un compte bancaire");
+      return;
+    }
+    setIsSaving(true);
+    try {
+      const transactions = analyzeResult.transactions.map((tx: any) => ({
+        date: tx.date,
+        label: tx.label,
+        amount: tx.amount,
+      }));
+      await apiClient.createBankTransactions(selectedBankAccountId, transactions);
+      toast.success("Transactions importées avec succès !");
+      setStep('success');
+    } catch (error: any) {
+      toast.error(error?.message || "Erreur lors de l'enregistrement");
+    } finally {
+      setIsSaving(false);
     }
   };
 

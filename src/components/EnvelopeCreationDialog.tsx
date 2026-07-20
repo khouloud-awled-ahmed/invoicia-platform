@@ -194,6 +194,7 @@ export function EnvelopeCreationDialog({ open, onOpenChange, onCreate }: Envelop
           name: signer.name.trim(),
           email: signer.email.trim(),
           role: 'SIGNER' as 'SIGNER' | 'VIEWER',
+          signatureRequired: signer.signatureRequired,
           // Le backend génère automatiquement l'ID et le routingOrder
         }));
 
@@ -573,4 +574,5 @@ export function EnvelopeCreationDialog({ open, onOpenChange, onCreate }: Envelop
     </Dialog>
   );
 }
+
 

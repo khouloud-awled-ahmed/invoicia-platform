@@ -1,4 +1,4 @@
-﻿import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Tenant, TenantDocument } from './schemas/tenant.schema';
@@ -74,6 +74,8 @@ export class TenantsService {
   async updateCompanyInfo(
     id: string,
     data: {
+      businessName?: string;
+      name?: string;
       matriculeFiscal?: string;
       registreCommerce?: string;
       codeDouane?: string;
@@ -97,6 +99,8 @@ export class TenantsService {
     this.validateCompanyData(data);
 
     const updateData: any = {};
+    if (data.businessName !== undefined) updateData.businessName = data.businessName;
+    if (data.name !== undefined) updateData.name = data.name;
     if (data.matriculeFiscal !== undefined) updateData.matriculeFiscal = data.matriculeFiscal;
     if (data.registreCommerce !== undefined) updateData.registreCommerce = data.registreCommerce;
     if (data.codeDouane !== undefined) updateData.codeDouane = data.codeDouane;
@@ -110,6 +114,16 @@ export class TenantsService {
     if (data.phone !== undefined) updateData.phone = data.phone;
 
     return this.tenantModel.findByIdAndUpdate(id, updateData, { new: true }).exec();
+  }
+
+  async updateInvoiceTemplateConfig(
+    id: string,
+    config: { primaryColor: string; secondaryColor: string; fontFamily: string; template: string },
+  ): Promise<Tenant> {
+    await this.findOne(id);
+    return this.tenantModel
+      .findByIdAndUpdate(id, { invoiceTemplateConfig: config }, { new: true })
+      .exec();
   }
 
   async updateBankAccount(
@@ -269,7 +283,23 @@ export class TenantsService {
     if (!bic) return false;
     const cleaned = bic.replace(/\s/g, '');
     // BIC doit faire 8 ou 11 caractères
-    return cleaned.length === 8 || cleaned.length === 11;
+    return cleaned.length >= 8 && cleaned.length <= 11;
+  }
+
+  async updateDefaultTerms(
+    id: string,
+    data: {
+      penaltyRate?: number;
+      penaltyDescription?: string;
+      recoveryFee?: number;
+      discountPolicy?: string;
+      paymentTermsDefault?: number;
+    },
+  ): Promise<Tenant> {
+    await this.findOne(id);
+    return this.tenantModel
+      .findByIdAndUpdate(id, { defaultTerms: data }, { new: true })
+      .exec();
   }
 
   async updateBillingSettings(

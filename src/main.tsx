@@ -1,10 +1,11 @@
-// IMPORT CRITIQUE : Configuration PDF Worker DOIT être chargée en premier
+﻿// IMPORT CRITIQUE : Configuration PDF Worker DOIT être chargée en premier
 import "./lib/pdf-worker-config";
 
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { Toaster } from "sonner";
 
 const rootElement = document.getElementById("root");
 
@@ -17,6 +18,7 @@ try {
   root.render(
     <ErrorBoundary>
       <App />
+      <Toaster position="top-right" richColors />
     </ErrorBoundary>
   );
 } catch (error) {

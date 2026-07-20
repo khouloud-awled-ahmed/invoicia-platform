@@ -32,7 +32,7 @@ export class LoggingInterceptor implements NestInterceptor {
         const statusCode = response.statusCode;
 
         // Logger les requêtes lentes ou les erreurs
-        if (statusCode >= 400 || duration > 1000) {
+        if (true) {
           this.logsService
             .createLog({
               level:

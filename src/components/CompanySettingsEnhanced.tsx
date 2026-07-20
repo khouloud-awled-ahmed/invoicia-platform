@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
@@ -60,13 +60,13 @@ export function CompanySettingsEnhanced() {
 
       setCompanyData({
         legalName: tenant.businessName || tenant.name || "",
-        siret: tenant.siret || "",
-        siren: tenant.siren || "",
+        siret: tenant.registreCommerce || "",
+        siren: tenant.matriculeFiscal || "",
         tvaNumber: tenant.tvaNumber || "",
         isVatSubject: tenant.isVatSubject ?? false,
         legalForm: tenant.legalForm || "",
         capital: tenant.capital?.toString() || "",
-        rcs: tenant.rcs || "",
+        rcs: tenant.registreCommerce || "",
         addressLine1: address?.line1 || "",
         addressLine2: address?.line2 || "",
         postalCode: address?.postalCode || "",
@@ -172,11 +172,11 @@ export function CompanySettingsEnhanced() {
       newErrors.legalName = "Raison sociale requise";
     }
 
-    if (!companyData.siret) {
+    if (!companyData.siret || !validateSIRET(companyData.siret)) {
       newErrors.siret = "SIRET invalide (14 chiffres requis)";
     }
     
-    if (!companyData.siren) {
+    if (!companyData.siren || !validateSIREN(companyData.siren)) {
       newErrors.siren = "SIREN invalide (9 chiffres requis)";
     }
 
@@ -202,12 +202,14 @@ export function CompanySettingsEnhanced() {
     try {
       // Sauvegarder les informations de la société
       await updateCompanyInfo({
-        siren: companyData.siren,
+        businessName: companyData.legalName,
+        name: companyData.legalName,
+        matriculeFiscal: companyData.siren,
         tvaNumber: companyData.tvaNumber,
         isVatSubject: companyData.isVatSubject,
         legalForm: companyData.legalForm,
         capital: companyData.capital ? parseFloat(companyData.capital) : undefined,
-        rcs: companyData.rcs,
+        registreCommerce: companyData.rcs,
         address: {
           line1: companyData.addressLine1,
           line2: companyData.addressLine2 || undefined,
@@ -224,8 +226,21 @@ export function CompanySettingsEnhanced() {
         await updateBankAccount({
           bankName: companyData.bankName,
           bankAddress: companyData.bankAddress,
-          iban: companyData.iban,
-          bic: companyData.bic,
+          iban: companyData.iban.trim(),
+          bic: companyData.bic.trim(),
+        });
+      }
+      if (companyData.penaltyRate || companyData.discountPolicy) {
+        const tenantId = tenant?.id || (tenant as any)?._id;
+        await apiClient.request(`/tenants/${tenantId}/default-terms`, {
+          method: "PATCH",
+          body: JSON.stringify({
+            penaltyRate: parseFloat(companyData.penaltyRate) || 0,
+            penaltyDescription: companyData.penaltyDescription,
+            recoveryFee: parseFloat(companyData.recoveryFee) || 0,
+            discountPolicy: companyData.discountPolicy,
+            paymentTermsDefault: parseInt(companyData.paymentTermsDefault) || 30,
+          }),
         });
       }
 

@@ -407,7 +407,7 @@ export function InvoiceEditDialog({ open, onOpenChange, invoice, onSave }: Invoi
                         </SelectTrigger>
                         <SelectContent>
                           {clients.map((client) => (
-                            <SelectItem key={client.id} value={client.id || ""}>
+                            <SelectItem key={client.id} value={client.id}>
                               {client.name}
                             </SelectItem>
                           ))}

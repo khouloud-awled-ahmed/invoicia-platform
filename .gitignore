@@ -2,3 +2,12 @@ node_modules/
 dist/
 .env
 *.log
+
+backend/.env
+*.bak
+*.bak2
+*.bak_currency
+*.backup
+node_modules/
+__pycache__/
+

@@ -51,6 +51,14 @@ export class Tenant {
   @Prop()
   capital?: number;
 
+  @Prop({ type: Object })
+  invoiceTemplateConfig?: {
+    primaryColor: string;
+    secondaryColor: string;
+    fontFamily: string;
+    template: string;
+  };
+
   // Adresse structurée
   @Prop({ type: Object })
   address?: {

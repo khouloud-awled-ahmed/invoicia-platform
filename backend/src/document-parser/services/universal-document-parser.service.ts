@@ -1,4 +1,4 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+﻿import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import {
@@ -9,6 +9,7 @@ import {
 import { parse as csvParse } from 'csv-parse/sync';
 import * as path from 'path';
 import * as mammoth from 'mammoth';
+import * as nodemailer from 'nodemailer';
 
 export interface ParsedBankTransaction {
   date: Date;
@@ -45,13 +46,17 @@ export interface ParsedCV {
   phone?: string;
   title?: string;
   summary?: string;
+  yearsOfExperience?: number;
+  seniorityLevel?: string;
+  isManager?: boolean;
   skills?: string[];
   experiences?: Array<{
+    title?: string;
     company: string;
-    position: string;
     startDate?: string;
     endDate?: string;
     description?: string;
+    technologies?: string[];
   }>;
   education?: Array<{
     institution: string;
@@ -104,7 +109,24 @@ export class UniversalDocumentParserService {
         rawText = extracted;
         rawLines = this.textToLines(rawText);
       } else {
-        throw new BadRequestException(`Type de fichier non supporté pour le parsing: ${fileType}`);
+        throw new BadRequestException(`Type de fichier non supporte pour le parsing: ${fileType}`);
+      }
+
+      // Extraction IA via Groq pour CV et INVOICE (nouveau)
+      if ((documentType === 'CV' || documentType === 'INVOICE') && process.env.GROQ_API_KEY) {
+        try {
+          const groqData = await this.extractWithGroq(rawText, documentType);
+          if (groqData) {
+            return {
+              status: 'SUCCESS',
+              data: { ...groqData, rawText },
+              message: 'Extraction par intelligence artificielle (Groq)',
+              confidence: 0.9,
+            };
+          }
+        } catch (error: any) {
+          this.logger.warn(`Extraction Groq echouee, fallback sur le systeme classique: ${error.message}`);
+        }
       }
 
       const template = await this.findTemplateBySignature(rawText, documentType, tenantId);
@@ -140,12 +162,605 @@ export class UniversalDocumentParserService {
           documentId,
           rawData: rawLines.slice(0, 50),
           rawText: rawText.substring(0, 5000),
-          message: `Format non reconnu. Le système peut apprendre à lire ce type de document.`,
+          message: `Format non reconnu. Le systeme peut apprendre a lire ce type de document.`,
         };
       }
     } catch (error) {
       this.logger.error(`Erreur lors de l'analyse du document ${documentType}:`, error);
       throw new BadRequestException(`Erreur lors de l'analyse: ${error.message}`);
+    }
+  }
+
+  private async extractWithGroq(rawText: string, documentType: DocumentType): Promise<any | null> {
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) return null;
+
+    const truncatedText = rawText.substring(0, 8000);
+
+    let prompt: string;
+    if (documentType === 'CV') {
+      prompt = `Tu es un expert en recrutement. Analyse ce CV et retourne UNIQUEMENT un objet JSON valide, sans aucun texte avant ou apres, sans markdown, avec exactement cette structure:
+{
+  "firstName": "",
+  "lastName": "",
+  "email": "",
+  "phone": "",
+  "title": "",
+  "summary": "",
+  "yearsOfExperience": 0,
+  "seniorityLevel": "junior|confirme|senior|manager",
+  "isManager": false,
+  "skills": ["competence1", "competence2"],
+  "experiences": [
+    {
+      "title": "Intitule du poste",
+      "company": "Nom entreprise",
+      "startDate": "YYYY-MM",
+      "endDate": "YYYY-MM ou null si poste actuel",
+      "description": "Resume court",
+      "technologies": ["tech1", "tech2"]
+    }
+  ],
+  "education": [
+    { "institution": "", "degree": "", "year": "" }
+  ]
+}
+
+Regles:
+- "isManager" doit etre true si la personne a gere une equipe, encadre des collaborateurs, ou occupe un poste avec "manager", "chef", "lead", "responsable" dans son historique.
+- "seniorityLevel" doit etre deduit du nombre d'annees d'experience et du niveau de responsabilite (junior: 0-2 ans, confirme: 3-5 ans, senior: 6+ ans, manager: gere une equipe).
+- "yearsOfExperience" doit etre calcule a partir des dates d'experience professionnelle.
+- Si une information n'est pas trouvee, laisse une chaine vide, un tableau vide, ou 0.
+
+Voici le texte du CV:
+${truncatedText}`;
+    } else {
+      prompt = `Tu es un expert-comptable. Analyse cette facture et retourne UNIQUEMENT un objet JSON valide, sans aucun texte avant ou apres, sans markdown, avec exactement cette structure:
+{
+  "invoiceNumber": "",
+  "date": "YYYY-MM-DD",
+  "dueDate": "YYYY-MM-DD",
+  "supplierName": "",
+  "supplierAddress": "",
+  "supplierSIRET": "",
+  "supplierVAT": "",
+  "totalHT": 0,
+  "totalTVA": 0,
+  "totalTTC": 0,
+  "lineItems": [
+    { "description": "", "quantity": 1, "unitPrice": 0, "vatRate": 20, "totalHT": 0 }
+  ]
+}
+
+Si une information n'est pas trouvee, laisse une chaine vide ou 0.
+
+Voici le texte de la facture:
+${truncatedText}`;
+    }
+
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.1,
+        max_tokens: 3000,
+      }),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`Erreur API Groq (${response.status}): ${errText}`);
+    }
+
+    const result: any = await response.json();
+    const content = result.choices?.[0]?.message?.content;
+    if (!content) throw new Error('Reponse Groq vide');
+
+    const cleaned = content.replace(/```json|```/g, '').trim();
+    try {
+      return JSON.parse(cleaned);
+    } catch (e) {
+      const match = cleaned.match(/\{[\s\S]*\}/);
+      if (match) return JSON.parse(match[0]);
+      throw new Error('Impossible de parser le JSON retourne par Groq');
+    }
+  }
+
+  async generatePipelineActions(opportunities: Array<{
+    id: string;
+    name: string;
+    client: string;
+    amount: number;
+    probability: number;
+    stage: string;
+    daysSinceCreated: number;
+  }>): Promise<Array<{ id: string; action: string }>> {
+    if (opportunities.length === 0) return [];
+    if (!process.env.GROQ_API_KEY) return [];
+
+    const prompt = `Tu es un coach commercial expert. Pour CHAQUE opportunite de vente ci-dessous, suggere UNE SEULE action concrete et courte (moins de 10 mots) que le commercial devrait faire maintenant. Sois specifique et actionnable (ex: "Relancer par telephone sous 48h", "Envoyer une proposition detaillee", "Negocier une remise de 5%", "Programmer une demo produit"). Adapte le conseil selon l'etape (stage), le nombre de jours depuis la creation, et la probabilite.
+
+Opportunites (format JSON):
+${JSON.stringify(opportunities.map(o => ({ id: o.id, name: o.name, client: o.client, amount: o.amount, probability: o.probability, stage: o.stage, joursDepuisCreation: o.daysSinceCreated })))}
+
+Retourne UNIQUEMENT un tableau JSON valide, sans texte avant ou apres, sans markdown, avec exactement cette structure:
+[{"id": "id_exact_fourni", "action": "action courte suggeree"}]`;
+
+    try {
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.3,
+          max_tokens: 1500,
+        }),
+      });
+
+      if (!response.ok) return [];
+
+      const result: any = await response.json();
+      const content = result.choices?.[0]?.message?.content;
+      if (!content) return [];
+
+      const cleaned = content.replace(/```json|```/g, '').trim();
+      const match = cleaned.match(/\[[\s\S]*\]/);
+      const parsed = match ? JSON.parse(match[0]) : JSON.parse(cleaned);
+
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+
+  async classifyDocumentForGED(file: any): Promise<{ documentType: string; confidence: number }> {
+    const fileType = this.detectFileType(file.originalname, file.mimetype);
+    let rawText = '';
+
+    try {
+      if (fileType === 'PDF') {
+        rawText = await this.extractTextFromPDF(file.buffer);
+      } else if (fileType === 'DOCX') {
+        rawText = await this.extractTextFromDocx(file.buffer);
+      }
+    } catch {
+      rawText = '';
+    }
+
+    if (!rawText || rawText.trim().length < 10 || !process.env.GROQ_API_KEY) {
+      return { documentType: 'autre', confidence: 0 };
+    }
+
+    const truncatedText = rawText.substring(0, 4000);
+    const validTypes = [
+      'facture', 'depense', 'avoir', 'devis', 'contrat',
+      'document_fournisseur', 'document_client', 'document_societe', 'general', 'autre',
+    ];
+
+    const prompt = `Tu es un assistant de classement documentaire. Analyse ce texte extrait d'un document et determine son type EXACT parmi cette liste uniquement: ${validTypes.join(', ')}.
+
+Definitions:
+- facture: une facture emise ou recue
+- depense: un justificatif de depense/note de frais
+- avoir: un avoir ou note de credit
+- devis: un devis ou une offre commerciale
+- contrat: un contrat ou accord juridique
+- document_fournisseur: document lie a un fournisseur (hors facture/devis)
+- document_client: document lie a un client (hors facture)
+- document_societe: document interne de l'entreprise (statuts, RH, etc.)
+- general: document generique
+- autre: si aucune categorie ne correspond clairement
+
+Retourne UNIQUEMENT un objet JSON valide, sans texte avant ou apres, sans markdown, avec cette structure exacte:
+{"documentType": "un des types ci-dessus", "confidence": 0.9}
+
+Texte du document:
+${truncatedText}`;
+
+    try {
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.1,
+          max_tokens: 100,
+        }),
+      });
+
+      if (!response.ok) return { documentType: 'autre', confidence: 0 };
+
+      const result: any = await response.json();
+      const content = result.choices?.[0]?.message?.content;
+      if (!content) return { documentType: 'autre', confidence: 0 };
+
+      const cleaned = content.replace(/```json|```/g, '').trim();
+      const match = cleaned.match(/\{[\s\S]*\}/);
+      const parsed = match ? JSON.parse(match[0]) : JSON.parse(cleaned);
+
+      if (!validTypes.includes(parsed.documentType)) {
+        return { documentType: 'autre', confidence: 0 };
+      }
+
+      return {
+        documentType: parsed.documentType,
+        confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 0.7,
+      };
+    } catch {
+      return { documentType: 'autre', confidence: 0 };
+    }
+  }
+
+  async generateBusinessNarrative(stats: {
+    totalRevenue: number;
+    totalExpenses: number;
+    overdueCount: number;
+    overdueAmount: number;
+    paymentRate: number;
+    topClientName: string;
+    topClientRevenue: number;
+    topExpenseCategory: string;
+    topExpenseAmount: number;
+  }): Promise<string> {
+    if (!process.env.GROQ_API_KEY) {
+      throw new BadRequestException('GROQ_API_KEY manquant');
+    }
+
+    const prompt = `Tu es un analyste financier qui parle simplement, comme a un dirigeant non-expert. Analyse ces indicateurs d'une entreprise tunisienne et redige UN SEUL paragraphe COURT de 2 A 3 phrases maximum, en francais simple et direct, sans jargon technique. Va droit au but: dis ce qui va bien, et le SEUL probleme le plus important a regler en priorite. Pas de markdown, pas de titre, juste le paragraphe court.
+
+Donnees:
+- Chiffre d'affaires: ${stats.totalRevenue} TND
+- Depenses totales: ${stats.totalExpenses} TND
+- Factures en retard: ${stats.overdueCount} (montant: ${stats.overdueAmount} TND)
+- Taux de paiement: ${stats.paymentRate}%
+- Meilleur client: ${stats.topClientName} (${stats.topClientRevenue} TND)
+- Plus grosse categorie de depense: ${stats.topExpenseCategory} (${stats.topExpenseAmount} TND)
+
+Retourne UNIQUEMENT le paragraphe, rien d'autre.`;
+
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.3,
+        max_tokens: 200,
+      }),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new BadRequestException(`Erreur API Groq (${response.status}): ${errText}`);
+    }
+
+    const result: any = await response.json();
+    const content = result.choices?.[0]?.message?.content;
+    if (!content) throw new BadRequestException('Reponse Groq vide');
+
+    return content.trim();
+  }
+
+  async sendPaymentReminderEmail(data: {
+    clientEmail: string;
+    subject: string;
+    body: string;
+  }): Promise<void> {
+    if (!data.clientEmail || !process.env.SMTP_USER) {
+      throw new BadRequestException('Email client ou configuration SMTP manquante');
+    }
+
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port: parseInt(process.env.SMTP_PORT || '587'),
+      secure: false,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+
+    const htmlBody = data.body.replace(/\n/g, '<br>');
+
+    try {
+      await transporter.sendMail({
+        from: `"Invoicia" <${process.env.SMTP_USER}>`,
+        to: data.clientEmail,
+        subject: data.subject,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
+            <div style="background: #f9f9f9; padding: 30px; border-radius: 8px;">
+              ${htmlBody}
+            </div>
+          </div>
+        `,
+      });
+      this.logger.log(`Relance de paiement envoyee a ${data.clientEmail}`);
+    } catch (err: any) {
+      this.logger.error('Echec envoi relance', err);
+      throw new BadRequestException(`Erreur lors de l'envoi de l'email: ${err.message}`);
+    }
+  }
+
+  async generatePaymentReminder(invoiceData: {
+    clientName: string;
+    invoiceNumber: string;
+    amountTTC: number;
+    dueDate: string;
+    daysOverdue: number;
+  }): Promise<any> {
+    if (!process.env.GROQ_API_KEY) {
+      throw new BadRequestException('GROQ_API_KEY manquant');
+    }
+
+    const tone = invoiceData.daysOverdue > 30 ? 'ferme mais professionnel' : 'courtois et amical';
+
+    const prompt = `Tu es un assistant comptable professionnel. Redige un email de relance de paiement en francais pour la situation suivante:
+- Client: ${invoiceData.clientName}
+- Facture N°: ${invoiceData.invoiceNumber}
+- Montant: ${invoiceData.amountTTC} TND
+- Date d'echeance: ${invoiceData.dueDate}
+- Jours de retard: ${invoiceData.daysOverdue}
+
+Le ton doit etre ${tone}, car le retard est de ${invoiceData.daysOverdue} jours.
+
+Retourne UNIQUEMENT un objet JSON valide, sans texte avant ou apres, sans markdown, avec cette structure exacte:
+{
+  "subject": "Objet de l'email",
+  "body": "Corps complet de l'email, avec formule de politesse au debut et signature generique a la fin"
+}`;
+
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.4,
+        max_tokens: 1000,
+      }),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new BadRequestException(`Erreur API Groq (${response.status}): ${errText}`);
+    }
+
+    const result: any = await response.json();
+    const content = result.choices?.[0]?.message?.content;
+    if (!content) throw new BadRequestException('Reponse Groq vide');
+
+    const cleaned = content.replace(/```json|```/g, '').trim();
+    try {
+      return JSON.parse(cleaned);
+    } catch (e) {
+      const match = cleaned.match(/\{[\s\S]*\}/);
+      if (match) return JSON.parse(match[0]);
+      throw new BadRequestException('Impossible de parser le JSON retourne par Groq');
+    }
+  }
+
+  async generateInvoiceTemplate(description: string): Promise<any> {
+    if (!process.env.GROQ_API_KEY) {
+      throw new BadRequestException('GROQ_API_KEY manquant');
+    }
+
+    const prompt = `Tu es un designer expert en creation de factures professionnelles. Analyse cette description et retourne UNIQUEMENT un objet JSON valide, sans aucun texte avant ou apres, sans markdown, avec exactement cette structure:
+{
+  "primaryColor": "#3b82f6",
+  "secondaryColor": "#1e40af",
+  "fontFamily": "Arial",
+  "layout": "modern",
+  "customFields": []
+}
+
+Regles:
+- "primaryColor" et "secondaryColor" doivent etre des codes hexadecimaux coherents avec les couleurs demandees (ex: vert -> #16a34a, bleu -> #3b82f6, violet -> #7c3aed, rouge -> #dc2626, orange -> #ea580c, noir/gris -> #1f2937). Si aucune couleur n'est mentionnee, utilise du bleu par defaut.
+- "fontFamily" doit etre "Arial", "Times New Roman", ou "Helvetica" selon le style demande (moderne/epure -> Arial ou Helvetica, classique/traditionnel -> Times New Roman).
+- "layout" doit etre exactement "classic", "modern", ou "minimal" selon le style decrit.
+- "customFields" est un tableau d'objets {"id": "field_X", "label": "Nom du champ"} pour chaque champ specifique mentionne (ex: numero de commande, code projet, QR code, coordonnees bancaires). Vide si aucun champ specifique n'est mentionne.
+
+Description de l'utilisateur:
+${description}`;
+
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.2,
+        max_tokens: 1000,
+      }),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new BadRequestException(`Erreur API Groq (${response.status}): ${errText}`);
+    }
+
+    const result: any = await response.json();
+    const content = result.choices?.[0]?.message?.content;
+    if (!content) throw new BadRequestException('Reponse Groq vide');
+
+    const cleaned = content.replace(/```json|```/g, '').trim();
+    try {
+      return JSON.parse(cleaned);
+    } catch (e) {
+      const match = cleaned.match(/\{[\s\S]*\}/);
+      if (match) return JSON.parse(match[0]);
+      throw new BadRequestException('Impossible de parser le JSON retourne par Groq');
+    }
+  }
+
+  async scanClientInvoice(file: any, tenantId: string): Promise<any> {
+    const fileType = this.detectFileType(file.originalname, file.mimetype);
+    let rawText: string;
+
+    if (fileType === 'PDF') {
+      rawText = await this.extractTextFromPDF(file.buffer);
+    } else if (fileType === 'DOCX') {
+      rawText = await this.extractTextFromDocx(file.buffer);
+    } else {
+      throw new BadRequestException(`Type de fichier non supporte: ${fileType}`);
+    }
+
+    if (!process.env.GROQ_API_KEY) {
+      throw new BadRequestException('GROQ_API_KEY manquant');
+    }
+
+    const truncatedText = rawText.substring(0, 8000);
+    const prompt = `Tu es un expert-comptable. Analyse ce document (bon de commande, devis ou facture) et retourne UNIQUEMENT un objet JSON valide, sans aucun texte avant ou apres, sans markdown, avec exactement cette structure:
+{
+  "invoiceNumber": "",
+  "orderNumber": "",
+  "engagementId": "",
+  "clientName": "",
+  "clientEmail": "",
+  "clientAddress": "",
+  "date": "YYYY-MM-DD",
+  "dueDate": "YYYY-MM-DD",
+  "items": [
+    { "article": "", "description": "", "quantity": 1, "unitPrice": 0, "discount": 0, "vatRate": 20 }
+  ],
+  "notes": ""
+}
+
+Si une information n'est pas trouvee, laisse une chaine vide ou 0.
+
+Voici le texte du document:
+${truncatedText}`;
+
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.1,
+        max_tokens: 3000,
+      }),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new BadRequestException(`Erreur API Groq (${response.status}): ${errText}`);
+    }
+
+    const result: any = await response.json();
+    const content = result.choices?.[0]?.message?.content;
+    if (!content) throw new BadRequestException('Reponse Groq vide');
+
+    const cleaned = content.replace(/```json|```/g, '').trim();
+    try {
+      return JSON.parse(cleaned);
+    } catch (e) {
+      const match = cleaned.match(/\{[\s\S]*\}/);
+      if (match) return JSON.parse(match[0]);
+      throw new BadRequestException('Impossible de parser le JSON retourne par Groq');
+    }
+  }
+
+  async analyzeSplitPDF(file: any, tenantId: string): Promise<any[]> {
+    const fileType = this.detectFileType(file.originalname, file.mimetype);
+    if (fileType !== 'PDF') {
+      throw new BadRequestException('Le decoupage necessite un fichier PDF');
+    }
+
+    const pageCount = await this.getPDFPageCount(file.buffer);
+    const results: any[] = [];
+
+    for (let i = 1; i <= pageCount; i++) {
+      try {
+        const pageText = await this.extractTextFromPDFPage(file.buffer, i);
+
+        if (!pageText || pageText.trim().length === 0) {
+          results.push({ pageNumber: i, status: 'ERROR', message: 'Page vide ou illisible' });
+          continue;
+        }
+
+        if (process.env.GROQ_API_KEY) {
+          try {
+            const groqData = await this.extractWithGroq(pageText, 'INVOICE');
+            if (groqData) {
+              results.push({
+                pageNumber: i,
+                status: 'SUCCESS',
+                data: { ...groqData, rawText: pageText },
+                confidence: 0.9,
+              });
+              continue;
+            }
+          } catch (error: any) {
+            this.logger.warn(`Extraction Groq echouee page ${i}: ${error.message}`);
+          }
+        }
+
+        results.push({ pageNumber: i, status: 'ERROR', message: 'Extraction impossible pour cette page' });
+      } catch (error: any) {
+        this.logger.error(`Erreur page ${i}:`, error);
+        results.push({ pageNumber: i, status: 'ERROR', message: error.message });
+      }
+    }
+
+    return results;
+  }
+
+  private async getPDFPageCount(buffer: Buffer): Promise<number> {
+    const { execSync } = require('child_process');
+    const fs = require('fs');
+    const os = require('os');
+    const path = require('path');
+    const tmpIn = path.join(os.tmpdir(), 'split_' + Date.now() + '.pdf');
+    fs.writeFileSync(tmpIn, buffer);
+    try {
+      const output = execSync(`pdfinfo "${tmpIn}"`, { timeout: 15000 }).toString();
+      const match = output.match(/Pages:\s+(\d+)/);
+      return match ? parseInt(match[1], 10) : 1;
+    } finally {
+      try { fs.unlinkSync(tmpIn); } catch {}
+    }
+  }
+
+  private async extractTextFromPDFPage(buffer: Buffer, pageNum: number): Promise<string> {
+    const { execSync } = require('child_process');
+    const fs = require('fs');
+    const os = require('os');
+    const path = require('path');
+    const tmpIn = path.join(os.tmpdir(), 'page_' + Date.now() + '_' + pageNum + '.pdf');
+    const tmpOut = path.join(os.tmpdir(), 'page_' + Date.now() + '_' + pageNum + '.txt');
+    fs.writeFileSync(tmpIn, buffer);
+    try {
+      execSync(`pdftotext -f ${pageNum} -l ${pageNum} "${tmpIn}" "${tmpOut}"`, { timeout: 30000 });
+      return fs.readFileSync(tmpOut, 'utf8');
+    } finally {
+      try { fs.unlinkSync(tmpIn); } catch {}
+      try { fs.unlinkSync(tmpOut); } catch {}
     }
   }
 
@@ -215,7 +830,7 @@ export class UniversalDocumentParserService {
 
         transactions.push({ date, label, amount, rawLine: line });
       } catch (error) {
-        this.logger.warn(`Erreur à la ligne ${i + 1}: ${error.message}`);
+        this.logger.warn(`Erreur a la ligne ${i + 1}: ${error.message}`);
         continue;
       }
     }
@@ -345,18 +960,16 @@ export class UniversalDocumentParserService {
     return cv;
   }
 
-  // ── PDF extraction using pdftotext (poppler) ──────────────────────────────
   private async extractTextFromPDF(buffer: Buffer): Promise<string> {
     try {
       const { execSync } = require('child_process');
       const fs = require('fs');
       const os = require('os');
-      const tmpIn = os.tmpdir() + '\\cv_' + Date.now() + '.pdf';
-      const tmpOut = os.tmpdir() + '\\cv_' + Date.now() + '.txt';
+      const path = require('path');
+      const tmpIn = path.join(os.tmpdir(), 'cv_' + Date.now() + '.pdf');
+      const tmpOut = path.join(os.tmpdir(), 'cv_' + Date.now() + '.txt');
       fs.writeFileSync(tmpIn, buffer);
-      const pop =
-        'C:\\Users\\k\\Downloads\\Release-26.02.0-0\\poppler-26.02.0\\Library\\bin\\pdftotext.exe';
-      execSync(`"${pop}" "${tmpIn}" "${tmpOut}"`, { timeout: 30000 });
+      execSync(`pdftotext "${tmpIn}" "${tmpOut}"`, { timeout: 30000 });
       const text = fs.readFileSync(tmpOut, 'utf8');
       try {
         fs.unlinkSync(tmpIn);
@@ -375,7 +988,7 @@ export class UniversalDocumentParserService {
       const result = await mammoth.extractRawText({ buffer });
       const rawText = result.value;
       if (typeof rawText !== 'string') {
-        throw new Error("Extraction Word invalide: le résultat n'est pas une chaîne");
+        throw new Error("Extraction Word invalide: le resultat n'est pas une chaine");
       }
       return rawText;
     } catch (error: any) {
@@ -419,7 +1032,7 @@ export class UniversalDocumentParserService {
       mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     )
       return 'DOCX';
-    throw new BadRequestException(`Type de fichier non supporté: ${ext || mimetype}`);
+    throw new BadRequestException(`Type de fichier non supporte: ${ext || mimetype}`);
   }
 
   private async findTemplateBySignature(
@@ -492,7 +1105,7 @@ export class UniversalDocumentParserService {
 
   async deleteTemplate(templateId: string, tenantId: string): Promise<void> {
     const template = await this.templateModel.findOne({ _id: templateId, tenantId });
-    if (!template) throw new BadRequestException('Template non trouvé');
+    if (!template) throw new BadRequestException('Template non trouve');
     await this.templateModel.deleteOne({ _id: templateId });
   }
 }

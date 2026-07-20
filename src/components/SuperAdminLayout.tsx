@@ -56,9 +56,8 @@ export function SuperAdminLayout({ onExit }: SuperAdminLayoutProps) {
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50">
-      {/* Sidebar */}
-      <aside className="w-64 bg-gradient-to-b from-purple-900 to-purple-800 text-white flex flex-col">
+    <div style={{display:"flex", minHeight:"100vh", background:"linear-gradient(135deg, #faf5ff, white, #faf5ff)"}}>
+      <aside style={{width:"256px", background:"linear-gradient(to bottom, #581c87, #4338ca)", color:"white", display:"flex", flexDirection:"column", height:"100vh", position:"sticky", top:0, flexShrink:0}}>
         {/* Header */}
         <div className="p-4">
           <div className="flex items-center gap-2">
@@ -73,7 +72,7 @@ export function SuperAdminLayout({ onExit }: SuperAdminLayoutProps) {
         <Separator className="bg-purple-700" />
 
         {/* Navigation */}
-        <nav className="flex-1 p-2 space-y-1">
+        <nav style={{flex:1, padding:"8px", overflowY:"auto"}}>
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentPage === item.id;
@@ -94,10 +93,7 @@ export function SuperAdminLayout({ onExit }: SuperAdminLayoutProps) {
           })}
         </nav>
 
-        <Separator className="bg-purple-700" />
-
-        {/* Footer */}
-        <div className="p-4">
+        <div className="p-4" style={{borderTop:"1px solid rgba(255,255,255,0.1)", marginTop:"auto"}}>
           <Button
             variant="ghost"
             className="w-full text-white hover:bg-purple-800 justify-start"

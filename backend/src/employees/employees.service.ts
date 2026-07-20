@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+﻿import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Employee, EmployeeDocument } from './schemas/employee.schema';
@@ -104,10 +104,27 @@ export class EmployeesService {
     }
   }
 
-  /** Sauvegarde un CV parsé (nom, email, texte brut). Aucune vérification externe. */
+  /** Sauvegarde un CV parsé (profil complet extrait par IA). Aucune vérification externe. */
   async createCV(
     tenantId: string,
-    data: { fileName: string; name?: string; email?: string; rawText: string },
+    data: {
+      fileName: string;
+      name?: string;
+      email?: string;
+      phone?: string;
+      title?: string;
+      summary?: string;
+      yearsOfExperience?: number;
+      seniorityLevel?: string;
+      isManager?: boolean;
+      city?: string;
+      skills?: Record<string, any>[];
+      experiences?: Record<string, any>[];
+      education?: Record<string, any>[];
+      certifications?: Record<string, any>[];
+      languages?: Record<string, any>[];
+      rawText: string;
+    },
   ): Promise<CVDocument> {
     const cv = new this.cvModel({ ...data, tenantId });
     return cv.save();

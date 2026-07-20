@@ -7,12 +7,14 @@ interface CompanySettingsContextType {
   tenant: Tenant | null;
   loading: boolean;
   updateCompanyInfo: (data: {
-    siren?: string;
+    matriculeFiscal?: string;
+    businessName?: string;
+    name?: string;
     tvaNumber?: string;
     isVatSubject?: boolean;
     legalForm?: string;
     capital?: number;
-    rcs?: string;
+    registreCommerce?: string;
     address?: {
       line1: string;
       line2?: string;
@@ -120,12 +122,14 @@ export function CompanySettingsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const updateCompanyInfo = async (data: {
-    siren?: string;
+    matriculeFiscal?: string;
+    businessName?: string;
+    name?: string;
     tvaNumber?: string;
     isVatSubject?: boolean;
     legalForm?: string;
     capital?: number;
-    rcs?: string;
+    registreCommerce?: string;
     address?: {
       line1: string;
       line2?: string;

@@ -8,25 +8,32 @@ services:
       - mongodb_data:/data/db
     networks:
       - invocia-network
-
   backend:
     build: ./backend
     container_name: invocia-backend
     ports:
       - "3001:3001"
+    env_file:
+      - ./backend/.env
     environment:
       - DB_URI=mongodb://mongodb:27017/INVOCIA-TN
       - MONGODB_URI=mongodb://mongodb:27017/INVOCIA-TN
-      - JWT_SECRET=invocia-secret-2026
+      - JWT_SECRET=${JWT_SECRET}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - PORT=3001
+      - SMTP_HOST=smtp-relay.brevo.com
+      - SMTP_PORT=587
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - PLATFORM_ADMIN_EMAIL=${PLATFORM_ADMIN_EMAIL}
+      - GROQ_API_KEY=${GROQ_API_KEY}   
     depends_on:
       - mongodb
     networks:
       - invocia-network
-
 volumes:
   mongodb_data:
-
 networks:
   invocia-network:
     driver: bridge
+

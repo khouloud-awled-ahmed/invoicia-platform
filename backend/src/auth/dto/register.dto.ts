@@ -23,6 +23,9 @@ export class RegisterDto {
   @IsNotEmpty()
   companyName: string;
 
+  @IsNotEmpty()
+  matriculeFiscal: string;
+
   @IsOptional()
   tenantId?: string;
 

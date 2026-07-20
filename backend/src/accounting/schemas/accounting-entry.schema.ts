@@ -34,6 +34,9 @@ export class AccountingEntry {
 
   @Prop({ type: String, ref: 'Tenant', required: true })
   tenantId: string;
+
+  @Prop({ type: String, required: false })
+  projectId?: string;
 }
 
 export const AccountingEntrySchema = SchemaFactory.createForClass(AccountingEntry);

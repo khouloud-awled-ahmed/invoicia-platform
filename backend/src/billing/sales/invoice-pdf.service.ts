@@ -20,9 +20,6 @@ function buildFatooraPayload(
 export class InvoicePdfService {
   private readonly logger = new Logger(InvoicePdfService.name);
 
-  /**
-   * Génère le PDF de la facture client avec QR Code El Fatoora en bas de page.
-   */
   async generateSalesInvoicePdf(
     invoice: InvoiceDocument,
     tenant: TenantDocument,
@@ -36,12 +33,40 @@ export class InvoicePdfService {
 
     let y = height - 50;
 
-    // En-tête
+    page.drawRectangle({
+      x: 20,
+      y: 20,
+      width: width - 40,
+      height: height - 40,
+      borderColor: rgb(0, 0, 0),
+      borderWidth: 2,
+    });
+
+    const status = (invoice as any).status || 'pending';
+    const statusLabel = status === 'paid' ? 'PAYEE' : status === 'overdue' ? 'EN RETARD' : 'EN ATTENTE';
+    const statusColor = status === 'paid' ? rgb(0.13, 0.55, 0.13) : status === 'overdue' ? rgb(0.8, 0.1, 0.1) : rgb(0.9, 0.6, 0.1);
+    page.drawRectangle({ x: width - 130, y: height - 72, width: 100, height: 20, color: statusColor });
+    page.drawText(statusLabel, { x: width - 125, y: height - 67, size: 9, font: helveticaBoldFont, color: rgb(1,1,1) });
+
+    const hexToRgb = (hex: string) => {
+      const cleaned = (hex || '#000000').replace('#', '');
+      const r = parseInt(cleaned.substring(0, 2), 16) / 255;
+      const g = parseInt(cleaned.substring(2, 4), 16) / 255;
+      const b = parseInt(cleaned.substring(4, 6), 16) / 255;
+      return rgb(r, g, b);
+    };
+    const templateConfig = (tenant as any).invoiceTemplateConfig || {};
+    const primaryColor = hexToRgb(templateConfig.primaryColor || '#000000');
+    const secondaryColor = hexToRgb(templateConfig.secondaryColor || '#666666');
+
+    // En-tete
+    page.drawText("FACTURE", { x: width - 130, y: height - 45, size: 20, font: helveticaBoldFont, color: primaryColor });
     page.drawText(tenant.businessName || tenant.name, {
       x: 50,
       y,
       size: 18,
       font: helveticaBoldFont,
+      color: primaryColor,
     });
     y -= 20;
 
@@ -74,15 +99,35 @@ export class InvoicePdfService {
       size: 10,
       font: helveticaFont,
     });
-    y -= 14;
-    page.drawText(`Client: ${invoice.client}`, { x: 50, y, size: 10, font: helveticaFont });
     y -= 30;
 
+    // FACTURER A
+    page.drawText('FACTURER A', { x: 50, y, size: 11, font: helveticaBoldFont, color: secondaryColor });
+    y -= 16;
+    page.drawText(String(invoice.client || ''), { x: 50, y, size: 10, font: helveticaBoldFont });
+    y -= 14;
+    if (client && (client as any).address) {
+      page.drawText(String((client as any).address).slice(0, 70), {
+        x: 50,
+        y,
+        size: 9,
+        font: helveticaFont,
+      });
+      y -= 14;
+    }
+    if (client && (client as any).email) {
+      page.drawText(String((client as any).email), { x: 50, y, size: 9, font: helveticaFont });
+      y -= 14;
+    }
+
+    y -= 16;
+
     // Lignes
-    page.drawText('Désignation', { x: 50, y, size: 10, font: helveticaBoldFont });
-    page.drawText('Qté', { x: 350, y, size: 10, font: helveticaBoldFont });
-    page.drawText('P.U.', { x: 400, y, size: 10, font: helveticaBoldFont });
-    page.drawText('Montant', { x: 500, y, size: 10, font: helveticaBoldFont });
+    page.drawRectangle({ x: 45, y: y - 5, width: width - 90, height: 20, color: primaryColor });
+    page.drawText('Designation', { x: 50, y, size: 10, font: helveticaBoldFont, color: rgb(1, 1, 1) });
+    page.drawText('Qte', { x: 350, y, size: 10, font: helveticaBoldFont, color: rgb(1, 1, 1) });
+    page.drawText('P.U.', { x: 400, y, size: 10, font: helveticaBoldFont, color: rgb(1, 1, 1) });
+    page.drawText('Montant', { x: 500, y, size: 10, font: helveticaBoldFont, color: rgb(1, 1, 1) });
     y -= 18;
 
     for (const item of invoice.items || []) {
@@ -134,14 +179,98 @@ export class InvoicePdfService {
       size: 10,
       font: helveticaFont,
     });
-    y -= 14;
+    y -= 18;
     const netAPayer = (invoice as any).netAPayer ?? Number(invoice.amountTTC || 0) + timbre;
-    page.drawText(`Net à payer: ${Number(netAPayer).toFixed(3)} TND`, {
+    page.drawRectangle({ x: 395, y: y - 4, width: 150, height: 20, color: primaryColor });
+    page.drawText(`Net a payer: ${Number(netAPayer).toFixed(3)} TND`, {
       x: 400,
       y,
       size: 10,
       font: helveticaBoldFont,
+      color: rgb(1, 1, 1),
     });
+    y -= 30;
+
+    // Coordonnees bancaires
+    const bank = (tenant as any).defaultBankAccount;
+    let bankBoxBottom = y;
+    if (bank && (bank.iban || bank.bankName)) {
+      page.drawRectangle({ x: 45, y: y - 60, width: 250, height: 70, color: rgb(0.96, 0.96, 0.96) });
+      let by = y - 15;
+      page.drawText('COORDONNEES BANCAIRES', {
+        x: 55,
+        y: by,
+        size: 10,
+        font: helveticaBoldFont,
+        color: secondaryColor,
+      });
+      by -= 16;
+      if (bank.bankName) {
+        page.drawText(`Banque: ${bank.bankName}`, { x: 55, y: by, size: 8, font: helveticaFont });
+        by -= 12;
+      }
+      if (bank.iban) {
+        page.drawText(`IBAN: ${bank.iban}`, { x: 55, y: by, size: 8, font: helveticaFont });
+        by -= 12;
+      }
+      if (bank.bic) {
+        page.drawText(`BIC: ${bank.bic}`, { x: 55, y: by, size: 8, font: helveticaFont });
+      }
+      bankBoxBottom = y - 70;
+      y -= 80;
+    }
+
+    // Mentions legales (CGV par defaut du tenant)
+    const terms = (tenant as any).defaultTerms;
+    if (terms) {
+      y -= 10;
+      page.drawLine({
+        start: { x: 50, y: y + 8 },
+        end: { x: width - 50, y: y + 8 },
+        thickness: 0.5,
+        color: rgb(0.8, 0.8, 0.8),
+      });
+      y -= 6;
+      if (terms.penaltyRate !== undefined) {
+        page.drawText(`Penalites de retard (taux annuel) : ${Number(terms.penaltyRate).toFixed(2)} %`, {
+          x: 50,
+          y,
+          size: 8,
+          font: helveticaFont,
+          color: rgb(0.4, 0.4, 0.4),
+        });
+        y -= 11;
+      }
+      if (terms.discountPolicy) {
+        page.drawText(String(terms.discountPolicy), {
+          x: 50,
+          y,
+          size: 8,
+          font: helveticaFont,
+          color: rgb(0.4, 0.4, 0.4),
+        });
+        y -= 11;
+      }
+      if (terms.recoveryFee !== undefined) {
+        page.drawText(
+          `Indemnite forfaitaire pour frais de recouvrement en cas de retard de paiement : ${Number(terms.recoveryFee).toFixed(2)} TND`,
+          { x: 50, y, size: 8, font: helveticaFont, color: rgb(0.4, 0.4, 0.4) },
+        );
+        y -= 11;
+      }
+      if (terms.paymentTermsDefault !== undefined && invoice.date) {
+        const dueDate = new Date(invoice.date);
+        dueDate.setDate(dueDate.getDate() + Number(terms.paymentTermsDefault || 0));
+        page.drawText(`Date limite de paiement: ${dueDate.toLocaleDateString('fr-FR')}`, {
+          x: 50,
+          y,
+          size: 8,
+          font: helveticaBoldFont,
+          color: rgb(0.3, 0.3, 0.3),
+        });
+        y -= 11;
+      }
+    }
 
     // ----- El Fatoora QR en bas de page -----
     const mfEmetteur = tenant.matriculeFiscal || '';
@@ -171,8 +300,17 @@ export class InvoicePdfService {
         color: rgb(0.5, 0.5, 0.5),
       });
     } catch (err) {
-      this.logger.warn('QR El Fatoora non généré: ' + (err as Error).message);
+      this.logger.warn('QR El Fatoora non genere: ' + (err as Error).message);
     }
+
+    // Footer
+    page.drawText('Merci pour votre confiance !', {
+      x: width / 2 - 60,
+      y: 25,
+      size: 8,
+      font: helveticaFont,
+      color: rgb(0.6, 0.6, 0.6),
+    });
 
     const pdfBytes = await pdfDoc.save();
     return Buffer.from(pdfBytes);

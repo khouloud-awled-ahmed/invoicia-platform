@@ -74,10 +74,19 @@ export function BankSelectionModal({ open, onOpenChange }: BankSelectionModalPro
       );
 
       // Stocker le state dans localStorage pour la vérification au retour
-      localStorage.setItem('banking_oauth_state', state);
+      // localStorage.setItem('banking_oauth_state', state); // disabled for demo
 
       // Rediriger vers l'URL OAuth de l'agrégateur
-      window.location.href = url;
+      // DEMO MODE: create a real bank account in MongoDB
+      await apiClient.request('/banking/accounts', { method: 'POST', body: JSON.stringify({
+        name: institution.name,
+        bankName: institution.name,
+        iban: 'TN59' + Math.random().toString().slice(2,22),
+        currency: 'TND',
+        balance: 0,
+      }) });
+      toast.success(institution.name + ' connectee avec succes !');
+      onOpenChange(false);
     } catch (error: any) {
       console.error("Erreur lors de la connexion:", error);
       toast.error(error?.message || "Erreur lors de la connexion à la banque");

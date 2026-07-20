@@ -1,4 +1,4 @@
-﻿import { apiClient } from "../lib/api-client-backend";
+import { apiClient } from "../lib/api-client-backend";
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
 import { Button } from "./ui/button";

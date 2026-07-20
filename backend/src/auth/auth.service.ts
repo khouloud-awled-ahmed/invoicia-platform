@@ -36,7 +36,6 @@ export class AuthService {
       throw new UnauthorizedException('Account is inactive');
     }
 
-    // Update last login
     await this.userModel.updateOne({ _id: user._id }, { lastLogin: new Date() });
 
     const payload = { email: user.email, sub: user._id, role: user.role, tenantId: user.tenantId };
@@ -56,14 +55,16 @@ export class AuthService {
   }
 
   async register(registerDto: RegisterDto) {
-    // Validation : companyName est obligatoire si tenantId n'est pas fourni
     if (!registerDto.tenantId && !registerDto.companyName) {
       throw new BadRequestException("Le nom de l'entreprise est obligatoire");
     }
 
-    // Validation : companyName ne doit pas être vide si fourni
     if (registerDto.companyName && registerDto.companyName.trim() === '') {
       throw new BadRequestException("Le nom de l'entreprise ne peut pas être vide");
+    }
+
+    if (!registerDto.tenantId && !registerDto.matriculeFiscal) {
+      throw new BadRequestException('Le matricule fiscal est obligatoire');
     }
 
     const existingUser = await this.userModel
@@ -73,22 +74,31 @@ export class AuthService {
       throw new UnauthorizedException('Un utilisateur avec cet email existe déjà');
     }
 
-    // Si c'est une inscription SaaS, créer le Tenant d'abord
+    // Check matricule fiscal unique
+    if (registerDto.matriculeFiscal) {
+      const existingTenant = await this.tenantModel
+        .findOne({ matriculeFiscal: registerDto.matriculeFiscal.trim() })
+        .exec();
+      if (existingTenant) {
+        throw new BadRequestException('Ce matricule fiscal est déjà utilisé');
+      }
+    }
+
     let tenantId = registerDto.tenantId;
 
     if (!tenantId && registerDto.companyName) {
       try {
-        // Créer un nouveau Tenant pour cette entreprise
         const tenant = new this.tenantModel({
           name: registerDto.companyName.trim(),
           businessName: registerDto.companyName.trim(),
           adminEmail: registerDto.email.toLowerCase(),
           email: registerDto.email.toLowerCase(),
+          matriculeFiscal: registerDto.matriculeFiscal.trim(),
           status: 'pending',
           subscriptionPlan: 'essential',
           pack: 'essential',
           modules: registerDto.selectedModules || [],
-          subscriptionStatus: 'INCOMPLETE',
+          subscriptionStatus: 'PENDING_PAYMENT',
           planType: 'CUSTOM',
           currentUsers: 0,
           maxUsers: 10,
@@ -122,7 +132,6 @@ export class AuthService {
 
     await user.save();
 
-    // Mettre à jour le compteur d'utilisateurs du tenant
     if (tenantId) {
       await this.tenantModel.updateOne({ _id: tenantId }, { $inc: { currentUsers: 1 } }).exec();
     }
@@ -149,12 +158,6 @@ export class AuthService {
     };
   }
 
-  /**
-   * Generates a password reset token, stores ONLY a hash + expiry on the user,
-   * and (for now) logs the reset URL (email sending is not implemented yet).
-   *
-   * Always returns a generic success message to avoid user enumeration.
-   */
   async forgotPassword(email: string) {
     const normalizedEmail = email.toLowerCase();
     const user = await this.userModel.findOne({ email: normalizedEmail }).exec();
@@ -162,7 +165,7 @@ export class AuthService {
     if (user) {
       const rawToken = crypto.randomBytes(32).toString('hex');
       const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
-      const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
 
       user.resetPasswordTokenHash = tokenHash;
       user.resetPasswordExpiresAt = expiresAt;
@@ -170,11 +173,6 @@ export class AuthService {
 
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3003';
       const resetUrl = `${frontendUrl}/reset-password?email=${encodeURIComponent(normalizedEmail)}&token=${encodeURIComponent(rawToken)}`;
-
-      // TODO: Send email via real email provider (SMTP/SendGrid/etc.)
-      // For now, log it for development.
-      // IMPORTANT: this logs a sensitive token; do NOT keep in production logs.
-      // eslint-disable-next-line no-console
       console.log(`[PASSWORD RESET] ${normalizedEmail} -> ${resetUrl}`);
     }
 
@@ -182,27 +180,13 @@ export class AuthService {
   }
 
   async resetPassword(email: string, token: string, newPassword: string) {
-    console.log('[RESET PASSWORD] Attempt:', {
-      email,
-      tokenLength: token?.length,
-      newPasswordLength: newPassword?.length,
-    });
-
     const normalizedEmail = email.toLowerCase();
     const user = await this.userModel.findOne({ email: normalizedEmail }).exec();
 
-    if (!user) {
-      console.log('[RESET PASSWORD] User not found:', normalizedEmail);
+    if (!user) throw new BadRequestException('Lien de réinitialisation invalide ou expiré');
+    if (!user.resetPasswordTokenHash || !user.resetPasswordExpiresAt)
       throw new BadRequestException('Lien de réinitialisation invalide ou expiré');
-    }
-
-    if (!user.resetPasswordTokenHash || !user.resetPasswordExpiresAt) {
-      console.log('[RESET PASSWORD] No reset token found for user:', normalizedEmail);
-      throw new BadRequestException('Lien de réinitialisation invalide ou expiré');
-    }
-
     if (new Date() > user.resetPasswordExpiresAt) {
-      console.log('[RESET PASSWORD] Token expired for user:', normalizedEmail);
       user.resetPasswordTokenHash = undefined;
       user.resetPasswordExpiresAt = undefined;
       await user.save();
@@ -210,23 +194,14 @@ export class AuthService {
     }
 
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-    console.log('[RESET PASSWORD] Token comparison:', {
-      providedHash: tokenHash.substring(0, 10) + '...',
-      storedHash: user.resetPasswordTokenHash.substring(0, 10) + '...',
-      match: tokenHash === user.resetPasswordTokenHash,
-    });
-
-    if (tokenHash !== user.resetPasswordTokenHash) {
-      console.log('[RESET PASSWORD] Token mismatch for user:', normalizedEmail);
+    if (tokenHash !== user.resetPasswordTokenHash)
       throw new BadRequestException('Lien de réinitialisation invalide ou expiré');
-    }
 
     user.password = await bcrypt.hash(newPassword, 10);
     user.resetPasswordTokenHash = undefined;
     user.resetPasswordExpiresAt = undefined;
     await user.save();
 
-    console.log('[RESET PASSWORD] Success for user:', normalizedEmail);
     return { message: 'Mot de passe réinitialisé avec succès' };
   }
 }

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Input } from "./ui/input";
@@ -200,7 +200,9 @@ export function AccountingComplete() {
       }))))
       .catch(() => {});
   }, []);
-  const [entryForm, setEntryForm] = useState({ date: "", journal: "", compte: "", libelle: "", debit: "", credit: "" });
+  const [entryForm, setEntryForm] = useState({ date: "", journal: "", compte: "", libelle: "", debit: "", credit: "", projectId: "" });
+  const [projectsList, setProjectsList] = useState<any[]>([]);
+  useEffect(() => { apiClient.getProjects().then((p) => setProjectsList(p || [])).catch(() => {}); }, []);
   const [showBankReconciliation, setShowBankReconciliation] = useState(false);
   const [showAssetDialog, setShowAssetDialog] = useState(false);
   const [showBudgetDialog, setShowBudgetDialog] = useState(false);
@@ -225,6 +227,85 @@ export function AccountingComplete() {
   const [expensesByCategory, setExpensesByCategory] = useState<Array<{ name: string; value: number; color: string }>>([]);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [projectAnalytics, setProjectAnalytics] = useState<any[]>([]);
+  const [budgetsList, setBudgetsList] = useState<any[]>([]);
+  const [budgetsSummary, setBudgetsSummary] = useState<{ totalBudget: number; totalActual: number; ecart: number; overBudgetCount: number } | null>(null);
+  const [budgetForm, setBudgetForm] = useState({ account: "", accountLabel: "", period: "", budgeted: "" });
+  const [treasuryForecast, setTreasuryForecast] = useState<Array<{ month: string; income: number; expenses: number; balance: number; projected: boolean }>>([]);
+  const [assetsSummary, setAssetsSummary] = useState<{ totalGross: number; totalNet: number; totalMonthlyDepreciation: number } | null>(null);
+  const [assetForm, setAssetForm] = useState({ name: "", category: "", purchaseDate: "", purchaseAmount: "", depreciationMethod: "", depreciationYears: "" });
+  const [aiSummary, setAiSummary] = useState<{ status: string; headline: string; points: Array<{ label: string; detail: string }> } | null>(null);
+  const [isLoadingAiSummary, setIsLoadingAiSummary] = useState(false);
+  const handleGenerateAiSummary = async () => {
+    setIsLoadingAiSummary(true);
+    try {
+      const result = await apiClient.getAccountingAISummary();
+      setAiSummary(result as any);
+    } catch (error: any) {
+      toast.error(error?.message || "Erreur lors de la génération de l'analyse IA");
+    } finally {
+      setIsLoadingAiSummary(false);
+    }
+  };
+  const loadAssets = () => {
+    apiClient.getAssets().then((list) => setAssets(list || [])).catch(() => setAssets([]));
+    apiClient.getAssetsSummary().then((s) => setAssetsSummary(s)).catch(() => setAssetsSummary(null));
+  };
+  useEffect(() => { loadAssets(); }, []);
+  const loadBudgets = () => {
+    apiClient.getBudgets().then((list) => {
+      setBudgetsList(list || []);
+      generateAlerts(list || []);
+    }).catch(() => setBudgetsList([]));
+    apiClient.getBudgetsSummary().then((s) => setBudgetsSummary(s)).catch(() => setBudgetsSummary(null));
+  };
+  const generateAlerts = async (budgets: any[]) => {
+    const newAlerts: Alert[] = [];
+    budgets.forEach((b: any) => {
+      if (b.variancePercent < -10) {
+        newAlerts.push({
+          id: "budget-" + b.id,
+          type: "danger",
+          title: "Dépassement budgétaire",
+          message: `Le compte ${b.account} (${b.accountLabel}) dépasse son budget de ${Math.abs(b.variancePercent).toFixed(1)}%`,
+          date: new Date().toISOString(),
+          read: false,
+        });
+      } else if (b.variancePercent < -5) {
+        newAlerts.push({
+          id: "budget-warn-" + b.id,
+          type: "warning",
+          title: "Alerte budgétaire",
+          message: `Le compte ${b.account} (${b.accountLabel}) approche de son budget (${Math.abs(b.variancePercent).toFixed(1)}% consommé au-delà)`,
+          date: new Date().toISOString(),
+          read: false,
+        });
+      }
+    });
+    try {
+      const invoices = await apiClient.getInvoices();
+      const today = new Date();
+      (invoices || []).forEach((inv: any) => {
+        const isUnpaid = inv.status !== "paid" && inv.paymentStatus !== "paid";
+        const isOverdue = inv.status === "overdue" || (inv.dueDate && new Date(inv.dueDate) < today);
+        if (isUnpaid && isOverdue && inv.dueDate) {
+          newAlerts.push({
+            id: "invoice-" + (inv._id || inv.id),
+            type: "warning",
+            title: "Facture en retard",
+            message: `La facture ${inv.number} est en retard de paiement`,
+            date: inv.dueDate,
+            read: false,
+          });
+        }
+      });
+    } catch {}
+    setAlerts(newAlerts);
+  };
+  useEffect(() => { loadBudgets(); }, []);
+  useEffect(() => {
+    apiClient.getTreasuryForecast().then((data) => setTreasuryForecast(data || [])).catch(() => setTreasuryForecast([]));
+  }, []);
 
   // Charger les données depuis l'API
   useEffect(() => {
@@ -313,7 +394,10 @@ export function AccountingComplete() {
       // Assets et Budgets : TODO - Créer les endpoints backend si nécessaire
       setAssets([]);
       setBudgets([]);
-      setAlerts([]);
+      // setAlerts([]) supprimé - les alertes sont maintenant gérées par generateAlerts() dans loadBudgets()
+
+      const analytics = await apiClient.getAccountingAnalyticsByProject().catch(() => []);
+      setProjectAnalytics(analytics || []);
     } catch (error: any) {
       console.error("Erreur lors du chargement des données:", error);
       toast.error(error?.message || "Erreur lors du chargement des données");
@@ -385,6 +469,125 @@ export function AccountingComplete() {
   const handleExportFEC = () => {
     toast.success("Export FEC généré avec succès !");
   };
+
+  const handleExportBalance = async () => {
+    try {
+      const balance = await apiClient.getEcrituresBalance();
+      if (!balance || balance.length === 0) {
+        toast.error("Aucune donnée à exporter");
+        return;
+      }
+      const rows = ["Compte,Debit,Credit,Solde"];
+      balance.forEach((b: any) => {
+        rows.push(b.compte + "," + b.debit + "," + b.credit + "," + b.solde);
+      });
+      const csv = rows.join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "balance-generale.csv";
+      a.click();
+      window.URL.revokeObjectURL(url);
+      toast.success("Balance générale exportée !");
+    } catch (error: any) {
+      toast.error(error?.message || "Erreur lors de l'export");
+    }
+  };
+
+  const handleExportGrandLivre = async () => {
+    try {
+      const data = await apiClient.getEcrituresGrandLivre();
+      if (!data || data.length === 0) { toast.error("Aucune donnée à exporter"); return; }
+      const rows = ["Compte,Date,Journal,Libelle,Debit,Credit"];
+      data.forEach((c: any) => {
+        c.lines.forEach((l: any) => {
+          rows.push(c.compte + "," + l.date + "," + l.journal + "," + l.libelle + "," + l.debit + "," + l.credit);
+        });
+      });
+      const csv = rows.join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = "grand-livre.csv"; a.click();
+      window.URL.revokeObjectURL(url);
+      toast.success("Grand Livre exporté !");
+    } catch (error: any) {
+      toast.error(error?.message || "Erreur lors de l'export");
+    }
+  };
+
+  const handleExportCompteResultat = async () => {
+    try {
+      const data = await apiClient.getEcrituresCompteResultat();
+      const rows = ["Poste,Montant"];
+      rows.push("Total Produits," + data.totalProduits);
+      rows.push("Total Charges," + data.totalCharges);
+      rows.push("Resultat Net," + data.resultatNet);
+      const csv = rows.join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = "compte-resultat.csv"; a.click();
+      window.URL.revokeObjectURL(url);
+      toast.success("Compte de Résultat exporté !");
+    } catch (error: any) {
+      toast.error(error?.message || "Erreur lors de l'export");
+    }
+  };
+
+  const handleExportFECReal = async () => {
+    try {
+      const data = await apiClient.getEcrituresExportFEC();
+      const blob = new Blob([data.content], { type: "text/plain;charset=utf-8;" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = "export-fec.txt"; a.click();
+      window.URL.revokeObjectURL(url);
+      toast.success("Export FEC généré !");
+    } catch (error: any) {
+      toast.error(error?.message || "Erreur lors de l'export");
+    }
+  };
+
+  const handleExportBilan = async () => {
+    try {
+      const data = await apiClient.getEcrituresBilan();
+      const rows = ["Poste,Montant"];
+      rows.push("Actif," + data.actif);
+      rows.push("Passif," + data.passif);
+      rows.push("Equilibre," + data.equilibre);
+      const csv = rows.join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = "bilan.csv"; a.click();
+      window.URL.revokeObjectURL(url);
+      toast.success("Bilan exporté ! (Classification automatique basée sur le numéro de compte)");
+    } catch (error: any) {
+      toast.error(error?.message || "Erreur lors de l'export");
+    }
+  };
+
+  const handleExportTVA = async () => {
+    try {
+      const data = await apiClient.getEcrituresDeclarationTVA();
+      const rows = ["Poste,Montant"];
+      rows.push("TVA Collectee," + data.tvaCollectee);
+      rows.push("TVA Deductible," + data.tvaDeductible);
+      rows.push("TVA a Payer," + data.tvaAPayer);
+      const csv = rows.join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = "declaration-tva.csv"; a.click();
+      window.URL.revokeObjectURL(url);
+      toast.success("Déclaration TVA exportée ! (Classification automatique basée sur le numéro de compte)");
+    } catch (error: any) {
+      toast.error(error?.message || "Erreur lors de l'export");
+    }
+  };
+
 
   const handleSyncBank = async () => {
     try {
@@ -485,6 +688,82 @@ export function AccountingComplete() {
 
         {/* ==================== DASHBOARD ==================== */}
         <TabsContent value="dashboard" className="space-y-6">
+          {/* Analyse IA */}
+          <Card className="border-slate-200">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-600">
+                    <Zap className="h-4 w-4 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-base">Analyse Financière IA</CardTitle>
+                    <CardDescription className="text-xs">Généré à partir de vos données réelles</CardDescription>
+                  </div>
+                </div>
+                <Button
+                  onClick={handleGenerateAiSummary}
+                  disabled={isLoadingAiSummary}
+                  variant="outline"
+                  size="sm"
+                >
+                  {isLoadingAiSummary ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 mr-2 animate-spin" />
+                      Analyse en cours...
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="w-3.5 h-3.5 mr-2" />
+                      {aiSummary ? "Actualiser" : "Analyser avec l'IA"}
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {aiSummary ? (
+                <>
+                  <div className={cn(
+                    "flex items-center gap-2 mb-4 px-3 py-2 rounded-lg text-sm font-medium w-fit",
+                    aiSummary.status === "positive" && "bg-green-50 text-green-700",
+                    aiSummary.status === "warning" && "bg-orange-50 text-orange-700",
+                    aiSummary.status === "critical" && "bg-red-50 text-red-700"
+                  )}>
+                    {aiSummary.status === "positive" && <CheckCircle2 className="w-4 h-4" />}
+                    {aiSummary.status === "warning" && <AlertCircle className="w-4 h-4" />}
+                    {aiSummary.status === "critical" && <AlertTriangle className="w-4 h-4" />}
+                    {aiSummary.headline}
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-3">
+                    {aiSummary.points?.map((point, idx) => (
+                      <div key={idx} className={cn(
+                        "rounded-lg border-l-4 bg-gray-50 p-3",
+                        idx === 0 && "border-l-green-500",
+                        idx === 1 && "border-l-orange-500",
+                        idx === 2 && "border-l-blue-500"
+                      )}>
+                        <div className={cn(
+                          "text-xs font-semibold uppercase tracking-wide mb-1",
+                          idx === 0 && "text-green-700",
+                          idx === 1 && "text-orange-700",
+                          idx === 2 && "text-blue-700"
+                        )}>
+                          {point.label}
+                        </div>
+                        <p className="text-gray-600 text-xs leading-relaxed">{point.detail}</p>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Cliquez sur "Analyser avec l'IA" pour obtenir un résumé de votre trésorerie, vos factures en retard et vos performances.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
           {/* KPIs Principaux */}
           <div className="grid gap-4 md:grid-cols-4">
             <Card>
@@ -493,7 +772,7 @@ export function AccountingComplete() {
                 <Wallet className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl">{currentBalance.toLocaleString("fr-FR")} €</div>
+                <div className="text-2xl">{currentBalance.toLocaleString("fr-FR")} DT</div>
                 <p className="text-xs text-muted-foreground mt-1">
                   Solde actuel
                 </p>
@@ -506,7 +785,7 @@ export function AccountingComplete() {
                 <TrendingDown className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl text-orange-600">{monthlyBurnRate.toLocaleString("fr-FR")} €</div>
+                <div className="text-2xl text-orange-600">{monthlyBurnRate.toLocaleString("fr-FR")} DT</div>
                 <p className="text-xs text-muted-foreground mt-1">
                   Par mois
                 </p>
@@ -617,7 +896,7 @@ export function AccountingComplete() {
                 <Button variant="outline" className="h-auto flex-col gap-2 p-4" onClick={() => handleQuickAction("tva")}>
                   <Receipt className="h-8 w-8 text-purple-600" />
                   <span className="text-sm">TVA à Déclarer</span>
-                  <Badge variant="outline" className="bg-purple-50 text-purple-700">1 000€</Badge>
+                  <Badge variant="outline" className="bg-purple-50 text-purple-700">1 000DT</Badge>
                 </Button>
                 <Button variant="outline" className="h-auto flex-col gap-2 p-4" onClick={() => handleQuickAction("unpaid")}>
                   <AlertTriangle className="h-8 w-8 text-red-600" />
@@ -722,7 +1001,7 @@ export function AccountingComplete() {
                               "text-right font-semibold",
                               transaction.type === "credit" ? "text-green-600" : "text-red-600"
                             )}>
-                              {transaction.amount.toLocaleString("fr-FR")} €
+                              {transaction.amount.toLocaleString("fr-FR")} DT
                             </TableCell>
                             <TableCell>
                               <Button
@@ -790,7 +1069,7 @@ export function AccountingComplete() {
                             </TableCell>
                             <TableCell><Badge variant="outline" className="bg-green-50">Facture</Badge></TableCell>
                             <TableCell className="font-medium">{inv.label || `Facture ${inv.number}`}</TableCell>
-                            <TableCell className="text-right">{Number(inv.amount || 0).toLocaleString("fr-FR")} €</TableCell>
+                            <TableCell className="text-right">{Number(inv.amount || 0).toLocaleString("fr-FR")} DT</TableCell>
                           </TableRow>
                         ))}
                         {(openItems.expenses || []).map((exp: any) => (
@@ -810,7 +1089,7 @@ export function AccountingComplete() {
                             </TableCell>
                             <TableCell><Badge variant="outline" className="bg-amber-50">Dépense</Badge></TableCell>
                             <TableCell className="font-medium">{exp.supplier || exp.category || exp.id}</TableCell>
-                            <TableCell className="text-right">{Number(exp.amount || 0).toLocaleString("fr-FR")} €</TableCell>
+                            <TableCell className="text-right">{Number(exp.amount || 0).toLocaleString("fr-FR")} DT</TableCell>
                           </TableRow>
                         ))}
                         {(openItems.payrolls || []).map((p: any) => (
@@ -830,7 +1109,7 @@ export function AccountingComplete() {
                             </TableCell>
                             <TableCell><Badge variant="outline" className="bg-purple-50">Paie</Badge></TableCell>
                             <TableCell className="font-medium">{p.label || p.id}</TableCell>
-                            <TableCell className="text-right">{Number(p.amount || 0).toLocaleString("fr-FR")} €</TableCell>
+                            <TableCell className="text-right">{Number(p.amount || 0).toLocaleString("fr-FR")} DT</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -866,7 +1145,7 @@ export function AccountingComplete() {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={350}>
-                <RechartsLineChart data={[]}>
+                <RechartsLineChart data={treasuryForecast}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />
                   <YAxis />
@@ -897,17 +1176,17 @@ export function AccountingComplete() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {[].map((forecast: any, idx: number) => (
+                  {treasuryForecast.map((forecast: any, idx: number) => (
                     <TableRow key={idx} className={forecast.projected ? "bg-blue-50" : ""}>
                       <TableCell className="font-medium">{forecast.month}</TableCell>
                       <TableCell className="text-right text-green-600 font-semibold">
-                        +{forecast.income.toLocaleString("fr-FR")} €
+                        +{forecast.income.toLocaleString("fr-FR")} DT
                       </TableCell>
                       <TableCell className="text-right text-red-600 font-semibold">
-                        -{forecast.expenses.toLocaleString("fr-FR")} €
+                        -{forecast.expenses.toLocaleString("fr-FR")} DT
                       </TableCell>
                       <TableCell className="text-right font-bold text-blue-600">
-                        {forecast.balance.toLocaleString("fr-FR")} €
+                        {forecast.balance.toLocaleString("fr-FR")} DT
                       </TableCell>
                       <TableCell>
                         {forecast.projected ? (
@@ -937,17 +1216,31 @@ export function AccountingComplete() {
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                <div className="p-3 bg-white rounded border border-yellow-300">
-                  <div className="flex items-start gap-2">
-                    <Info className="w-4 h-4 text-yellow-600 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium">Trésorerie stable</p>
-                      <p className="text-xs text-muted-foreground">
-                        Votre trésorerie reste positive sur les 3 prochains mois
-                      </p>
+                {treasuryForecast.length > 0 && treasuryForecast.some((f) => f.balance < 0) ? (
+                  <div className="p-3 bg-white rounded border border-red-300">
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className="w-4 h-4 text-red-600 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium">Trésorerie négative prévue</p>
+                        <p className="text-xs text-muted-foreground">
+                          Votre solde prévisionnel devient négatif sur la période. Vérifiez vos factures en attente et vos dépenses.
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="p-3 bg-white rounded border border-yellow-300">
+                    <div className="flex items-start gap-2">
+                      <Info className="w-4 h-4 text-yellow-600 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium">Trésorerie stable</p>
+                        <p className="text-xs text-muted-foreground">
+                          Votre trésorerie reste positive sur les 3 prochains mois
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -976,7 +1269,7 @@ export function AccountingComplete() {
                 <Building2 className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl">40 000 €</div>
+                <div className="text-2xl">{(assetsSummary?.totalGross || 0).toLocaleString("fr-FR")} DT</div>
                 <p className="text-xs text-muted-foreground mt-1">
                   Total acquisitions
                 </p>
@@ -989,7 +1282,7 @@ export function AccountingComplete() {
                 <Award className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl text-blue-600">23 000 €</div>
+                <div className="text-2xl text-blue-600">{(assetsSummary?.totalNet || 0).toLocaleString("fr-FR")} DT</div>
                 <p className="text-xs text-muted-foreground mt-1">
                   Après amortissements
                 </p>
@@ -1002,7 +1295,7 @@ export function AccountingComplete() {
                 <TrendingDown className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl text-orange-600">625 €</div>
+                <div className="text-2xl text-orange-600">{(assetsSummary?.totalMonthlyDepreciation || 0).toFixed(2)} DT</div>
                 <p className="text-xs text-muted-foreground mt-1">
                   Par mois
                 </p>
@@ -1044,7 +1337,7 @@ export function AccountingComplete() {
                           <TableCell className="font-medium">{asset.name}</TableCell>
                           <TableCell>{asset.category}</TableCell>
                           <TableCell>{new Date(asset.purchaseDate).toLocaleDateString("fr-FR")}</TableCell>
-                          <TableCell className="text-right">{Number(asset.purchaseAmount || 0).toLocaleString("fr-FR")} €</TableCell>
+                          <TableCell className="text-right">{Number(asset.purchaseAmount || 0).toLocaleString("fr-FR")} DT</TableCell>
                           <TableCell>
                             <Badge variant="outline">
                               {asset.depreciationMethod === "linear" ? "Linéaire" : "Dégressif"}
@@ -1052,10 +1345,10 @@ export function AccountingComplete() {
                           </TableCell>
                           <TableCell>{asset.depreciationYears} ans</TableCell>
                           <TableCell className="text-right font-semibold text-blue-600">
-                            {Number(asset.currentValue || 0).toLocaleString("fr-FR")} €
+                            {Number(asset.currentValue || 0).toLocaleString("fr-FR")} DT
                           </TableCell>
                           <TableCell className="text-right text-orange-600">
-                            {Number(asset.monthlyDepreciation || 0).toFixed(2)} €
+                            {Number(asset.monthlyDepreciation || 0).toFixed(2)} DT
                           </TableCell>
                           <TableCell className="text-right">
                             <DropdownMenu>
@@ -1113,9 +1406,9 @@ export function AccountingComplete() {
                 <Target className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl">24 500 €</div>
+                <div className="text-2xl">{(budgetsSummary?.totalBudget || 0).toLocaleString("fr-FR")} DT</div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Mois en cours
+                  Tous comptes
                 </p>
               </CardContent>
             </Card>
@@ -1126,9 +1419,9 @@ export function AccountingComplete() {
                 <Activity className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl text-blue-600">22 800 €</div>
+                <div className="text-2xl text-blue-600">{(budgetsSummary?.totalActual || 0).toLocaleString("fr-FR")} DT</div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  93% consommé
+                  {budgetsSummary && budgetsSummary.totalBudget > 0 ? Math.round((budgetsSummary.totalActual / budgetsSummary.totalBudget) * 100) : 0}% consommé
                 </p>
               </CardContent>
             </Card>
@@ -1139,9 +1432,11 @@ export function AccountingComplete() {
                 <ArrowRightLeft className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl text-green-600">+1 700 €</div>
+                <div className={cn("text-2xl", (budgetsSummary?.ecart || 0) >= 0 ? "text-green-600" : "text-red-600")}>
+                  {(budgetsSummary?.ecart || 0) >= 0 ? "+" : ""}{(budgetsSummary?.ecart || 0).toLocaleString("fr-FR")} DT
+                </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Sous budget
+                  {(budgetsSummary?.ecart || 0) >= 0 ? "Sous budget" : "Dépassement"}
                 </p>
               </CardContent>
             </Card>
@@ -1152,7 +1447,7 @@ export function AccountingComplete() {
                 <AlertTriangle className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl text-red-600">1</div>
+                <div className="text-2xl text-red-600">{budgetsSummary?.overBudgetCount || 0}</div>
                 <p className="text-xs text-muted-foreground mt-1">
                   Alertes actives
                 </p>
@@ -1179,24 +1474,24 @@ export function AccountingComplete() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {budgets.length === 0 ? (
+                  {budgetsList.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                         Aucun budget configuré
                       </TableCell>
                     </TableRow>
                   ) : (
-                    budgets.map((budget) => (
+                    budgetsList.map((budget) => (
                     <TableRow key={budget.id}>
                       <TableCell className="font-mono">{budget.account}</TableCell>
                       <TableCell className="font-medium">{budget.accountLabel}</TableCell>
-                      <TableCell className="text-right">{budget.budgeted.toLocaleString("fr-FR")} €</TableCell>
-                      <TableCell className="text-right font-semibold">{budget.actual.toLocaleString("fr-FR")} €</TableCell>
+                      <TableCell className="text-right">{budget.budgeted.toLocaleString("fr-FR")} DT</TableCell>
+                      <TableCell className="text-right font-semibold">{budget.actual.toLocaleString("fr-FR")} DT</TableCell>
                       <TableCell className={cn(
                         "text-right font-semibold",
                         budget.variance >= 0 ? "text-green-600" : "text-red-600"
                       )}>
-                        {budget.variance >= 0 ? "+" : ""}{budget.variance.toLocaleString("fr-FR")} €
+                        {budget.variance >= 0 ? "+" : ""}{budget.variance.toLocaleString("fr-FR")} DT
                       </TableCell>
                       <TableCell className={cn(
                         "text-right",
@@ -1233,20 +1528,46 @@ export function AccountingComplete() {
 
         {/* ==================== ANALYTIQUE ==================== */}
         <TabsContent value="analytics" className="space-y-6">
-          <Card className="border-green-200 bg-green-50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-green-800">
-                <Layers className="h-5 w-5" />
-                Comptabilité Analytique
-              </CardTitle>
-              <CardDescription className="text-green-700">
-                Analysez la rentabilité par projet, département ou client avec des axes analytiques personnalisables.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm text-green-800">
-                ✨ Fonctionnalité disponible dans le module Projets
-              </div>
+          <div>
+            <h2>Comptabilité Analytique</h2>
+            <p className="text-sm text-muted-foreground">
+              Rentabilité par projet, calculée à partir des écritures liées
+            </p>
+          </div>
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50">
+                    <TableHead>Projet</TableHead>
+                    <TableHead className="text-right">Revenus</TableHead>
+                    <TableHead className="text-right">Dépenses</TableHead>
+                    <TableHead className="text-right">Marge</TableHead>
+                    <TableHead className="text-right">Marge %</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {projectAnalytics.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                        Aucune écriture liée à un projet pour le moment
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    projectAnalytics.map((row: any) => (
+                      <TableRow key={row.projectId}>
+                        <TableCell className="font-medium">{row.projectName || row.projectId}</TableCell>
+                        <TableCell className="text-right text-green-600">{row.revenue.toLocaleString("fr-FR")} DT</TableCell>
+                        <TableCell className="text-right text-red-600">{row.expenses.toLocaleString("fr-FR")} DT</TableCell>
+                        <TableCell className={cn("text-right font-semibold", row.margin >= 0 ? "text-green-600" : "text-red-600")}>
+                          {row.margin.toLocaleString("fr-FR")} DT
+                        </TableCell>
+                        <TableCell className="text-right">{row.marginPercent.toFixed(1)}%</TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
         </TabsContent>
@@ -1292,8 +1613,8 @@ export function AccountingComplete() {
                         <TableCell><Badge variant="outline">{entry.journal}</Badge></TableCell>
                         <TableCell>{entry.libelle}</TableCell>
                         <TableCell className="font-mono text-sm">{entry.compte}</TableCell>
-                        <TableCell className="text-right text-green-600">{entry.debit ? `${entry.debit.toLocaleString("fr-FR")} €` : "—"}</TableCell>
-                        <TableCell className="text-right text-red-600">{entry.credit ? `${entry.credit.toLocaleString("fr-FR")} €` : "—"}</TableCell>
+                        <TableCell className="text-right text-green-600">{entry.debit ? `${entry.debit.toLocaleString("fr-FR")} DT` : "—"}</TableCell>
+                        <TableCell className="text-right text-red-600">{entry.credit ? `${entry.credit.toLocaleString("fr-FR")} DT` : "—"}</TableCell>
                         <TableCell><Badge className="bg-green-100 text-green-700">Validée</Badge></TableCell>
                       </TableRow>
                     ))
@@ -1336,13 +1657,24 @@ export function AccountingComplete() {
                   <Label>Libellé *</Label>
                   <Input placeholder="Description de l écriture" value={entryForm.libelle} onChange={e => setEntryForm({...entryForm, libelle: e.target.value})} />
                 </div>
+                <div className="space-y-2">
+                  <Label>Projet (optionnel)</Label>
+                  <Select value={entryForm.projectId} onValueChange={v => setEntryForm({...entryForm, projectId: v})}>
+                    <SelectTrigger><SelectValue placeholder="Aucun projet" /></SelectTrigger>
+                    <SelectContent>
+                      {projectsList.map((p: any) => (
+                        <SelectItem key={p.id || p._id} value={p.id || p._id}>{p.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Débit (€)</Label>
+                    <Label>Débit (DT)</Label>
                     <Input type="number" placeholder="0" value={entryForm.debit} onChange={e => setEntryForm({...entryForm, debit: e.target.value})} />
                   </div>
                   <div className="space-y-2">
-                    <Label>Crédit (€)</Label>
+                    <Label>Crédit (DT)</Label>
                     <Input type="number" placeholder="0" value={entryForm.credit} onChange={e => setEntryForm({...entryForm, credit: e.target.value})} />
                   </div>
                 </div>
@@ -1353,7 +1685,7 @@ export function AccountingComplete() {
                   if (!entryForm.date || !entryForm.journal || !entryForm.compte || !entryForm.libelle) return;
                   apiClient.request("/ecritures", { method: "POST", body: JSON.stringify({ ...entryForm, debit: parseFloat(entryForm.debit) || 0, credit: parseFloat(entryForm.credit) || 0 }) }).then((created: any) => { setJournalEntries((prev: any[]) => [...prev, { id: created._id || created.id, ...entryForm, debit: parseFloat(entryForm.debit) || 0, credit: parseFloat(entryForm.credit) || 0 }]); }).catch(() => { setJournalEntries((prev: any[]) => [...prev, { id: Date.now().toString(), ...entryForm, debit: parseFloat(entryForm.debit) || 0, credit: parseFloat(entryForm.credit) || 0 }]); });
                   setShowEntryDialog(false);
-                  setEntryForm({ date: "", journal: "", compte: "", libelle: "", debit: "", credit: "" });
+                  setEntryForm({ date: "", journal: "", compte: "", libelle: "", debit: "", credit: "", projectId: "" });
                 }}>Valider</Button>
               </DialogFooter>
             </DialogContent>
@@ -1362,14 +1694,14 @@ export function AccountingComplete() {
         <TabsContent value="reports" className="space-y-6">
           <div><h2 className="text-xl font-bold">Rapports Comptables</h2><p className="text-sm text-muted-foreground">Balance, Grand Livre, Bilan, Compte de Resultat, TVA</p></div>
           <div className="grid gap-4 md:grid-cols-3">
-            <Card><CardHeader><CardTitle className="text-base">Balance Generale</CardTitle></CardHeader><CardContent><p className="text-sm text-muted-foreground">Soldes de tous les comptes</p><Button className="mt-3 w-full" variant="outline" size="sm"><Download className="w-4 h-4 mr-2" />Exporter</Button></CardContent></Card>
-            <Card><CardHeader><CardTitle className="text-base">Grand Livre</CardTitle></CardHeader><CardContent><p className="text-sm text-muted-foreground">Detail des ecritures par compte</p><Button className="mt-3 w-full" variant="outline" size="sm"><Download className="w-4 h-4 mr-2" />Exporter</Button></CardContent></Card>
-            <Card><CardHeader><CardTitle className="text-base">Bilan</CardTitle></CardHeader><CardContent><p className="text-sm text-muted-foreground">Actif et passif a une date donnee</p><Button className="mt-3 w-full" variant="outline" size="sm"><Download className="w-4 h-4 mr-2" />Exporter</Button></CardContent></Card>
-            <Card><CardHeader><CardTitle className="text-base">Compte de Resultat</CardTitle></CardHeader><CardContent><p className="text-sm text-muted-foreground">Produits et charges sur la periode</p><Button className="mt-3 w-full" variant="outline" size="sm"><Download className="w-4 h-4 mr-2" />Exporter</Button></CardContent></Card>
-            <Card><CardHeader><CardTitle className="text-base">Declaration TVA</CardTitle></CardHeader><CardContent><p className="text-sm text-muted-foreground">TVA collectee et deductible</p><Button className="mt-3 w-full" variant="outline" size="sm"><Download className="w-4 h-4 mr-2" />Exporter</Button></CardContent></Card>
-            <Card><CardHeader><CardTitle className="text-base">Export FEC</CardTitle></CardHeader><CardContent><p className="text-sm text-muted-foreground">Fichier des Ecritures Comptables</p><Button className="mt-3 w-full" variant="outline" size="sm"><Download className="w-4 h-4 mr-2" />Exporter</Button></CardContent></Card>
+            <Card><CardHeader><CardTitle className="text-base">Balance Generale</CardTitle></CardHeader><CardContent><p className="text-sm text-muted-foreground">Soldes de tous les comptes</p><Button className="mt-3 w-full" variant="outline" size="sm" onClick={handleExportBalance}><Download className="w-4 h-4 mr-2" />Exporter</Button></CardContent></Card>
+            <Card><CardHeader><CardTitle className="text-base">Grand Livre</CardTitle></CardHeader><CardContent><p className="text-sm text-muted-foreground">Detail des ecritures par compte</p><Button className="mt-3 w-full" variant="outline" size="sm" onClick={handleExportGrandLivre}><Download className="w-4 h-4 mr-2" />Exporter</Button></CardContent></Card>
+            <Card><CardHeader><CardTitle className="text-base">Bilan</CardTitle></CardHeader><CardContent><p className="text-sm text-muted-foreground">Actif et passif a une date donnee</p><Button className="mt-3 w-full" variant="outline" size="sm" onClick={handleExportBilan}><Download className="w-4 h-4 mr-2" />Exporter</Button></CardContent></Card>
+            <Card><CardHeader><CardTitle className="text-base">Compte de Resultat</CardTitle></CardHeader><CardContent><p className="text-sm text-muted-foreground">Produits et charges sur la periode</p><Button className="mt-3 w-full" variant="outline" size="sm" onClick={handleExportCompteResultat}><Download className="w-4 h-4 mr-2" />Exporter</Button></CardContent></Card>
+            <Card><CardHeader><CardTitle className="text-base">Declaration TVA</CardTitle></CardHeader><CardContent><p className="text-sm text-muted-foreground">TVA collectee et deductible</p><Button className="mt-3 w-full" variant="outline" size="sm" onClick={handleExportTVA}><Download className="w-4 h-4 mr-2" />Exporter</Button></CardContent></Card>
+            <Card><CardHeader><CardTitle className="text-base">Export FEC</CardTitle></CardHeader><CardContent><p className="text-sm text-muted-foreground">Fichier des Ecritures Comptables</p><Button className="mt-3 w-full" variant="outline" size="sm" onClick={handleExportFECReal}><Download className="w-4 h-4 mr-2" />Exporter</Button></CardContent></Card>
           </div>
-          <Card><CardHeader><CardTitle className="text-base">Resume Financier</CardTitle></CardHeader><CardContent><div className="grid grid-cols-3 gap-6 text-center"><div><p className="text-sm text-muted-foreground">Total Produits</p><p className="text-2xl font-bold text-green-600">{journalEntries.filter((e:any) => e.credit > 0).reduce((s:number,e:any) => s + e.credit, 0).toLocaleString("fr-FR")} EUR</p></div><div><p className="text-sm text-muted-foreground">Total Charges</p><p className="text-2xl font-bold text-red-600">{journalEntries.filter((e:any) => e.debit > 0).reduce((s:number,e:any) => s + e.debit, 0).toLocaleString("fr-FR")} EUR</p></div><div><p className="text-sm text-muted-foreground">Resultat Net</p><p className="text-2xl font-bold text-blue-600">{(journalEntries.filter((e:any) => e.credit > 0).reduce((s:number,e:any) => s + e.credit, 0) - journalEntries.filter((e:any) => e.debit > 0).reduce((s:number,e:any) => s + e.debit, 0)).toLocaleString("fr-FR")} EUR</p></div></div></CardContent></Card>
+          <Card><CardHeader><CardTitle className="text-base">Resume Financier</CardTitle></CardHeader><CardContent><div className="grid grid-cols-3 gap-6 text-center"><div><p className="text-sm text-muted-foreground">Total Produits</p><p className="text-2xl font-bold text-green-600">{journalEntries.filter((e:any) => e.credit > 0).reduce((s:number,e:any) => s + e.credit, 0).toLocaleString("fr-FR")} DT</p></div><div><p className="text-sm text-muted-foreground">Total Charges</p><p className="text-2xl font-bold text-red-600">{journalEntries.filter((e:any) => e.debit > 0).reduce((s:number,e:any) => s + e.debit, 0).toLocaleString("fr-FR")} DT</p></div><div><p className="text-sm text-muted-foreground">Resultat Net</p><p className="text-2xl font-bold text-blue-600">{(journalEntries.filter((e:any) => e.credit > 0).reduce((s:number,e:any) => s + e.credit, 0) - journalEntries.filter((e:any) => e.debit > 0).reduce((s:number,e:any) => s + e.debit, 0)).toLocaleString("fr-FR")} DT</p></div></div></CardContent></Card>
         </TabsContent>
       </Tabs>
 
@@ -1449,11 +1781,11 @@ export function AccountingComplete() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Désignation *</Label>
-                <Input placeholder="Ex: Serveur informatique" />
+                <Input placeholder="Ex: Serveur informatique" value={assetForm.name} onChange={e => setAssetForm({...assetForm, name: e.target.value})} />
               </div>
               <div className="space-y-2">
                 <Label>Catégorie *</Label>
-                <Select>
+                <Select value={assetForm.category} onValueChange={v => setAssetForm({...assetForm, category: v})}>
                   <SelectTrigger>
                     <SelectValue placeholder="Sélectionner" />
                   </SelectTrigger>
@@ -1469,17 +1801,17 @@ export function AccountingComplete() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Date d'acquisition *</Label>
-                <Input type="date" />
+                <Input type="date" value={assetForm.purchaseDate} onChange={e => setAssetForm({...assetForm, purchaseDate: e.target.value})} />
               </div>
               <div className="space-y-2">
-                <Label>Valeur d'acquisition (€) *</Label>
-                <Input type="number" placeholder="10000" />
+                <Label>Valeur d'acquisition (DT) *</Label>
+                <Input type="number" placeholder="10000" value={assetForm.purchaseAmount} onChange={e => setAssetForm({...assetForm, purchaseAmount: e.target.value})} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Méthode d'amortissement *</Label>
-                <Select>
+                <Select value={assetForm.depreciationMethod} onValueChange={v => setAssetForm({...assetForm, depreciationMethod: v})}>
                   <SelectTrigger>
                     <SelectValue placeholder="Sélectionner" />
                   </SelectTrigger>
@@ -1491,7 +1823,7 @@ export function AccountingComplete() {
               </div>
               <div className="space-y-2">
                 <Label>Durée d'amortissement (années) *</Label>
-                <Input type="number" placeholder="5" />
+                <Input type="number" placeholder="5" value={assetForm.depreciationYears} onChange={e => setAssetForm({...assetForm, depreciationYears: e.target.value})} />
               </div>
             </div>
             <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
@@ -1511,8 +1843,77 @@ export function AccountingComplete() {
               Annuler
             </Button>
             <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => {
-              toast.success("Immobilisation créée avec succès !");
-              setShowAssetDialog(false);
+              if (!assetForm.name || !assetForm.category || !assetForm.purchaseDate || !assetForm.purchaseAmount || !assetForm.depreciationMethod || !assetForm.depreciationYears) {
+                toast.error("Veuillez remplir tous les champs");
+                return;
+              }
+              apiClient.createAsset({
+                name: assetForm.name,
+                category: assetForm.category,
+                purchaseDate: assetForm.purchaseDate,
+                purchaseAmount: parseFloat(assetForm.purchaseAmount) || 0,
+                depreciationMethod: assetForm.depreciationMethod,
+                depreciationYears: parseInt(assetForm.depreciationYears) || 1,
+              }).then(() => {
+                toast.success("Immobilisation créée avec succès !");
+                setShowAssetDialog(false);
+                setAssetForm({ name: "", category: "", purchaseDate: "", purchaseAmount: "", depreciationMethod: "", depreciationYears: "" });
+                loadAssets();
+              }).catch((error: any) => {
+                toast.error(error?.message || "Erreur lors de la création");
+              });
+            }}>
+              Enregistrer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ==================== DIALOG NOUVEAU BUDGET ==================== */}
+      <Dialog open={showBudgetDialog} onOpenChange={setShowBudgetDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Nouveau Budget</DialogTitle>
+            <DialogDescription>Définir un budget pour un compte sur une période</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Compte *</Label>
+              <Input placeholder="ex: 607000" value={budgetForm.account} onChange={e => setBudgetForm({...budgetForm, account: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>Libellé *</Label>
+              <Input placeholder="ex: Achats de marchandises" value={budgetForm.accountLabel} onChange={e => setBudgetForm({...budgetForm, accountLabel: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>Période *</Label>
+              <Input type="month" value={budgetForm.period} onChange={e => setBudgetForm({...budgetForm, period: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>Montant Budgété (DT) *</Label>
+              <Input type="number" placeholder="5000" value={budgetForm.budgeted} onChange={e => setBudgetForm({...budgetForm, budgeted: e.target.value})} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowBudgetDialog(false)}>Annuler</Button>
+            <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => {
+              if (!budgetForm.account || !budgetForm.accountLabel || !budgetForm.period || !budgetForm.budgeted) {
+                toast.error("Veuillez remplir tous les champs");
+                return;
+              }
+              apiClient.createBudget({
+                account: budgetForm.account,
+                accountLabel: budgetForm.accountLabel,
+                period: budgetForm.period,
+                budgeted: parseFloat(budgetForm.budgeted) || 0,
+              }).then(() => {
+                toast.success("Budget créé avec succès !");
+                setShowBudgetDialog(false);
+                setBudgetForm({ account: "", accountLabel: "", period: "", budgeted: "" });
+                loadBudgets();
+              }).catch((error: any) => {
+                toast.error(error?.message || "Erreur lors de la création du budget");
+              });
             }}>
               Enregistrer
             </Button>

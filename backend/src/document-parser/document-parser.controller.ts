@@ -5,6 +5,7 @@
   Delete,
   Param,
   Query,
+  Body,
   UseGuards,
   UseInterceptors,
   UploadedFile,
@@ -75,9 +76,55 @@ export class DocumentParserController {
     }
   }
 
+  @Post('send-reminder')
+  async sendReminder(@Body() body: any, @CurrentUser() user: any) {
+    if (!body?.clientEmail || !body?.subject || !body?.body) {
+      throw new BadRequestException('Donnees email requises');
+    }
+    await this.parserService.sendPaymentReminderEmail(body);
+    return { success: true };
+  }
+
+  @Post('generate-reminder')
+  async generateReminder(@Body() body: any, @CurrentUser() user: any) {
+    if (!body?.clientName || !body?.invoiceNumber) {
+      throw new BadRequestException('Donnees facture requises');
+    }
+    return await this.parserService.generatePaymentReminder(body);
+  }
+
+  @Post('classify-ged-document')
+  @UseInterceptors(FileInterceptor('file'))
+  async classifyGEDDocument(@UploadedFile() file: any) {
+    if (!file) throw new BadRequestException('Aucun fichier fourni');
+    return await this.parserService.classifyDocumentForGED(file);
+  }
+
+  @Post('generate-template')
+  async generateTemplate(@Body() body: { description: string }, @CurrentUser() user: any) {
+    if (!body?.description || !body.description.trim()) {
+      throw new BadRequestException('Description requise');
+    }
+    return await this.parserService.generateInvoiceTemplate(body.description);
+  }
+
+  @Post('scan-client-invoice')
+  @UseInterceptors(FileInterceptor('file'))
+  async scanClientInvoice(@UploadedFile() file: any, @CurrentUser() user: any) {
+    if (!file) throw new BadRequestException('Aucun fichier fourni');
+    return await this.parserService.scanClientInvoice(file, user.tenantId);
+  }
+
+  @Post('split-analyze')
+  @UseInterceptors(FileInterceptor('file'))
+  async splitAnalyze(@UploadedFile() file: any, @CurrentUser() user: any) {
+    if (!file) throw new BadRequestException('Aucun fichier fourni');
+    return await this.parserService.analyzeSplitPDF(file, user.tenantId);
+  }
+
   @Post('learn')
-  async learnFormat(@Query('templateName') templateName: string, @CurrentUser() user: any) {
-    return { message: 'ok' };
+  async learnFormat(@Body() dto: LearnFormatDto, @CurrentUser() user: any) {
+    return await this.parserService.learnFormat(user.tenantId, dto as any);
   }
 
   @Get('templates')

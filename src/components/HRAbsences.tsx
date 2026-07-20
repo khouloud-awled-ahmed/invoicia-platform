@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
@@ -24,7 +24,10 @@ interface Absence {
 
 interface HRAbsencesProps {
   employees: any[];
+  initialEmployeeFilter?: string;
 }
+
+const ANNUAL_CP_QUOTA = 18;
 
 const ABSENCE_TYPES = [
   { value: "CP", label: "Congé Payé", icon: Umbrella, color: "bg-blue-100 text-blue-700" },
@@ -35,10 +38,13 @@ const ABSENCE_TYPES = [
   { value: "AUTRE", label: "Autre", icon: Clock, color: "bg-gray-100 text-gray-700" },
 ];
 
-export function HRAbsences({ employees }: HRAbsencesProps) {
+export function HRAbsences({ employees, initialEmployeeFilter }: HRAbsencesProps) {
   const [absences, setAbsences] = useState<Absence[]>([]);
   const [showDialog, setShowDialog] = useState(false);
   const [filter, setFilter] = useState("all");
+  const [nameFilter, setNameFilter] = useState(initialEmployeeFilter || "");
+  useEffect(() => { if (initialEmployeeFilter) setNameFilter(initialEmployeeFilter); }, [initialEmployeeFilter]);
+  const [riskMap, setRiskMap] = useState<Record<string, { riskLevel: string; riskScore: number }>>({});
   const [form, setForm] = useState({
     employeeId: "",
     type: "",
@@ -50,7 +56,8 @@ useEffect(() => {
   apiClient.getAbsences()
     .then(data => setAbsences(data.map((a: any) => ({
       id: a._id || a.id,
-      employee: a.employeeId,
+      employee: a.employeeName || a.employeeId,
+      employeeId: a.employeeId,
       type: a.type,
       startDate: a.startDate,
       endDate: a.endDate,
@@ -116,8 +123,17 @@ const handleReject = async (id: string) => {
   toast.error("Absence refusée");
 };
 
-  const filtered = filter === "all" ? absences : absences.filter(a => a.status === filter);
+  const filtered = (filter === "all" ? absences : absences.filter(a => a.status === filter)).filter(a => a.employee.toLowerCase().includes(nameFilter.toLowerCase()));
   const pending = absences.filter(a => a.status === "pending").length;
+  const currentYear = new Date().getFullYear();
+  const cpBalances = employees.map((emp: any) => {
+    const empId = emp.id || emp._id;
+    const empName = `${emp.firstName} ${emp.lastName}`;
+    const usedThisYear = absences
+      .filter(a => a.type === "CP" && a.status === "approved" && a.employee === empName && new Date(a.startDate).getFullYear() === currentYear)
+      .reduce((sum, a) => sum + a.days, 0);
+    return { empId, empName, used: usedThisYear, remaining: Math.max(0, ANNUAL_CP_QUOTA - usedThisYear) };
+  });
   const approved = absences.filter(a => a.status === "approved").length;
   const totalDays = absences.filter(a => a.status === "approved").reduce((s, a) => s + a.days, 0);
 
@@ -165,6 +181,7 @@ const handleReject = async (id: string) => {
           <CardContent><div className="text-2xl font-bold">{absences.length}</div><p className="text-xs text-muted-foreground">Toutes demandes</p></CardContent>
         </Card>
       </div>
+
 
       {/* Types d'absences */}
       <Card>
@@ -225,7 +242,17 @@ const handleReject = async (id: string) => {
               ) : (
                 filtered.map(absence => (
                   <TableRow key={absence.id}>
-                    <TableCell className="font-medium">{absence.employee}</TableCell>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-1.5">
+                        {absence.employee}
+                        {riskMap[absence.employeeId]?.riskLevel === 'high' && (
+                          <Badge className="bg-red-100 text-red-700 text-[10px] px-1.5 py-0">Risque élevé</Badge>
+                        )}
+                        {riskMap[absence.employeeId]?.riskLevel === 'medium' && (
+                          <Badge className="bg-amber-100 text-amber-700 text-[10px] px-1.5 py-0">Risque moyen</Badge>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell>{getTypeBadge(absence.type)}</TableCell>
                     <TableCell>{new Date(absence.startDate).toLocaleDateString("fr-FR")}</TableCell>
                     <TableCell>{new Date(absence.endDate).toLocaleDateString("fr-FR")}</TableCell>

@@ -1,4 +1,4 @@
-import {
+﻿import {
   Controller,
   Req,
   Get,
@@ -160,6 +160,15 @@ export class EmployeesController {
         fileName: file.originalname || 'document',
         name: finalName,
         email: finalEmail,
+        phone: (data as any).phone || undefined,
+        title: (data as any).title || undefined,
+        summary: (data as any).summary || undefined,
+        yearsOfExperience: (data as any).yearsOfExperience || undefined,
+        seniorityLevel: (data as any).seniorityLevel || undefined,
+        isManager: (data as any).isManager || undefined,
+        skills: (data as any).skills || undefined,
+        experiences: (data as any).experiences || undefined,
+        education: (data as any).education || undefined,
         rawText,
       });
 
@@ -178,7 +187,9 @@ export class EmployeesController {
           phone: (data as any).phone || rawText.match(/(?:\+216|0)[0-9]{8}/)?.[0] || '',
           title: (data as any).title || '',
           summary: (data as any).summary || '',
-          yearsOfExperience: 0,
+          yearsOfExperience: (data as any).yearsOfExperience || 0,
+          seniorityLevel: (data as any).seniorityLevel || undefined,
+          isManager: (data as any).isManager || false,
           city: '',
           skills:
             (data as any).skills?.map((s: string) => ({

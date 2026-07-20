@@ -1,4 +1,4 @@
-﻿import { Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './app.controller';
@@ -22,6 +22,10 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { ReconciliationModule } from './reconciliation/reconciliation.module';
 import { RolesModule } from './roles/roles.module';
 import { EcrituresModule } from './ecritures/ecritures.module';
+import { BudgetsModule } from './budgets/budgets.module';
+import { ForecastModule } from './forecast/forecast.module';
+import { AssetsModule } from './assets/assets.module';
+import { InsightsModule } from './insights/insights.module';
 import { RecrutementModule } from './recrutement/recrutement.module';
 import { EvaluationsModule } from './evaluations/evaluations.module';
 import { FormationsModule } from './formations/formations.module';
@@ -30,6 +34,7 @@ import { AbsencesModule } from './absences/absences.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
 import { FacturationModule } from './facturation/facturation.module';
 import { PipelineModule } from './pipeline/pipeline.module';
+import { HrInsightsModule } from './hr-insights/hr-insights.module';
 
 @Module({
   imports: [
@@ -80,6 +85,10 @@ import { PipelineModule } from './pipeline/pipeline.module';
     ReconciliationModule,
     RolesModule,
     EcrituresModule,
+    BudgetsModule,
+    ForecastModule,
+    AssetsModule,
+    InsightsModule,
     RecrutementModule,
     EvaluationsModule,
     FormationsModule,
@@ -88,6 +97,7 @@ import { PipelineModule } from './pipeline/pipeline.module';
     WebhooksModule,
     FacturationModule,
     PipelineModule,
+    HrInsightsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -261,7 +261,7 @@ export function UserManagement() {
                     </SelectTrigger>
                     <SelectContent>
                       {tenants.length === 0 ? (
-                        <SelectItem value="" disabled>
+                        <SelectItem value="__none__" disabled>
                           {isLoadingTenants ? "Chargement des clients..." : "Aucun client disponible"}
                         </SelectItem>
                       ) : (

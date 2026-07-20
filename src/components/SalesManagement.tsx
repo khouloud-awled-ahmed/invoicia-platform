@@ -301,7 +301,7 @@ export function SalesManagement({ initialView = "dashboard" }: SalesManagementPr
   });
 
   // Liste unique des clients
-  const uniqueClients = Array.from(new Set(invoices.map(inv => inv.client))).sort();
+  const uniqueClients = Array.from(new Set(invoices.map(inv => inv.client).filter(c => c && c.trim() !== ""))).sort();
 
   // Compter les filtres actifs
   const activeFiltersCount = 
@@ -340,11 +340,22 @@ export function SalesManagement({ initialView = "dashboard" }: SalesManagementPr
     toast.info(`Édition de la facture ${invoice.number}`);
   };
 
-  const handleDownloadPDF = (invoice: Invoice) => {
-    toast.info(`Préparation du téléchargement...`);
-    setTimeout(() => {
-      toast.success(`PDF ${invoice.number} téléchargé avec succès`);
-    }, 1000);
+  const handleDownloadPDF = async (invoice: Invoice) => {
+    try {
+      toast.info("Preparation du telechargement...");
+      const token = localStorage.getItem("token");
+      const id = (invoice as any)._id || (invoice as any).id;
+      const response = await fetch("http://localhost:3001/api/billing/sales/invoices/" + id + "/download", { headers: { Authorization: "Bearer " + token } });
+      if (!response.ok) throw new Error("Erreur");
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = invoice.number + ".pdf";
+      a.click();
+      window.URL.revokeObjectURL(url);
+      toast.success("PDF telecharge avec succes");
+    } catch (err) { toast.error("Erreur telechargement"); }
   };
 
   const handleDeleteInvoice = (invoice: Invoice) => {
@@ -1208,12 +1219,13 @@ export function SalesManagement({ initialView = "dashboard" }: SalesManagementPr
                                 <Edit className="w-4 h-4 mr-2" />
                                 Éditer
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleDownloadPDF(invoice)}>
+                              <DropdownMenuItem                 onClick={() => handleDownloadPDF(invoice)}>
                                 <Download className="w-4 h-4 mr-2" />
                                 Télécharger PDF
                               </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                className="text-red-600"
+                              {invoice.status === "pending" && <DropdownMenuItem className="text-green-600" onClick={() => apiClient.request("/billing/sales/invoices/" + ((invoice as any)._id || invoice.id) + "/validate", { method: "PATCH" }).then(loadInvoices)}><CheckCircle2 className="w-4 h-4 mr-2" />Valider</DropdownMenuItem>}
+                              <DropdownMenuItem
+                              className="text-red-600"
                                 onClick={() => handleDeleteInvoice(invoice)}
                               >
                                 <Trash2 className="w-4 h-4 mr-2" />
@@ -1226,7 +1238,7 @@ export function SalesManagement({ initialView = "dashboard" }: SalesManagementPr
                                 <FileMinus className="w-4 h-4 mr-2" />
                                 Créer un avoir
                               </DropdownMenuItem>
-                              {invoice.status === "validated" && (
+                              {["validated", "pending", "en_attente", "sent"].includes(invoice.status) && (
                               <DropdownMenuItem
                                 className="text-blue-600"
                                 onClick={() => apiClient.request(`/billing/sales/invoices/${invoice.id}/pay`, { method: 'PATCH' }).then(loadInvoices)}

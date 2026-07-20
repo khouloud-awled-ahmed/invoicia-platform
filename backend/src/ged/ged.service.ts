@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+﻿import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { GEDFolder, GEDFolderDocument } from './schemas/ged-folder.schema';
@@ -382,6 +382,15 @@ export class GEDService {
     if (lowerName.includes('societe') || lowerName.includes('company')) return 'document_societe';
 
     return 'autre';
+  }
+
+  async getDownloadStream(documentId: string, tenantId: string): Promise<{ stream: NodeJS.ReadableStream; document: GEDDocument }> {
+    const document = await this.documentModel.findOne({ _id: documentId, tenantId }).exec();
+    if (!document) {
+      throw new NotFoundException(`Document with ID ${documentId} not found`);
+    }
+    const stream = await this.attachmentsService.getStreamByGridFsId(document.gridFsFileId);
+    return { stream, document };
   }
 
   async getDocuments(

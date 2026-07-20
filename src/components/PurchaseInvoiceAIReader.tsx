@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Input } from "./ui/input";
@@ -108,7 +108,20 @@ interface ProcessedInvoice {
 // MOCK_PROCESSED_INVOICES supprimé - Les factures traitées doivent être chargées depuis l'API ou créées via le parser
 
 export function PurchaseInvoiceAIReader() {
-  const [processedInvoices, setProcessedInvoices] = useState<ProcessedInvoice[]>([]);
+  const [processedInvoices, setProcessedInvoices] = useState<ProcessedInvoice[]>(() => {
+    try {
+      const saved = localStorage.getItem("processedInvoices");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("processedInvoices", JSON.stringify(processedInvoices));
+    } catch {}
+  }, [processedInvoices]);
   const [selectedInvoice, setSelectedInvoice] = useState<ProcessedInvoice | null>(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [showSplitDialog, setShowSplitDialog] = useState(false);
@@ -117,6 +130,7 @@ export function PurchaseInvoiceAIReader() {
   const [splitProgress, setSplitProgress] = useState(0);
   const [isSplitting, setIsSplitting] = useState(false);
   const [editedData, setEditedData] = useState<ExtractedInvoiceData | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -206,7 +220,21 @@ export function PurchaseInvoiceAIReader() {
                     totalVAT: invoiceData.totalTVA || 0,
                     totalTTC: invoiceData.totalTTC || 0,
                     currency: "EUR",
-                    lineItems: invoiceData.lineItems || []
+                    lineItems: (invoiceData.lineItems || []).map((item: any) => {
+                      const quantity = item.quantity || 0;
+                      const unitPrice = item.unitPrice || 0;
+                      const vatRate = item.vatRate || 0;
+                      const totalHT = item.totalHT || (quantity * unitPrice);
+                      const totalTTC = totalHT * (1 + vatRate / 100);
+                      return {
+                        description: item.description || "",
+                        quantity,
+                        unitPrice,
+                        vatRate,
+                        totalHT,
+                        totalTTC,
+                      };
+                    })
                   }
                 }
               : inv
@@ -226,69 +254,74 @@ export function PurchaseInvoiceAIReader() {
     }
   };
 
-  const handleSplitPDF = (file: File) => {
+  const handleSplitPDF = async (file: File) => {
     setIsSplitting(true);
-    setSplitProgress(0);
+    setSplitProgress(10);
     toast.info(`Découpage de ${file.name} en cours...`);
 
-    // Simuler le découpage page par page
-    const totalPages = 5; // Simuler 5 pages
-    let currentPage = 0;
+    try {
+      const results = await apiClient.splitAnalyzeDocument(file);
+      setSplitProgress(70);
 
-    const interval = setInterval(() => {
-      currentPage++;
-      setSplitProgress((currentPage / totalPages) * 100);
+      const newInvoices: ProcessedInvoice[] = results.map((r: any) => {
+        if (r.status === "SUCCESS" && r.data) {
+          const d = r.data;
+          return {
+            id: `INV${Date.now()}-P${r.pageNumber}`,
+            fileName: `${file.name.replace(".pdf", "")}_page_${r.pageNumber}.pdf`,
+            source: "split" as const,
+            uploadedAt: new Date().toISOString(),
+            status: "completed" as const,
+            confidence: r.confidence ? Math.round(r.confidence * 100) : 0,
+            pageNumber: r.pageNumber,
+            parentFileId: file.name,
+            extractedData: {
+              invoiceNumber: d.invoiceNumber || "",
+              invoiceDate: d.date ? new Date(d.date).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
+              dueDate: d.dueDate ? new Date(d.dueDate).toISOString().split("T")[0] : new Date(Date.now() + 30*24*60*60*1000).toISOString().split("T")[0],
+              supplierName: d.supplierName || "",
+              supplierAddress: d.supplierAddress || "",
+              supplierSIRET: d.supplierSIRET || "",
+              supplierVAT: d.supplierVAT || "",
+              totalHT: d.totalHT || 0,
+              totalVAT: d.totalTVA || 0,
+              totalTTC: d.totalTTC || 0,
+              currency: "EUR",
+              lineItems: (d.lineItems || []).map((item: any) => {
+                const quantity = item.quantity || 0;
+                const unitPrice = item.unitPrice || 0;
+                const vatRate = item.vatRate || 0;
+                const totalHT = item.totalHT || (quantity * unitPrice);
+                const totalTTC = totalHT * (1 + vatRate / 100);
+                return { description: item.description || "", quantity, unitPrice, vatRate, totalHT, totalTTC };
+              }),
+            },
+          };
+        } else {
+          return {
+            id: `INV${Date.now()}-P${r.pageNumber}`,
+            fileName: `${file.name.replace(".pdf", "")}_page_${r.pageNumber}.pdf`,
+            source: "split" as const,
+            uploadedAt: new Date().toISOString(),
+            status: "error" as const,
+            errorMessage: r.message || "Extraction impossible",
+            pageNumber: r.pageNumber,
+            parentFileId: file.name,
+            extractedData: null,
+          };
+        }
+      });
 
-      if (currentPage <= totalPages) {
-        const newInvoice: ProcessedInvoice = {
-          id: `INV${Date.now()}-P${currentPage}`,
-          fileName: `${file.name.replace('.pdf', '')}_page_${currentPage}.pdf`,
-          source: "split",
-          uploadedAt: new Date().toISOString(),
-          status: "processing",
-          extractedData: null,
-          pageNumber: currentPage,
-          parentFileId: file.name
-        };
-
-        setProcessedInvoices(prev => [newInvoice, ...prev]);
-
-        // Simuler le traitement de chaque page
-        setTimeout(() => {
-          setProcessedInvoices(prev => prev.map(inv => 
-            inv.id === newInvoice.id 
-              ? { 
-                  ...inv, 
-                  status: "completed",
-                  processingTime: 2.0,
-                  confidence: 90 + Math.floor(Math.random() * 8),
-                  extractedData: {
-                    invoiceNumber: `FAC-2025-${100 + currentPage}`,
-                    invoiceDate: "2025-11-10",
-                    dueDate: "2025-12-10",
-                    supplierName: `Fournisseur Page ${currentPage}`,
-                    supplierAddress: "Adresse du fournisseur",
-                    supplierSIRET: "123 456 789 00000",
-                    supplierVAT: "FR00000000000",
-                    totalHT: 500.00 * currentPage,
-                    totalVAT: 100.00 * currentPage,
-                    totalTTC: 600.00 * currentPage,
-                    currency: "EUR",
-                    lineItems: []
-                  }
-                }
-              : inv
-          ));
-        }, 1500);
-      }
-
-      if (currentPage >= totalPages) {
-        clearInterval(interval);
-        setIsSplitting(false);
-        setShowSplitDialog(false);
-        toast.success(`${totalPages} factures extraites avec succès !`);
-      }
-    }, 1000);
+      setProcessedInvoices(prev => [...newInvoices, ...prev]);
+      setSplitProgress(100);
+      setIsSplitting(false);
+      setShowSplitDialog(false);
+      toast.success(`${newInvoices.length} page(s) traitée(s) !`);
+    } catch (error: any) {
+      setIsSplitting(false);
+      setShowSplitDialog(false);
+      toast.error(error?.message || "Erreur lors du découpage");
+    }
   };
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -317,11 +350,56 @@ export function PurchaseInvoiceAIReader() {
     toast.success("Facture vérifiée ! Prête à être publiée.");
   };
 
-  const handlePublish = (invoice: ProcessedInvoice) => {
-    setProcessedInvoices(prev => prev.map(inv => 
-      inv.id === invoice.id ? { ...inv, status: "published" as const } : inv
-    ));
-    toast.success("Facture publiée dans le module Achats !");
+  const guessCategory = (invoice: ProcessedInvoice): string => {
+    const text = (
+      (invoice.extractedData?.supplierName || "") + " " +
+      (invoice.extractedData?.lineItems || []).map(i => i.description).join(" ")
+    ).toLowerCase();
+
+    const rules: [string, string[]][] = [
+      ["Informatique", ["logiciel", "licence", "software", "informatique", "serveur", "hebergement", "cloud", "saas", "it "]],
+      ["Formation", ["formation", "cours", "training", "certification"]],
+      ["Marketing", ["marketing", "publicite", "pub ", "communication", "ads", "campagne"]],
+      ["Loyer", ["loyer", "location bureau", "bail"]],
+      ["Transport", ["transport", "taxi", "essence", "carburant", "peage", "billet"]],
+      ["Telephone", ["telephone", "mobile", "forfait", "operateur", "ooredoo", "orange", "tunisie telecom"]],
+      ["Fournitures de bureau", ["fourniture", "papeterie", "bureau", "consommable"]],
+    ];
+
+    for (const [category, keywords] of rules) {
+      if (keywords.some(k => text.includes(k))) return category;
+    }
+    return "Autre";
+  };
+
+  const handlePublish = async (invoice: ProcessedInvoice) => {
+    if (!invoice.extractedData) {
+      toast.error("Aucune donnée extraite à publier");
+      return;
+    }
+    try {
+      await apiClient.createExpense({
+        date: invoice.extractedData.invoiceDate,
+        supplier: invoice.extractedData.supplierName || "Fournisseur inconnu",
+        category: guessCategory(invoice),
+        amountHT: invoice.extractedData.totalHT,
+        amountTVA: invoice.extractedData.totalVAT,
+        amountTTC: invoice.extractedData.totalTTC,
+        currency: invoice.extractedData.currency || "EUR",
+        status: "verified",
+        documentType: "INVOICE",
+        extractionConfidence: invoice.confidence ? invoice.confidence / 100 : undefined,
+        notes: invoice.extractedData.notes,
+        paymentMethod: invoice.extractedData.paymentMethod,
+      });
+
+      setProcessedInvoices(prev => prev.map(inv =>
+        inv.id === invoice.id ? { ...inv, status: "published" as const } : inv
+      ));
+      toast.success("Facture publiée dans le module Achats !");
+    } catch (error: any) {
+      toast.error(error?.message || "Erreur lors de la publication");
+    }
   };
 
   const handleReprocess = (invoice: ProcessedInvoice) => {

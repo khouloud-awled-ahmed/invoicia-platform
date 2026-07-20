@@ -100,6 +100,15 @@ export class TenantsController {
   updateBankAccount(@Param('id') id: string, @Body() data: any) {
     return this.tenantsService.updateBankAccount(id, data);
   }
+  @Patch(':id/invoice-template-config')
+  updateInvoiceTemplateConfig(@Param('id') id: string, @Body() data: any) {
+    return this.tenantsService.updateInvoiceTemplateConfig(id, data);
+  }
+
+  @Patch(':id/default-terms')
+  updateDefaultTerms(@Param('id') id: string, @Body() data: any) {
+    return this.tenantsService.updateDefaultTerms(id, data);
+  }
 
   @Patch(':id/invoice-settings')
   updateInvoiceSettings(@Param('id') id: string, @Body() data: any) {

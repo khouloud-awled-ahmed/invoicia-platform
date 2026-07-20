@@ -138,12 +138,7 @@ export function TechnicalMonitoring() {
       if (filters.resolved) params.append("resolved", filters.resolved);
       if (filters.search) params.append("search", filters.search);
 
-      const data = await apiClient.getLogs({
-        ...filters,
-        page,
-        limit,
-        resolved: filters.resolved ? filters.resolved === "true" : undefined,
-      });
+      const data = await apiClient.getLogs({ ...filters, page, limit });
       setLogs(data.logs || []);
       setTotal(data.total || 0);
     } catch (error) {
@@ -310,7 +305,7 @@ export function TechnicalMonitoring() {
                   <SelectValue placeholder="Tous" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Tous</SelectItem>
+                  <SelectItem value="all">Tous</SelectItem>
                   <SelectItem value={LogLevel.ERROR}>Error</SelectItem>
                   <SelectItem value={LogLevel.WARN}>Warning</SelectItem>
                   <SelectItem value={LogLevel.INFO}>Info</SelectItem>
@@ -325,7 +320,7 @@ export function TechnicalMonitoring() {
                   <SelectValue placeholder="Toutes" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Toutes</SelectItem>
+                  <SelectItem value="all">Toutes</SelectItem>
                   <SelectItem value={LogCategory.TECHNICAL}>Technique</SelectItem>
                   <SelectItem value={LogCategory.API}>API</SelectItem>
                   <SelectItem value={LogCategory.DATABASE}>Base de données</SelectItem>
@@ -342,7 +337,7 @@ export function TechnicalMonitoring() {
                   <SelectValue placeholder="Toutes" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Toutes</SelectItem>
+                  <SelectItem value="all">Toutes</SelectItem>
                   <SelectItem value={LogSource.BACKEND}>Backend</SelectItem>
                   <SelectItem value={LogSource.FRONTEND}>Frontend</SelectItem>
                   <SelectItem value={LogSource.DATABASE}>Database</SelectItem>
@@ -357,7 +352,7 @@ export function TechnicalMonitoring() {
                   <SelectValue placeholder="Tous" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Tous</SelectItem>
+                  <SelectItem value="all">Tous</SelectItem>
                   <SelectItem value="false">Non résolu</SelectItem>
                   <SelectItem value="true">Résolu</SelectItem>
                 </SelectContent>

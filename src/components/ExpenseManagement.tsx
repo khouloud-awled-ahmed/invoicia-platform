@@ -186,7 +186,7 @@ export function ExpenseManagement() {
   const handleValidateExpense = async (id: string) => {
     try {
       await apiClient.updateExpense(id, { status: "verified" });
-      setExpenses(expenses.map(e => 
+      setExpenses(expenses.filter(e => e && (e.value !== undefined ? e.value : e) !== "").map(e => 
         e.id === id ? { ...e, status: "verified" as const } : e
       ));
       toast.success("Dépense validée");
@@ -602,7 +602,7 @@ export function ExpenseManagement() {
                             </div>
                             {expense.tags && expense.tags.length > 0 && (
                               <div className="flex gap-1 mt-1">
-                                {expense.tags.map(tag => (
+                                {expense.tags.filter(tag => tag && (tag.value !== undefined ? tag.value : tag) !== "").map(tag => (
                                   <Badge key={tag} variant="outline" className="text-xs">
                                     {tag}
                                   </Badge>

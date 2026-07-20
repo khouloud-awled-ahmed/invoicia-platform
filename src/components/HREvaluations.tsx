@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
@@ -147,7 +147,7 @@ export function HREvaluations({ employees }: HREvaluationsProps) {
                   </TableCell>
                 </TableRow>
               ) : (
-                evaluations.map(e => (
+                evaluations.filter(e => e.id || e._id).map(e => (
                   <TableRow key={e.id}>
                     <TableCell className="font-medium">{e.employe}</TableCell>
                     <TableCell>{e.evaluateur || "—"}</TableCell>

@@ -33,6 +33,8 @@ export function BIDashboard() {
   const [selectedPeriod, setSelectedPeriod] = useState(12);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [insights, setInsights] = useState<any[]>([]);
+  const [narrative, setNarrative] = useState<string>("");
+  const [narrativeLoading, setNarrativeLoading] = useState(false);
   const [insightsLoading, setInsightsLoading] = useState(false);
   const [insightsVisible, setInsightsVisible] = useState(true);
   const [dismissedInsights, setDismissedInsights] = useState<number[]>([]);
@@ -81,6 +83,13 @@ export function BIDashboard() {
         setInsights(data);
       } catch { setInsights([]); }
       finally { setInsightsLoading(false); }
+
+      setNarrativeLoading(true);
+      try {
+        const narrativeData = await apiClient.getAINarrative(selectedPeriod);
+        setNarrative(narrativeData.summary || "");
+      } catch { setNarrative(""); }
+      finally { setNarrativeLoading(false); }
     } catch (e) { console.error(e); }
     finally { setLoading(false); setRefreshing(false); }
   };
@@ -489,6 +498,30 @@ export function BIDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* ═══ 5.5 AI NARRATIVE SUMMARY ═══ */}
+      {(narrativeLoading || narrative) && (
+        <Card className="border border-indigo-200 bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 shadow-sm">
+          <CardContent className="py-4">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Brain className="w-4 h-4 text-white" />
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-bold uppercase tracking-wide text-indigo-700 mb-1">Analyse IA de votre activité</p>
+                {narrativeLoading ? (
+                  <div className="flex items-center gap-2 py-1">
+                    <div className="w-3 h-3 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"/>
+                    <p className="text-sm text-indigo-600">Analyse en cours...</p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-700 leading-relaxed">{narrative}</p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* ═══ 6. AI INSIGHTS (EN BAS) ═══ */}
       {insightsVisible && (

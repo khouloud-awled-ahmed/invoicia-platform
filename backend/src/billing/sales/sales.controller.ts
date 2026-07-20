@@ -123,9 +123,7 @@ export class SalesController {
   getDashboard(@CurrentUser() user: any) {
     return this.salesService.getDashboard(user.tenantId);
   }
-  /**
-   * Analyse une facture fournisseur avec OCR
-   */
+
   @Post('invoices/parse')
   @UseInterceptors(FileInterceptor('file'))
   async parseInvoice(@UploadedFile() file: any, @CurrentUser() user: any) {

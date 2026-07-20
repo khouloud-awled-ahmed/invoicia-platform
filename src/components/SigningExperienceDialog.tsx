@@ -138,6 +138,8 @@ export function SigningExperienceDialog({
       return;
     }
     try {
+      const canvas = canvasRef.current;
+      const drawnDataUrl = typedSignature === "__drawn__" && canvas ? canvas.toDataURL("image/png") : typedSignature;
       const signatureData = {
         fieldValues: [
           ...Object.entries(textFieldValues).map(([fieldId, value]) => ({
@@ -153,8 +155,8 @@ export function SigningExperienceDialog({
                         (f) => f.type === "SIGNATURE" || f.type === "signature"
                       ) || envelope.fields?.[0]
                     )?.id || "signature",
-                  value: typedSignature,
-                  signatureData: typedSignature,
+                  value: drawnDataUrl,
+                  signatureData: drawnDataUrl,
                 },
               ]
             : []),

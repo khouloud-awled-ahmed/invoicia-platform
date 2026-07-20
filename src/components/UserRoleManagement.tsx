@@ -151,7 +151,7 @@ const DEFAULT_ROLES: Role[] = [
     level: 1,
     isSystem: true,
     isActive: true,
-    permissions: AVAILABLE_MODULES.map(m => ({
+    permissions: AVAILABLE_MODULES.filter(m => m && (m.id || m._id || m.value)).map(m => ({
       module: m.id,
       actions: { view: true, create: true, edit: true, delete: true, validate: true, export: true }
     })),
@@ -554,7 +554,7 @@ export function UserRoleManagement() {
     try {
       const user = users.find(u => u.id === userId);
       await apiCall(`/api/users/${userId}`, 'PATCH', { isActive: !user?.isActive });
-      setUsers(users.map(u =>
+      setUsers(users.filter(u => u && (u.id || u._id || u.value)).map(u =>
         u.id === userId ? { ...u, isActive: !u.isActive } : u
       ));
       toast.success("Statut modifié");
@@ -798,7 +798,7 @@ export function UserRoleManagement() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Tous les rôles</SelectItem>
-                    {roles.map(role => (
+                    {roles.filter(role => role && (role.id || role._id || role.value)).filter(role => role.id && role.id !== "").map(role => (
                       <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>
                     ))}
                   </SelectContent>
@@ -1255,7 +1255,7 @@ export function UserRoleManagement() {
                   <div className="space-y-2">
                     <Label>Couleur</Label>
                     <div className="flex gap-2">
-                      {["#9333ea", "#7c3aed", "#0891b2", "#059669", "#ea580c", "#dc2626"].map(color => (
+                      {["#9333ea", "#7c3aed", "#0891b2", "#059669", "#ea580c", "#dc2626"].filter(color => color && (color.id || color._id || color.value)).map(color => (
                         <button key={color} className="w-8 h-8 rounded-full border-2 border-gray-200 hover:scale-110 transition-transform" style={{ backgroundColor: color }} />
                       ))}
                     </div>
@@ -1265,7 +1265,7 @@ export function UserRoleManagement() {
                     <Select defaultValue={editingRole?.level.toString() || "5"}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        {[1,2,3,4,5,6,7,8,9,10].map(level => (
+                        {[1,2,3,4,5,6,7,8,9,10].filter(level => level && (level.id || level._id || level.value)).map(level => (
                           <SelectItem key={level} value={level.toString()}>
                             Niveau {level} {level === 1 && "(Plus haut)"}
                           </SelectItem>
@@ -1291,7 +1291,7 @@ export function UserRoleManagement() {
                           </div>
                         </div>
                         <div className="flex gap-6">
-                          {["view", "create", "edit", "delete"].map(action => (
+                          {["view", "create", "edit", "delete"].filter(action => action && (action.id || action._id || action.value)).map(action => (
                             <label key={action} className="flex items-center gap-2 cursor-pointer">
                               <Checkbox id={`${module.id}-${action}`} />
                               <span className="text-sm capitalize">{action === "view" ? "Voir" : action === "create" ? "Créer" : action === "edit" ? "Modifier" : "Supprimer"}</span>
@@ -1358,7 +1358,7 @@ export function UserRoleManagement() {
                             <span className="font-medium">{module.name}</span>
                           </div>
                         </TableCell>
-                        {["view", "create", "edit", "delete"].map(action => (
+                        {["view", "create", "edit", "delete"].filter(action => action && (action.id || action._id || action.value)).map(action => (
                           <TableCell key={action} className="text-center">
                             {permission?.actions[action as keyof typeof permission.actions] ? (
                               <CheckCircle2 className="w-5 h-5 text-green-600 mx-auto" />

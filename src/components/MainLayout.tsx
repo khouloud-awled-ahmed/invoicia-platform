@@ -20,33 +20,10 @@ import {
 } from "./ui/sheet";
 import { useIsMobile } from "./ui/use-mobile";
 import {
-  LayoutDashboard,
-  FileText,
-  Calendar,
-  Users,
-  FolderOpen,
-  CreditCard,
-  Building2,
-  Settings,
-  LogOut,
-  Bell,
-  ChevronDown,
-  ChevronRight,
-  Shield,
-  Receipt,
-  Calculator,
-  Award,
-  FolderKanban,
-  TrendingUp,
-  Zap,
-  FileSignature,
-  AlertTriangle,
-  Briefcase,
-  User as UserIcon,
-  Menu,
-  Activity,
-  DollarSign,
-  FileX,
+  LayoutDashboard, FileText, Calendar, Users, FolderOpen, CreditCard,
+  Building2, Settings, LogOut, Bell, ChevronDown, ChevronRight, Shield,
+  Receipt, Calculator, Award, FolderKanban, TrendingUp, Zap, FileSignature,
+  AlertTriangle, Briefcase, User as UserIcon, Menu, Activity, DollarSign, FileX,
 } from "lucide-react";
 import { Dashboard } from "./Dashboard";
 import { SalesManagement } from "./SalesManagement";
@@ -85,140 +62,110 @@ interface MainLayoutProps {
 }
 
 export function MainLayout({ user, onSwitchToAdmin, onLogout }: MainLayoutProps) {
-  const pathname = typeof window !== 'undefined' ? window.location.pathname : '/';
+  const pathname = typeof window !== "undefined" ? window.location.pathname : "/";
+
   const getCurrentPageFromPath = () => {
-    if (pathname === '/my-leaves') return 'my-leaves';
-    if (pathname === '/my-profile') return 'my-profile';
-    if (pathname === '/banking/import') return 'banking-import';
-
+    if (pathname === "/my-leaves") return "my-leaves";
+    if (pathname === "/my-profile") return "my-profile";
+    if (pathname === "/banking/import") return "banking-import";
     const routeMap: Record<string, string> = {
-      '/dashboard': 'dashboard',
-      '/sales': 'sales',
-      '/credit-notes': 'credit-notes',
-      '/expenses': 'expenses',
-      '/suppliers': 'suppliers',
-      '/projects': 'projects',
-      '/hr': 'hr',
-      '/ged': 'ged',
-      '/payments': 'payments',
-      '/clients': 'clients',
-      '/intervenants': 'intervenants',
-      '/banking': 'banking',
-      '/users': 'users',
-      '/settings': 'settings',
-      '/accounting': 'accounting',
-      '/cvtech': 'cvtech',
-      '/pipeline': 'pipeline',
-      '/autoinvoicing': 'autoinvoicing',
-      '/signature': 'signature',
-      '/notifications': 'notifications',
-      '/alerts': 'alerts',
-      '/monitoring': 'monitoring',
-      '/bi-dashboard': 'bi-dashboard',
+      "/dashboard": "dashboard", "/sales": "sales", "/credit-notes": "credit-notes",
+      "/expenses": "expenses", "/suppliers": "suppliers", "/projects": "projects",
+      "/hr": "hr", "/ged": "ged", "/payments": "payments", "/clients": "clients",
+      "/intervenants": "intervenants", "/banking": "banking", "/users": "users",
+      "/settings": "settings", "/accounting": "accounting", "/cvtech": "cvtech",
+      "/pipeline": "pipeline", "/autoinvoicing": "autoinvoicing", "/signature": "signature",
+      "/notifications": "notifications", "/alerts": "alerts", "/monitoring": "monitoring",
+      "/bi-dashboard": "bi-dashboard",
     };
-
     if (routeMap[pathname]) return routeMap[pathname];
-
-    const segments = pathname.split('/').filter(s => s);
+    const segments = pathname.split("/").filter(s => s);
     if (segments.length > 0) return segments[0];
-
-    return 'dashboard';
+    return "dashboard";
   };
 
   const [currentPage, setCurrentPage] = useState(getCurrentPageFromPath());
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [billingMenuOpen, setBillingMenuOpen] = useState(false);
   const [moduleFlags, setModuleFlags] = useState<Record<string, boolean>>({});
-  // ✅ NEW: user permissions from DB
   const [userPermissions, setUserPermissions] = useState<any[]>([]);
+  const [permissionsLoaded, setPermissionsLoaded] = useState(false);
   const isMobile = useIsMobile();
 
   useEffect(() => {
     const newPage = getCurrentPageFromPath();
-    if (newPage !== currentPage) {
-      setCurrentPage(newPage);
-    }
+    if (newPage !== currentPage) setCurrentPage(newPage);
   }, [pathname]);
 
-  // ✅ UPDATED: Load both modules AND role permissions
   useEffect(() => {
     const loadTenantData = async () => {
-      if (user?.role === 'PLATFORM_ADMIN' || !user?.tenantId) {
+      if (user?.role === "PLATFORM_ADMIN" || !user?.tenantId) {
         setModuleFlags({});
         setUserPermissions([]);
+        setPermissionsLoaded(true);
         return;
       }
       try {
-        // Load tenant modules
-       const tenant = await apiClient.getTenant(user.tenantId);
-        if (tenant.moduleFlags && typeof tenant.moduleFlags === 'object') {
-        setModuleFlags(tenant.moduleFlags);
+        const tenant = await apiClient.getTenant(user.tenantId);
+        if (tenant.moduleFlags && typeof tenant.moduleFlags === "object") {
+          setModuleFlags(tenant.moduleFlags);
         } else if (tenant.modules && Array.isArray(tenant.modules)) {
-  // Convert modules array to moduleFlags object
-      const flags: Record<string, boolean> = {
-      module_invoicing: tenant.modules.includes('SALES'),
-      module_suppliers: tenant.modules.includes('PURCHASES'),
-      module_accounting: tenant.modules.includes('ACCOUNTING'),
-      module_projects: tenant.modules.includes('PROJECTS'),
-      module_hr: tenant.modules.includes('HR'),
-      module_ged: tenant.modules.includes('GED'),
-      module_crm: tenant.modules.includes('CRM'),
-      module_banking: tenant.modules.includes('BANKING'),
-      module_signature: tenant.modules.includes('SIGNATURE'),
-      module_payments: tenant.modules.includes('PAYMENTS'),
-      module_clients: tenant.modules.includes('CLIENTS'),
-      module_cvtech: tenant.modules.includes('CVTECH'),
-    };
-    setModuleFlags(flags);
-    } else {
-      setModuleFlags({});
-    }
+          setModuleFlags({
+            module_invoicing: tenant.modules.includes("SALES"),
+            module_suppliers: tenant.modules.includes("PURCHASES"),
+            module_accounting: tenant.modules.includes("ACCOUNTING"),
+            module_projects: tenant.modules.includes("PROJECTS"),
+            module_hr: tenant.modules.includes("HR"),
+            module_ged: tenant.modules.includes("GED"),
+            module_crm: tenant.modules.includes("CRM"),
+            module_banking: tenant.modules.includes("BANKING"),
+            module_signature: tenant.modules.includes("SIGNATURE"),
+            module_payments: tenant.modules.includes("PAYMENTS"),
+            module_clients: tenant.modules.includes("CLIENTS"),
+            module_cvtech: tenant.modules.includes("CVTECH"),
+          });
+        } else {
+          setModuleFlags({});
+        }
 
-      // Load role permissions from DB
-       // const roles = await apiClient.getRoles();
-// TENANT_ADMIN et ADMIN voient tout
-      if (['TENANT_ADMIN', 'ADMIN', 'PLATFORM_ADMIN'].includes(user.role)) {
-        setUserPermissions([]);
-        return;
-      }
+        // TENANT_ADMIN always has full access, no need to fetch role permissions
+        if (user.role === "TENANT_ADMIN") {
+          setUserPermissions([]);
+          setPermissionsLoaded(true);
+          return;
+        }
 
-      // Permissions locales par rôle
-      const rolePermissionsMap: Record<string, any[]> = {
-        'RH': [
-          { module: 'dashboard', actions: { view: true } },
-          { module: 'hr', actions: { view: true, create: true, edit: true, delete: true } },
-          { module: 'users', actions: { view: true, create: true, edit: true } },
-          { module: 'settings', actions: { view: true } },
-        ],
-        'MANAGER': [
-          { module: 'dashboard', actions: { view: true } },
-          { module: 'projects', actions: { view: true, create: true, edit: true } },
-          { module: 'hr', actions: { view: true, create: true, edit: true } },
-          { module: 'clients', actions: { view: true, create: true, edit: true } },
-          { module: 'ged', actions: { view: true, create: true } },
-          { module: 'signature', actions: { view: true, create: true } },
-          { module: 'crm', actions: { view: true, create: true, edit: true } },
-          { module: 'users', actions: { view: true } },
-          { module: 'settings', actions: { view: true } },
-        ],
-        'CONSULTANT': [],
-      };
+        const roleSlug = (user as any).roleSlug;
 
-      const permissions = rolePermissionsMap[user.role] || [];
-      setUserPermissions(permissions);
+        if (!roleSlug) {
+          // No role assigned -> fail safe: no module access
+          setUserPermissions([{ module: "__none__", actions: {} }]);
+          setPermissionsLoaded(true);
+          return;
+        }
+
+        const roles = await apiClient.getRoles();
+        const matchedRole = roles.find((r: any) => r.slug === roleSlug);
+
+        if (matchedRole && Array.isArray(matchedRole.permissions)) {
+          setUserPermissions(matchedRole.permissions);
+        } else {
+          // Role slug not found in DB -> fail safe: no module access
+          setUserPermissions([{ module: "__none__", actions: {} }]);
+        }
+        setPermissionsLoaded(true);
       } catch (error) {
-        console.error('Erreur lors du chargement des données:', error);
+        console.error("Erreur lors du chargement des données:", error);
         setModuleFlags({});
-        setUserPermissions([]);
+        setUserPermissions([{ module: "__none__", actions: {} }]);
+        setPermissionsLoaded(true);
       }
     };
     loadTenantData();
-  }, [user?.tenantId, user?.role]);
+  }, [user?.tenantId, user?.role, (user as any)?.roleSlug]);
 
   useEffect(() => {
-    if (!isMobile && sidebarOpen) {
-      setSidebarOpen(false);
-    }
+    if (!isMobile && sidebarOpen) setSidebarOpen(false);
   }, [isMobile, sidebarOpen]);
 
   const handleSheetOpenChange = (open: boolean) => {
@@ -226,26 +173,17 @@ export function MainLayout({ user, onSwitchToAdmin, onLogout }: MainLayoutProps)
     setSidebarOpen(open);
   };
 
-  const SOCLE_IDS = new Set(['dashboard', 'settings', 'users']);
+  const SOCLE_IDS = new Set(["dashboard"]);
 
   const getModuleKeyForPage = (pageId: string): string | null => {
     const map: Record<string, string> = {
-      sales: 'module_invoicing',
-      'credit-notes': 'module_invoicing',
-      expenses: 'module_invoicing',
-      suppliers: 'module_suppliers',
-      clients: 'module_clients',
-      pipeline: 'module_crm',
-      autoinvoicing: 'module_invoicing',
-      accounting: 'module_accounting',
-      projects: 'module_projects',
-      hr: 'module_hr',
-      cvtech: 'module_cvtech',
-      ged: 'module_ged',
-      signature: 'module_signature',
-      payments: 'module_payments',
-      intervenants: 'module_hr',
-      banking: 'module_banking',
+      sales: "module_invoicing", "credit-notes": "module_invoicing",
+      expenses: "module_invoicing", suppliers: "module_suppliers",
+      clients: "module_clients", pipeline: "module_crm",
+      autoinvoicing: "module_invoicing", accounting: "module_accounting",
+      projects: "module_projects", hr: "module_hr", cvtech: "module_cvtech",
+      ged: "module_ged", signature: "module_signature", payments: "module_payments",
+      intervenants: "module_hr", banking: "module_banking",
     };
     return map[pageId] ?? null;
   };
@@ -256,99 +194,94 @@ export function MainLayout({ user, onSwitchToAdmin, onLogout }: MainLayoutProps)
     return !!moduleFlags[moduleKey];
   };
 
-  // ✅ NEW: Check if user has permission to view a page
-  const hasPermission = (pageId: string): boolean => {
-    // TENANT_ADMIN always has full access
-    if (user?.role === 'TENANT_ADMIN') return true;
-    // If no permissions loaded, allow access (fallback)
-    if (userPermissions.length === 0) return true;
-
-    // Map page ID to permission module name
-    const pageToModule: Record<string, string> = {
-      dashboard: 'dashboard',
-      sales: 'sales',
-      'credit-notes': 'sales',
-      expenses: 'purchases',
-      suppliers: 'purchases',
-      accounting: 'accounting',
-      banking: 'banking',
-      hr: 'hr',
-      projects: 'projects',
-      clients: 'clients',
-      ged: 'ged',
-      signature: 'signature',
-      pipeline: 'crm',
-      autoinvoicing: 'sales',
-      users: 'users',
-      settings: 'settings',
-      notifications: 'dashboard',
-      alerts: 'dashboard',
-      monitoring: 'settings',
-      cvtech: 'hr',
-      payments: 'accounting',
-      intervenants: 'hr',
-    };
-
-    const module = pageToModule[pageId];
-    if (!module) return true;
-
-    const perm = userPermissions.find((p: any) => p.module === module);
-    return perm?.actions?.view === true;
+  // The roles stored in MongoDB hold `permissions` as an array of French
+  // display-name strings (e.g. "Comptabilité", "Ventes & Factures") rather
+  // than structured { module, actions } objects. This map translates each
+  // page id to the exact label(s) that grant access to it.
+  const pageToPermissionLabels: Record<string, string[]> = {
+    dashboard: ["Tableau de bord"],
+    sales: ["Ventes & Factures"],
+    "credit-notes": ["Ventes & Factures"],
+    autoinvoicing: ["Ventes & Factures"],
+    expenses: ["Achats & Fournisseurs"],
+    suppliers: ["Achats & Fournisseurs"],
+    accounting: ["Comptabilité"],
+    banking: ["Banque"],
+    hr: ["RH & Absences"],
+    intervenants: ["RH & Absences"],
+    cvtech: ["RH & Absences"],
+    projects: ["Projets"],
+    clients: ["Clients"],
+    ged: ["GED (Documents)"],
+    signature: ["Signature électronique"],
+    pipeline: ["CRM (Pipeline)"],
+    users: ["Utilisateurs & Rôles"],
+    settings: ["Paramètres"],
+    "bi-dashboard": ["Reporting & Analytics"],
+    notifications: ["Tableau de bord"],
+    alerts: ["Tableau de bord"],
+    monitoring: ["Paramètres"],
+    payments: ["Comptabilité"],
   };
 
-  const userRole = (user?.role as string) || 'USER';
-  const isConsultant = userRole === 'CONSULTANT';
+  const hasPermission = (pageId: string): boolean => {
+    if (user?.role === "TENANT_ADMIN") return true;
+    // While permissions are still loading, hide everything except the always-visible socle
+    // to avoid a flash of full access before the real permissions arrive.
+    if (!permissionsLoaded) return SOCLE_IDS.has(pageId);
 
-  type SubMenuItem = { id: string; label: string; icon: any };
-  type MenuItem = { id: string; label: string; icon: any; hasSubMenu?: boolean; subMenu?: SubMenuItem[] };
+    const requiredLabels = pageToPermissionLabels[pageId];
+    if (!requiredLabels) return true;
+
+    return requiredLabels.some((label) => userPermissions.includes(label));
+  };
+
+  const userRole = (user?.role as string) || "USER";
+  const isConsultant = userRole === "CONSULTANT";
+
+  type SubMenuItem = { id: string; label: string; icon: any; color: string };
+  type MenuItem = { id: string; label: string; icon: any; color: string; hasSubMenu?: boolean; subMenu?: SubMenuItem[] };
 
   const consultantMenuItems: MenuItem[] = [
-    { id: "my-leaves", label: "Mes Congés", icon: Calendar },
-    { id: "my-profile", label: "Mon Profil", icon: UserIcon },
+    { id: "my-leaves", label: "Mes Congés", icon: Calendar, color: "#06b6d4" },
+    { id: "my-profile", label: "Mon Profil", icon: UserIcon, color: "#8b5cf6" },
   ];
 
   const ALL_ADMIN_MENU_ITEMS: MenuItem[] = [
-    { id: "dashboard", label: "Tableau de Bord", icon: LayoutDashboard },
-    { id: "bi-dashboard", label: "Cockpit de Gestion", icon: TrendingUp },
+    { id: "dashboard", label: "Tableau de Bord", icon: LayoutDashboard, color: "#6d28d9" },
+    { id: "bi-dashboard", label: "Cockpit de Gestion", icon: TrendingUp, color: "#3b82f6" },
     {
-      id: "billing",
-      label: "Facturation",
-      icon: DollarSign,
-      hasSubMenu: true,
+      id: "billing", label: "Facturation", icon: DollarSign, color: "#10b981", hasSubMenu: true,
       subMenu: [
-        { id: "sales", label: "Factures Clients", icon: FileText },
-        { id: "credit-notes", label: "Avoirs", icon: FileX },
-        { id: "expenses", label: "Dépenses", icon: Receipt },
-        { id: "suppliers", label: "Fournisseurs", icon: Building2 },
+        { id: "sales", label: "Factures Clients", icon: FileText, color: "#10b981" },
+        { id: "credit-notes", label: "Avoirs", icon: FileX, color: "#10b981" },
+        { id: "expenses", label: "Dépenses", icon: Receipt, color: "#10b981" },
+        { id: "suppliers", label: "Fournisseurs", icon: Building2, color: "#10b981" },
       ],
     },
-    { id: "accounting", label: "Comptabilité", icon: Calculator },
-    { id: "projects", label: "Projets", icon: FolderKanban },
-    { id: "pipeline", label: "Pipeline CRM", icon: TrendingUp },
-    { id: "autoinvoicing", label: "Facturation Auto", icon: Zap },
-    { id: "signature", label: "Signature Électronique", icon: FileSignature },
-    { id: "hr", label: "RH & Absences", icon: Users },
-    { id: "cvtech", label: "CV Tech", icon: Award },
-    { id: "ged", label: "GED", icon: FolderOpen },
-    { id: "payments", label: "Paiements", icon: CreditCard },
-    { id: "clients", label: "Clients", icon: Briefcase },
-    { id: "intervenants", label: "Intervenants", icon: UserIcon },
-    { id: "banking", label: "Banque", icon: CreditCard },
-    { id: "users", label: "Utilisateurs", icon: Users },
-    { id: "settings", label: "Paramètres", icon: Settings },
-    { id: "notifications", label: "Notifications", icon: Bell },
-    { id: "alerts", label: "Alertes", icon: AlertTriangle },
-    { id: "monitoring", label: "Monitoring Technique", icon: Activity },
+    { id: "accounting", label: "Comptabilité", icon: Calculator, color: "#f59e0b" },
+    { id: "projects", label: "Projets", icon: FolderKanban, color: "#8b5cf6" },
+    { id: "pipeline", label: "Pipeline CRM", icon: TrendingUp, color: "#ec4899" },
+    { id: "autoinvoicing", label: "Facturation Auto", icon: Zap, color: "#f97316" },
+    { id: "signature", label: "Signature Électronique", icon: FileSignature, color: "#06b6d4" },
+    { id: "hr", label: "RH & Absences", icon: Users, color: "#06b6d4" },
+    { id: "cvtech", label: "CV Tech", icon: Award, color: "#8b5cf6" },
+    { id: "ged", label: "GED", icon: FolderOpen, color: "#f97316" },
+    { id: "payments", label: "Paiements", icon: CreditCard, color: "#10b981" },
+    { id: "clients", label: "Clients", icon: Briefcase, color: "#3b82f6" },
+    { id: "intervenants", label: "Intervenants", icon: UserIcon, color: "#ec4899" },
+    { id: "banking", label: "Banque", icon: CreditCard, color: "#10b981" },
+    { id: "users", label: "Utilisateurs", icon: Users, color: "#6d28d9" },
+    { id: "settings", label: "Paramètres", icon: Settings, color: "#6b7280" },
+    { id: "notifications", label: "Notifications", icon: Bell, color: "#f59e0b" },
+    { id: "alerts", label: "Alertes", icon: AlertTriangle, color: "#ef4444" },
+    { id: "monitoring", label: "Monitoring Technique", icon: Activity, color: "#3b82f6" },
   ];
 
-  // ✅ UPDATED: Filter by both moduleFlags AND role permissions
   const filteredAdminMenuItems = ALL_ADMIN_MENU_ITEMS.filter((item) => {
     if (SOCLE_IDS.has(item.id)) return true;
     if (item.hasSubMenu && item.subMenu) {
-      const visibleSub = item.subMenu.filter(
-        (sub) => hasModule(getModuleKeyForPage(sub.id)) && hasPermission(sub.id)
-      );
-      return visibleSub.length > 0;
+      return item.subMenu.filter(sub => hasModule(getModuleKeyForPage(sub.id)) && hasPermission(sub.id)).length > 0;
     }
     return hasModule(getModuleKeyForPage(item.id)) && hasPermission(item.id);
   });
@@ -359,8 +292,8 @@ export function MainLayout({ user, onSwitchToAdmin, onLogout }: MainLayoutProps)
     switch (currentPage) {
       case "dashboard": return <Dashboard />;
       case "bi-dashboard": return <BIDashboard />;
-      case "my-leaves": return <div className="container mx-auto p-6"><h1 className="text-2xl font-bold">Mes Congés</h1><p className="text-muted-foreground mt-2">Fonctionnalité à venir</p></div>;
-      case "my-profile": return <div className="container mx-auto p-6"><h1 className="text-2xl font-bold">Mon Profil</h1><p className="text-muted-foreground mt-2">Fonctionnalité à venir</p></div>;
+      case "my-leaves": return <div className="container mx-auto p-6"><h1 className="text-2xl font-bold">Mes Congés</h1></div>;
+      case "my-profile": return <div className="container mx-auto p-6"><h1 className="text-2xl font-bold">Mon Profil</h1></div>;
       case "sales": return <SalesManagement />;
       case "credit-notes": return <SalesManagement initialView="creditNotes" />;
       case "expenses": return <ExpenseManagement />;
@@ -388,302 +321,300 @@ export function MainLayout({ user, onSwitchToAdmin, onLogout }: MainLayoutProps)
     }
   };
 
-  const getUserInitials = (name: string) => {
-    return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
+  const getUserInitials = (name: string) =>
+    name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+
+  const getRoleBadge = (role: string) => {
+    const userRoleSlug = (user as any).roleSlug;
+    const slugLabels: Record<string, string> = {
+      directeur_ceo: "Directeur / CEO", comptable: "Comptable", responsable_rh: "Responsable RH",
+      responsable_commercial: "Responsable Commercial", super_admin: "Super Admin",
+      salarie_consultant: "Salarié / Consultant", admin_plateforme: "Admin Plateforme",
+      daf: "DAF", comptable_externe: "Comptable Externe", commercial: "Commercial",
+      chef_projet: "Chef de Projet", intervenant_externe: "Intervenant Externe",
+      client_role: "Client", fournisseur: "Fournisseur",
+    };
+    const roleLabels: Record<string, string> = {
+      TENANT_ADMIN: "Admin", MANAGER: "Manager", RH: "Responsable RH",
+      CONSULTANT: "Consultant", PLATFORM_ADMIN: "Platform Admin",
+    };
+    const roleColors: Record<string, string> = {
+      TENANT_ADMIN: "bg-purple-600", MANAGER: "bg-blue-600",
+      RH: "bg-green-600", CONSULTANT: "bg-gray-600", PLATFORM_ADMIN: "bg-red-600",
+    };
+    return <Badge className={roleColors[role] || "bg-gray-600"}>{slugLabels[userRoleSlug] || roleLabels[role] || role}</Badge>;
   };
 
- const getRoleBadge = (role: string) => {
-  const userRoleSlug = (user as any).roleSlug;
-
-  const slugLabels: { [key: string]: string } = {
-    ceo: "Directeur / CEO",
-    accountant: "Comptable",
-    hr_manager: "Responsable RH",
-    sales_manager: "Responsable Commercial",
-    super_admin: "Super Admin",
-    employee: "Salarié / Consultant",
-    platform_admin: "Admin Plateforme",
-    daf: "DAF",
-    external_accountant: "Comptable Externe",
-    sales_rep: "Commercial",
-    project_manager: "Chef de Projet",
-    external_contractor: "Intervenant Externe",
-    client_role: "Client",
-    supplier_role: "Fournisseur",
+  const getRouteForPage = (pageId: string) => {
+    const routeMap: Record<string, string> = {
+      "my-leaves": "/my-leaves", "my-profile": "/my-profile", dashboard: "/dashboard",
+      sales: "/sales", "credit-notes": "/credit-notes", expenses: "/expenses",
+      suppliers: "/suppliers", projects: "/projects", hr: "/hr", ged: "/ged",
+      payments: "/payments", clients: "/clients", intervenants: "/intervenants",
+      banking: "/banking", users: "/users", settings: "/settings", accounting: "/accounting",
+      cvtech: "/cvtech", pipeline: "/pipeline", autoinvoicing: "/autoinvoicing",
+      signature: "/signature", notifications: "/notifications", alerts: "/alerts",
+      monitoring: "/monitoring", "bi-dashboard": "/bi-dashboard",
+    };
+    return routeMap[pageId] || `/${pageId}`;
   };
 
-  const roleLabels: { [key: string]: string } = {
-    TENANT_ADMIN: "Admin",
-    MANAGER: "Manager",
-    RH: "Responsable RH",
-    CONSULTANT: "Consultant",
-    PLATFORM_ADMIN: "Platform Admin",
-  };
-
-  const roleColors: { [key: string]: string } = {
-    TENANT_ADMIN: "bg-purple-600",
-    MANAGER: "bg-blue-600",
-    RH: "bg-green-600",
-    CONSULTANT: "bg-gray-600",
-    PLATFORM_ADMIN: "bg-red-600",
-  };
-
-  const label = slugLabels[userRoleSlug] || roleLabels[role] || role;
-
-  return (
-    <Badge className={roleColors[role] || "bg-gray-600"}>
-      {label}
-    </Badge>
-  );
-};
-  const SidebarContent = () => (
-    <>
-      <div className="p-4 border-b">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-            <FileText className="h-5 w-5 text-white" />
-          </div>
-          <div>
-          <h1 className="text-lg font-semibold tracking-tight">Invoicia</h1>
-          <p className="text-xs text-muted-foreground">
-          {user?.role === 'PLATFORM_ADMIN' ? 'Super Admin' : 'Platform SaaS'}
-         </p>
-        </div>
-        </div>
-      </div>
-
-      <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
-        {menuItems.map((item) => {
-          if (item.id === "monitoring" && user.role !== 'TENANT_ADMIN' && user.role !== 'PLATFORM_ADMIN') {
-            return null;
-          }
-
-          const Icon = item.icon;
-          const isActive = currentPage === item.id;
-          const hasSubMenu = item.hasSubMenu && item.subMenu;
-          const isBillingActive = hasSubMenu && item.subMenu?.some(subItem => currentPage === subItem.id);
-
-          if (hasSubMenu) {
-            return (
-              <div key={item.id} className="space-y-1">
-                <button
-                  onClick={() => setBillingMenuOpen(!billingMenuOpen)}
-                  className={`w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg transition-colors text-sm ${
-                    isBillingActive || billingMenuOpen ? "bg-blue-50 text-blue-700" : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <Icon className="h-4 w-4 flex-shrink-0" />
-                    <span>{item.label}</span>
-                  </div>
-                  {billingMenuOpen ? (
-                    <ChevronDown className="h-4 w-4 flex-shrink-0" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4 flex-shrink-0" />
-                  )}
-                </button>
-                {billingMenuOpen && item.subMenu && (
-                  <div className="ml-4 space-y-1 border-l-2 border-gray-200 pl-2">
-                    {item.subMenu
-                      .filter((subItem) => hasModule(getModuleKeyForPage(subItem.id)) && hasPermission(subItem.id))
-                      .map((subItem) => {
-                        const SubIcon = subItem.icon;
-                        const isSubActive = currentPage === subItem.id;
-                        return (
-                          <button
-                            key={subItem.id}
-                            onClick={() => {
-                              window.location.href = `/${subItem.id}`;
-                              setSidebarOpen(false);
-                            }}
-                            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm ${
-                              isSubActive ? "bg-blue-50 text-blue-700 font-medium" : "text-gray-600 hover:bg-gray-50"
-                            }`}
-                          >
-                            <SubIcon className="h-4 w-4 flex-shrink-0" />
-                            <span>{subItem.label}</span>
-                          </button>
-                        );
-                      })}
-                  </div>
-                )}
-              </div>
-            );
-          }
-
-          const getRouteForPage = (pageId: string) => {
-            const routeMap: Record<string, string> = {
-              'my-leaves': '/my-leaves', 'my-profile': '/my-profile',
-              'dashboard': '/dashboard', 'sales': '/sales',
-              'credit-notes': '/credit-notes', 'expenses': '/expenses',
-              'suppliers': '/suppliers', 'projects': '/projects',
-              'hr': '/hr', 'ged': '/ged', 'payments': '/payments',
-              'clients': '/clients', 'intervenants': '/intervenants',
-              'banking': '/banking', 'users': '/users', 'settings': '/settings',
-              'accounting': '/accounting', 'cvtech': '/cvtech',
-              'pipeline': '/pipeline', 'autoinvoicing': '/autoinvoicing',
-              'signature': '/signature', 'notifications': '/notifications',
-              'alerts': '/alerts', 'monitoring': '/monitoring',
-              'bi-dashboard': '/bi-dashboard',
-            };
-            return routeMap[pageId] || `/${pageId}`;
-          };
-
-          return (
-            <button
-              key={item.id}
-              onClick={() => {
-                window.location.href = getRouteForPage(item.id);
-                setSidebarOpen(false);
-              }}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm ${
-                isActive ? "bg-blue-50 text-blue-700" : "text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              <Icon className="h-4 w-4 flex-shrink-0" />
-              <span>{item.label}</span>
-            </button>
-          );
-        })}
-      </nav>
-
-      <div className="p-4 border-t">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-8 w-8">
-            <AvatarFallback className="bg-blue-600 text-white text-xs">
-              {getUserInitials(user.name)}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm truncate">{user.name}</p>
-            <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-          </div>
-        </div>
-      </div>
-    </>
-  );
-
-  return (
-    <>
-    <div className="flex min-h-screen bg-gray-50">
-      {!isMobile && (
-        <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
-          <SidebarContent />
-        </aside>
-      )}
-
-      {isMobile && (
-        <Sheet open={sidebarOpen} onOpenChange={handleSheetOpenChange} modal={false}>
-          <SheetContent
-            side="left"
-            className="w-64 p-0 sm:w-80"
-            id="mobile-sidebar"
-            aria-label="Menu de navigation"
-          >
-            <SheetHeader className="sr-only">
-              <SheetTitle>Menu</SheetTitle>
-            </SheetHeader>
-            <div className="flex flex-col h-full bg-white">
-              <SidebarContent />
+  const SidebarContent = () => {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+        {/* Logo */}
+        <div style={{ padding: "18px 16px 14px", borderBottom: "1px solid #f3f4f6" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <div style={{
+              width: "36px", height: "36px", borderRadius: "10px",
+              background: "linear-gradient(135deg, #6d28d9, #4f46e5)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              boxShadow: "0 4px 12px rgba(109,40,217,0.3)", flexShrink: 0
+            }}>
+              <FileText style={{ width: "18px", height: "18px", color: "white" }} />
             </div>
-          </SheetContent>
-        </Sheet>
-      )}
+            <div>
+              <h1 style={{ fontSize: "17px", fontWeight: "800", color: "#1e1b4b", letterSpacing: "-0.5px", margin: 0 }}>Invoicia</h1>
+              <p style={{ fontSize: "10px", color: "#9ca3af", margin: 0 }}>
+                {user?.role === "PLATFORM_ADMIN" ? "Super Admin" : "Platform SaaS"}
+              </p>
+            </div>
+          </div>
+        </div>
 
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="bg-white border-b border-gray-200 px-4 md:px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            {isMobile && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setSidebarOpen(true)}
-                aria-label="Ouvrir le menu"
-                aria-expanded={sidebarOpen}
-                aria-controls="mobile-sidebar"
+        {/* Nav */}
+        <nav style={{ flex: 1, padding: "8px", overflowY: "auto" }}>
+          {menuItems.map((item) => {
+            if (item.id === "monitoring" && user.role !== "TENANT_ADMIN" && user.role !== "PLATFORM_ADMIN") return null;
+
+            const Icon = item.icon;
+            const color = item.color || "#6d28d9";
+            const isActive = currentPage === item.id;
+            const hasSubMenu = item.hasSubMenu && item.subMenu;
+            const isBillingActive = !!(hasSubMenu && item.subMenu?.some(sub => currentPage === sub.id));
+
+            const btnBase: React.CSSProperties = {
+              width: "100%", display: "flex", alignItems: "center", gap: "10px",
+              padding: "7px 10px", borderRadius: "8px", border: "none", cursor: "pointer",
+              fontSize: "13px", transition: "all 0.15s", textAlign: "left" as const,
+              marginBottom: "2px",
+            };
+
+            if (hasSubMenu) {
+              return (
+                <div key={item.id}>
+                  <button
+                    onClick={() => setBillingMenuOpen(!billingMenuOpen)}
+                    style={{
+                      ...btnBase,
+                      background: (isBillingActive || billingMenuOpen) ? "#f3f4f6" : "transparent",
+                      color: (isBillingActive || billingMenuOpen) ? color : "#6b7280",
+                      fontWeight: (isBillingActive || billingMenuOpen) ? "600" : "400",
+                      justifyContent: "space-between",
+                    }}
+                    onMouseEnter={e => { if (!isBillingActive && !billingMenuOpen) (e.currentTarget as HTMLButtonElement).style.background = "#f9fafb"; }}
+                    onMouseLeave={e => { if (!isBillingActive && !billingMenuOpen) (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <div style={{
+                        width: "28px", height: "28px", borderRadius: "8px", flexShrink: 0,
+                        background: (isBillingActive || billingMenuOpen) ? color : "#f3f4f6",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                      }}>
+                        <Icon style={{ width: "14px", height: "14px", color: (isBillingActive || billingMenuOpen) ? "white" : color }} />
+                      </div>
+                      <span>{item.label}</span>
+                    </div>
+                    {billingMenuOpen
+                      ? <ChevronDown style={{ width: "13px", height: "13px" }} />
+                      : <ChevronRight style={{ width: "13px", height: "13px" }} />
+                    }
+                  </button>
+                  {billingMenuOpen && item.subMenu && (
+                    <div style={{ marginLeft: "14px", paddingLeft: "10px", borderLeft: "2px solid #f3f4f6", marginBottom: "4px" }}>
+                      {item.subMenu
+                        .filter(sub => hasModule(getModuleKeyForPage(sub.id)) && hasPermission(sub.id))
+                        .map(subItem => {
+                          const SubIcon = subItem.icon;
+                          const isSubActive = currentPage === subItem.id;
+                          const subColor = subItem.color || "#10b981";
+                          return (
+                            <button
+                              key={subItem.id}
+                              onClick={() => { window.location.href = `/${subItem.id}`; setSidebarOpen(false); }}
+                              style={{
+                                ...btnBase,
+                                background: isSubActive ? subColor + "15" : "transparent",
+                                color: isSubActive ? subColor : "#6b7280",
+                                fontWeight: isSubActive ? "600" : "400",
+                              }}
+                              onMouseEnter={e => { if (!isSubActive) (e.currentTarget as HTMLButtonElement).style.background = "#f9fafb"; }}
+                              onMouseLeave={e => { if (!isSubActive) (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
+                            >
+                              <SubIcon style={{ width: "13px", height: "13px", color: isSubActive ? subColor : "#9ca3af", flexShrink: 0 }} />
+                              <span style={{ fontSize: "12px" }}>{subItem.label}</span>
+                            </button>
+                          );
+                        })}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
+            return (
+              <button
+                key={item.id}
+                onClick={() => { window.location.href = getRouteForPage(item.id); setSidebarOpen(false); }}
+                style={{
+                  ...btnBase,
+                  background: isActive ? "#f3f4f6" : "transparent",
+                  color: isActive ? color : "#6b7280",
+                  fontWeight: isActive ? "600" : "400",
+                }}
+                onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = "#f9fafb"; }}
+                onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
               >
-                <Menu className="h-5 w-5" />
-              </Button>
-            )}
-            <h2 className="text-lg md:text-xl font-semibold truncate">
-              {(() => {
-                const currentItem = menuItems.find((item) => item.id === currentPage);
-                if (currentItem) return currentItem.label;
-                const billingItem = menuItems.find((item) => item.id === "billing");
-                const subItem = billingItem?.subMenu?.find((sub) => sub.id === currentPage);
-                if (subItem) return subItem.label;
-                return "Tableau de Bord";
-              })()}
-            </h2>
+                <div style={{
+                  width: "28px", height: "28px", borderRadius: "8px", flexShrink: 0,
+                  background: isActive ? color : "#f3f4f6",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  <Icon style={{ width: "14px", height: "14px", color: isActive ? "white" : color }} />
+                </div>
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* User */}
+        <div style={{ padding: "12px 14px", borderTop: "1px solid #f3f4f6", background: "#fafafa" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <div style={{
+              width: "32px", height: "32px", borderRadius: "10px", flexShrink: 0,
+              background: "linear-gradient(135deg, #6d28d9, #4f46e5)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              color: "white", fontSize: "11px", fontWeight: "700"
+            }}>
+              {getUserInitials(user.name)}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: "12px", color: "#1f2937", fontWeight: "600", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.name}</p>
+              <p style={{ fontSize: "10px", color: "#9ca3af", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.email}</p>
+            </div>
           </div>
-
-          <div className="flex items-center gap-2 md:gap-3">
-            <NotificationCenter
-              userId={user.id}
-              onNotificationClick={(notification) => {
-                if (notification.actionUrl) {
-                  const pageMatch = notification.actionUrl.match(/\/(\w+)/);
-                  if (pageMatch && pageMatch[1]) {
-                    setCurrentPage(pageMatch[1]);
-                  }
-                }
-              }}
-            />
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="gap-2">
-                  <Avatar className="h-6 w-6">
-                    <AvatarFallback className="bg-blue-600 text-white text-xs">
-                      {getUserInitials(user.name)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="hidden sm:inline text-sm">{user.name}</span>
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>
-                  <div className="space-y-1">
-                    <p className="text-sm">{user.name}</p>
-                    <p className="text-xs text-muted-foreground">{user.email}</p>
-                    <div className="pt-1">{getRoleBadge(user.role)}</div>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setCurrentPage("settings")}>
-                  <Settings className="mr-2 h-4 w-4" />
-                  Paramètres
-                </DropdownMenuItem>
-                {user.role === "super_admin" && onSwitchToAdmin && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={onSwitchToAdmin}>
-                      <Shield className="mr-2 h-4 w-4" />
-                      Panneau Super-Admin
-                    </DropdownMenuItem>
-                  </>
-                )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={onLogout}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Déconnexion
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </header>
-
-        <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8">
-          {renderContent()}
-        </main>
+        </div>
       </div>
-    </div>
-    <HRChatbot />
+    );
+  };
+
+  return (
+    <>
+      <style>{`
+        nav::-webkit-scrollbar { width: 3px; }
+        nav::-webkit-scrollbar-track { background: transparent; }
+        nav::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 4px; }
+      `}</style>
+      <div className="flex min-h-screen bg-gray-50">
+        {!isMobile && (
+          <aside style={{
+            width: "240px", flexShrink: 0, background: "white",
+            display: "flex", flexDirection: "column",
+            borderRight: "1px solid #f3f4f6", boxShadow: "2px 0 8px rgba(0,0,0,0.04)"
+          }}>
+            <SidebarContent />
+          </aside>
+        )}
+
+        {isMobile && (
+          <Sheet open={sidebarOpen} onOpenChange={handleSheetOpenChange} modal={false}>
+            <SheetContent side="left" className="w-64 p-0 sm:w-80" id="mobile-sidebar" aria-label="Menu de navigation">
+              <SheetHeader className="sr-only"><SheetTitle>Menu</SheetTitle></SheetHeader>
+              <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "white" }}>
+                <SidebarContent />
+              </div>
+            </SheetContent>
+          </Sheet>
+        )}
+
+        <div className="flex-1 flex flex-col min-w-0">
+          <header className="bg-white border-b border-gray-100 px-4 md:px-6 py-3 flex items-center justify-between" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
+            <div className="flex items-center gap-4">
+              {isMobile && (
+                <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)} aria-label="Ouvrir le menu">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              )}
+              <h2 className="text-lg md:text-xl font-semibold truncate" style={{ color: "#1e1b4b" }}>
+                {(() => {
+                  const currentItem = menuItems.find(item => item.id === currentPage);
+                  if (currentItem) return currentItem.label;
+                  const billingItem = menuItems.find(item => item.id === "billing");
+                  const subItem = billingItem?.subMenu?.find(sub => sub.id === currentPage);
+                  if (subItem) return subItem.label;
+                  return "Tableau de Bord";
+                })()}
+              </h2>
+            </div>
+
+            <div className="flex items-center gap-2 md:gap-3">
+              <NotificationCenter
+                userId={user.id}
+                onNotificationClick={(notification) => {
+                  if (notification.actionUrl) {
+                    const pageMatch = notification.actionUrl.match(/\/(\w+)/);
+                    if (pageMatch && pageMatch[1]) setCurrentPage(pageMatch[1]);
+                  }
+                }}
+              />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="gap-2">
+                    <Avatar className="h-7 w-7">
+                      <AvatarFallback style={{ background: "linear-gradient(135deg,#6d28d9,#4f46e5)", color: "white", fontSize: "11px", fontWeight: "700" }}>
+                        {getUserInitials(user.name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="hidden sm:inline text-sm" style={{ color: "#374151" }}>{user.name}</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>
+                    <div className="space-y-1">
+                      <p className="text-sm">{user.name}</p>
+                      <p className="text-xs text-muted-foreground">{user.email}</p>
+                      <div className="pt-1">{getRoleBadge(user.role)}</div>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setCurrentPage("settings")}>
+                    <Settings className="mr-2 h-4 w-4" /> Paramètres
+                  </DropdownMenuItem>
+                  {user.role === "super_admin" && onSwitchToAdmin && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={onSwitchToAdmin}>
+                        <Shield className="mr-2 h-4 w-4" /> Panneau Super-Admin
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={onLogout}>
+                    <LogOut className="mr-2 h-4 w-4" /> Déconnexion
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </header>
+
+          <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8">
+            {renderContent()}
+          </main>
+        </div>
+      </div>
+      <HRChatbot />
     </>
   );
 }
-
-
-
-

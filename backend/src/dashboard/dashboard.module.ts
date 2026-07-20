@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+﻿import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { DashboardController } from './dashboard.controller';
 import { DashboardService } from './dashboard.service';
@@ -6,6 +6,7 @@ import { Employee, EmployeeSchema } from '../employees/schemas/employee.schema';
 import { Invoice, InvoiceSchema } from '../billing/sales/schemas/invoice.schema';
 import { Expense, ExpenseSchema } from '../billing/purchases/schemas/expense.schema';
 import { BankAccount, BankAccountSchema } from '../banking/schemas/bank-account.schema';
+import { DocumentParserModule } from '../document-parser/document-parser.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { BankAccount, BankAccountSchema } from '../banking/schemas/bank-account.
       { name: Expense.name, schema: ExpenseSchema },
       { name: BankAccount.name, schema: BankAccountSchema },
     ]),
+    DocumentParserModule,
   ],
   controllers: [DashboardController],
   providers: [DashboardService],

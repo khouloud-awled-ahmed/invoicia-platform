@@ -1,4 +1,4 @@
-/**
+﻿/**
  * API Client pour le backend NestJS
  * Utilise fetch (pas axios) pour toutes les requêtes
  */
@@ -417,6 +417,142 @@ class ApiClientBackend {
     return this.request<void>(`/projects/${id}`, { method: 'DELETE' });
   }
 
+  async getAccountingAnalyticsByProject() {
+    return this.request<any[]>('/billing/accounting/analytics/by-project');
+  }
+
+  async getEcrituresBalance() {
+    return this.request<any[]>('/ecritures/balance');
+  }
+
+  async getEcrituresGrandLivre() {
+    return this.request<any[]>('/ecritures/grand-livre');
+  }
+
+  async getEcrituresCompteResultat() {
+    return this.request<any>('/ecritures/compte-resultat');
+  }
+
+  async getEcrituresExportFEC() {
+    return this.request<{ content: string }>('/ecritures/export-fec');
+  }
+
+  async getEcrituresBilan() {
+    return this.request<any>('/ecritures/bilan');
+  }
+
+  async getEcrituresDeclarationTVA() {
+    return this.request<any>('/ecritures/declaration-tva');
+  }
+
+  async getBudgets() {
+    return this.request<any[]>('/budgets');
+  }
+
+  async getBudgetsSummary() {
+    return this.request<any>('/budgets/summary');
+  }
+
+  async createBudget(data: any) {
+    return this.request<any>('/budgets', { method: 'POST', body: JSON.stringify(data) });
+  }
+
+  async deleteBudget(id: string) {
+    return this.request<void>('/budgets/' + id, { method: 'DELETE' });
+  }
+
+  async getTreasuryForecast() {
+    return this.request<any[]>('/forecast/treasury');
+  }
+
+  async getAssets() {
+    return this.request<any[]>('/assets');
+  }
+
+  async getAssetsSummary() {
+    return this.request<any>('/assets/summary');
+  }
+
+  async createAsset(data: any) {
+    return this.request<any>('/assets', { method: 'POST', body: JSON.stringify(data) });
+  }
+
+  async deleteAsset(id: string) {
+    return this.request<void>('/assets/' + id, { method: 'DELETE' });
+  }
+
+  async getAccountingAISummary() {
+    return this.request<{ summary: string }>('/insights/accounting-summary');
+  }
+
+  async getAccountingAISummary() {
+    return this.request<{ summary: string }>('/insights/accounting-summary');
+  }
+
+  async getEcrituresGrandLivre() {
+    return this.request<any[]>('/ecritures/grand-livre');
+  }
+
+  async getEcrituresCompteResultat() {
+    return this.request<any>('/ecritures/compte-resultat');
+  }
+
+  async getEcrituresExportFEC() {
+    return this.request<{ content: string }>('/ecritures/export-fec');
+  }
+
+  async getEcrituresBilan() {
+    return this.request<any>('/ecritures/bilan');
+  }
+
+  async getEcrituresDeclarationTVA() {
+    return this.request<any>('/ecritures/declaration-tva');
+  }
+
+  async getBudgets() {
+    return this.request<any[]>('/budgets');
+  }
+
+  async getBudgetsSummary() {
+    return this.request<any>('/budgets/summary');
+  }
+
+  async createBudget(data: any) {
+    return this.request<any>('/budgets', { method: 'POST', body: JSON.stringify(data) });
+  }
+
+  async deleteBudget(id: string) {
+    return this.request<void>('/budgets/' + id, { method: 'DELETE' });
+  }
+
+  async getTreasuryForecast() {
+    return this.request<any[]>('/forecast/treasury');
+  }
+
+  async getAssets() {
+    return this.request<any[]>('/assets');
+  }
+
+  async getAssetsSummary() {
+    return this.request<any>('/assets/summary');
+  }
+
+  async createAsset(data: any) {
+    return this.request<any>('/assets', { method: 'POST', body: JSON.stringify(data) });
+  }
+
+  async deleteAsset(id: string) {
+    return this.request<void>('/assets/' + id, { method: 'DELETE' });
+  }
+
+  async getAccountingAISummary() {
+    return this.request<{ summary: string }>('/insights/accounting-summary');
+  }
+
+  async getAccountingAISummary() {
+    return this.request<{ summary: string }>('/insights/accounting-summary');
+  }
+
   // ==========================================
   // 📁 GED (Gestion Électronique des Documents)
   // ==========================================
@@ -734,7 +870,7 @@ async deleteRole(id: string) {
   async getLogs(filters?: any) {
     const params = new URLSearchParams();
     if (filters) {
-      Object.entries(filters).forEach(([k, v]) => { if (v !== undefined) params.append(k, String(v)); });
+      Object.entries(filters).forEach(([k, v]) => { if (v !== undefined && v !== null && v !== "") params.append(k, String(v)); });
     }
     const qs = params.toString();
     return this.request<{ logs: any[]; total: number }>(`/logs${qs ? `?${qs}` : ''}`);
@@ -801,6 +937,26 @@ async deleteRole(id: string) {
   }
 
   // ==========================================
+  // ==========================================
+  // 📄 DOCUMENT PARSER
+  // ==========================================
+  async aiParseBankFile(file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.request<any>('/banking/import/ai-parse', { method: 'POST', body: formData });
+  }
+
+  async parseDocument(file: File, type: string) {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.request<any>('/banking/import/analyze?type=' + type, { method: 'POST', body: formData, isFormData: true });
+  }
+  async learnDocumentFormat(data: any) {
+    return this.request<any>('/banking/import/learn', { method: 'POST', body: JSON.stringify(data) });
+  }
+  async getBankImportTemplates() {
+    return this.request<any[]>('/banking/import/templates');
+  }
   // 🏦 BANKING
   // ==========================================
 
@@ -892,6 +1048,12 @@ async deleteRole(id: string) {
   // 📄 DOCUMENT PARSER
   // ==========================================
 
+  async aiParseBankFile(file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.request<any>('/banking/import/ai-parse', { method: 'POST', body: formData });
+  }
+
   async parseDocument(file: File, type: 'BANK' | 'INVOICE' | 'CV') {
     const formData = new FormData();
     formData.append('file', file);
@@ -925,6 +1087,111 @@ async deleteRole(id: string) {
   async deleteParsingTemplate(templateId: string) {
     return this.request<any>(`/document-parser/templates/${templateId}`, { method: 'DELETE' });
   }
+
+  async splitAnalyzeDocument(file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+    const token = localStorage.getItem('token');
+    const userStr = localStorage.getItem('user');
+    let tenantId = '';
+    try {
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        if (user.role !== 'PLATFORM_ADMIN' && user.tenantId) tenantId = user.tenantId;
+      }
+    } catch (e) { }
+    const headers: HeadersInit = {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(tenantId ? { 'x-tenant-id': tenantId } : {}),
+    };
+    const response = await fetch(`${API_URL}/document-parser/split-analyze`, { method: 'POST', body: formData, headers });
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(errText || `Erreur ${response.status}`);
+    }
+    return response.json();
+  }
+
+  async scanClientInvoice(file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+    const token = localStorage.getItem('token');
+    const userStr = localStorage.getItem('user');
+    let tenantId = '';
+    try {
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        if (user.role !== 'PLATFORM_ADMIN' && user.tenantId) tenantId = user.tenantId;
+      }
+    } catch (e) { }
+    const headers: HeadersInit = {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(tenantId ? { 'x-tenant-id': tenantId } : {}),
+    };
+    const response = await fetch(`${API_URL}/document-parser/scan-client-invoice`, { method: 'POST', body: formData, headers });
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(errText || `Erreur ${response.status}`);
+    }
+    return response.json();
+  }
+
+  async generateInvoiceTemplate(description: string) {
+    return this.request<any>('/document-parser/generate-template', {
+      method: 'POST',
+      body: JSON.stringify({ description }),
+    });
+  }
+
+  async generatePaymentReminder(data: {
+    clientName: string;
+    invoiceNumber: string;
+    amountTTC: number;
+    dueDate: string;
+    daysOverdue: number;
+  }) {
+    return this.request<any>('/document-parser/generate-reminder', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getPipelineAIActions(): Promise<Array<{ id: string; action: string }>> {
+    return this.request<any>('/pipeline/ai-actions');
+  }
+
+  async classifyGEDDocument(file: File): Promise<{ documentType: string; confidence: number }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    const token = localStorage.getItem('token');
+    const userStr = localStorage.getItem('user');
+    let tenantId = '';
+    try {
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        if (user.role !== 'PLATFORM_ADMIN' && user.tenantId) tenantId = user.tenantId;
+      }
+    } catch (e) { }
+    const headers: HeadersInit = {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(tenantId ? { 'x-tenant-id': tenantId } : {}),
+    };
+    const response = await fetch(`${API_URL}/document-parser/classify-ged-document`, { method: 'POST', body: formData, headers });
+    if (!response.ok) throw new Error(`Erreur ${response.status}`);
+    return response.json();
+  }
+
+  async getAINarrative(months?: number) {
+    const qs = months ? `?months=${months}` : '';
+    return this.request<{ summary: string }>(`/dashboard/ai-narrative${qs}`);
+  }
+
+  async sendPaymentReminder(data: { clientEmail: string; subject: string; body: string }) {
+    return this.request<any>('/document-parser/send-reminder', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
 // ==========================================
 // 🏖️ ABSENCES
 // ==========================================
@@ -935,6 +1202,45 @@ async getAbsences() {
 
 async createAbsence(data: any) {
   return this.request<any>('/absences', { method: 'POST', body: JSON.stringify(data) });
+}
+
+async getHighRiskEmployees() {
+  return this.request<any[]>('/hr-insights/absence-risk/high-risk');
+}
+
+async getAbsenceRisk() {
+  return this.request<any[]>('/hr-insights/absence-risk');
+}
+
+async getEmployeeDocuments(employeeId: string) {
+  const all = await this.getGEDDocuments();
+  return (all || []).filter((d: any) => d.metadata?.entityType === 'employee' && d.metadata?.entityId === employeeId);
+}
+
+async uploadEmployeeDocument(employeeId: string, file: File) {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('entityType', 'employee');
+  formData.append('entityId', employeeId);
+  return this.request<any>(`/ged/documents/upload?documentType=autre`, { method: 'POST', body: formData });
+}
+
+async downloadGEDDocument(id: string, fileName: string): Promise<void> {
+  const token = localStorage.getItem('token');
+  const res = await fetch('http://localhost:3001/api/ged/documents/' + id + '/download', { headers: { Authorization: 'Bearer ' + token } });
+  const blob = await res.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = fileName; a.click();
+  window.URL.revokeObjectURL(url);
+}
+
+async getBulletins() {
+  return this.request<any[]>('/payroll/bulletins');
+}
+
+async getAiHrReport() {
+  return this.request<any>('/hr-insights/ai-report');
 }
 
 async approveAbsence(id: string) {
@@ -954,6 +1260,33 @@ async rejectAbsence(id: string) {
   async deleteWebhook(id: string) { return this.request('/webhooks/' + id, { method: 'DELETE' }); }
   async getInvoices() { return this.request<any[]>('/billing/sales/invoices'); }
   async markInvoiceAsPaid(id: string) { return this.request<any>('/billing/sales/invoices/' + id + '/pay', { method: 'PATCH' }); }
+  // ==========================================
+  // 👥 INTERVENANTS
+  // ==========================================
+  async getIntervenants(filters?: any) {
+    const params = filters ? '?' + new URLSearchParams(filters).toString() : '';
+    return this.request<any[]>('/intervenants' + params);
+  }
+  async createIntervenant(data: any) {
+    return this.request<any>('/intervenants', { method: 'POST', body: JSON.stringify(data) });
+  }
+  async updateIntervenant(id: string, data: any) {
+    return this.request<any>('/intervenants/' + id, { method: 'PATCH', body: JSON.stringify(data) });
+  }
+  async deleteIntervenant(id: string) {
+    return this.request<any>('/intervenants/' + id, { method: 'DELETE' });
+  }
+  async generateCRAToken(id: string) {
+    return this.request<any>('/intervenants/' + id + '/generate-cra-token', { method: 'POST' });
+  }
+  async getEmployees(filters?: any) {
+    const params = filters ? '?' + new URLSearchParams(filters).toString() : '';
+    return this.request<any[]>('/employees' + params);
+  }
+  async getSuppliers(filters?: any) {
+    const params = filters ? '?' + new URLSearchParams(filters).toString() : '';
+    return this.request<any[]>('/billing/purchases/suppliers' + params);
+  }
   async getUsers() {
     return this.request<any[]>('/users');
   }
@@ -961,11 +1294,3 @@ async rejectAbsence(id: string) {
 
 export const apiClient = new ApiClientBackend();
 export default apiClient;
-
-
-
-
-
-
-
-

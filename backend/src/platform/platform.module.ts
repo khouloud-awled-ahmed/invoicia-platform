@@ -9,6 +9,7 @@ import { User, UserSchema } from '../users/schemas/user.schema';
 import { SubscriptionPlan, SubscriptionPlanSchema } from './schemas/subscription-plan.schema';
 import { PlatformSettings, PlatformSettingsSchema } from './schemas/platform-settings.schema';
 import { PlatformInvoicesModule } from './platform-invoices/platform-invoices.module';
+import { InvoiceEmailService } from './invoice-generator/invoice-email.service';
 
 @Module({
   imports: [
@@ -21,7 +22,7 @@ import { PlatformInvoicesModule } from './platform-invoices/platform-invoices.mo
     PlatformInvoicesModule,
   ],
   controllers: [PlatformController],
-  providers: [PlatformService, SubscriptionPlansService, PlatformSettingsService],
-  exports: [PlatformService, SubscriptionPlansService, PlatformSettingsService],
+  providers: [PlatformService, SubscriptionPlansService, PlatformSettingsService, InvoiceEmailService],
+  exports: [PlatformService, SubscriptionPlansService, PlatformSettingsService, InvoiceEmailService],
 })
 export class PlatformModule {}

@@ -81,19 +81,7 @@ interface ScannedInvoice {
 }
 
 async function scanInvoiceWithAI(file: File): Promise<ScannedInvoice> {
-  const backendUrl = import.meta.env.VITE_AI_SCANNER_URL || "http://localhost:8000";
-  const formData = new FormData();
-  formData.append("file", file);
-  const token = localStorage.getItem("token");
-  const userStr = localStorage.getItem("user");
-  let tenantId = "";
-  try { if (userStr) { const u = JSON.parse(userStr); tenantId = u.tenantId || ""; } } catch {}
-  const headers: any = {};
-  if (token) headers["Authorization"] = `Bearer ${token}`;
-  if (tenantId) headers["x-tenant-id"] = tenantId;
-  const response = await fetch(`${backendUrl}/scan`, { method: "POST", body: formData });
-  if (!response.ok) { const err = await response.json().catch(() => ({})); throw new Error(err.message || "Erreur scan"); }
-  return response.json();
+  return apiClient.scanClientInvoice(file);
 }
 
 
@@ -319,8 +307,32 @@ export function InvoiceFormDialog({ open, onOpenChange, onInvoiceCreated, invoic
     }
   };
 
-  const handleApplyScan = () => {
+  const handleApplyScan = async () => {
     if (!scanResult) return;
+
+    if (scanResult.clientName) {
+      const existingClient = clients.find(
+        c => c.name.trim().toLowerCase() === scanResult.clientName!.trim().toLowerCase()
+      );
+
+      if (existingClient) {
+        setSelectedClient(existingClient);
+      } else {
+        try {
+          const newClient = await apiClient.createClient({
+            name: scanResult.clientName,
+            email: scanResult.clientEmail || undefined,
+            address: scanResult.clientAddress || undefined,
+          });
+          const normalized = { ...newClient, id: newClient._id || newClient.id };
+          setClients(prev => [...prev, normalized]);
+          setSelectedClient(normalized);
+          toast.success(`Client "${scanResult.clientName}" créé automatiquement`);
+        } catch (error: any) {
+          toast.error("Impossible de créer le client automatiquement : " + (error?.message || "Erreur"));
+        }
+      }
+    }
 
     setInvoiceForm(prev => ({
       ...prev,
@@ -456,7 +468,7 @@ export function InvoiceFormDialog({ open, onOpenChange, onInvoiceCreated, invoic
                     </SelectTrigger>
                     <SelectContent>
                       {clients.map((client) => (
-                        <SelectItem key={client.id} value={client.id || ""}>{client.name}</SelectItem>
+                        <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>

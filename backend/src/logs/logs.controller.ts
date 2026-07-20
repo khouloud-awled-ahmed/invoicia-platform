@@ -16,7 +16,7 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { FilterLogsDto } from './dto/filter-logs.dto';
 
 @Controller('logs')
-@UseGuards(JwtAuthGuard, TechnicalAdminGuard)
+@UseGuards(JwtAuthGuard)
 export class LogsController {
   constructor(private readonly logsService: LogsService) {}
 

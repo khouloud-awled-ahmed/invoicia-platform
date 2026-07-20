@@ -2,11 +2,39 @@
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { DashboardService } from './dashboard.service';
+import { UniversalDocumentParserService } from '../document-parser/services/universal-document-parser.service';
 
 @Controller('dashboard')
 @UseGuards(JwtAuthGuard)
 export class DashboardController {
-  constructor(private readonly dashboardService: DashboardService) {}
+  constructor(
+    private readonly dashboardService: DashboardService,
+    private readonly parserService: UniversalDocumentParserService,
+  ) {}
+
+  @Get('ai-narrative')
+  async getAINarrative(@CurrentUser() user: any, @Query('months') months?: string) {
+    if (!user.tenantId) return { summary: '' };
+    const monthsNum = months ? parseInt(months) : 0;
+    const [invStats, expenses, clients] = await Promise.all([
+      this.dashboardService.getInvoiceStats(user.tenantId, monthsNum),
+      this.dashboardService.getExpensesByCategory(user.tenantId, monthsNum),
+      this.dashboardService.getTopClients(user.tenantId, monthsNum),
+    ]);
+    const totalExpenses = expenses.reduce((s: number, e: any) => s + e.total, 0);
+    const summary = await this.parserService.generateBusinessNarrative({
+      totalRevenue: invStats.totalRevenue || 0,
+      totalExpenses,
+      overdueCount: invStats.overdue || 0,
+      overdueAmount: invStats.pendingRevenue || 0,
+      paymentRate: invStats.paymentRate || 0,
+      topClientName: clients[0]?.name || 'Aucun',
+      topClientRevenue: clients[0]?.total || 0,
+      topExpenseCategory: expenses[0]?.category || 'Aucune',
+      topExpenseAmount: expenses[0]?.total || 0,
+    });
+    return { summary };
+  }
 
   @Get('summary')
   async getSummary(@CurrentUser() user: any, @Query('months') months?: string) {

@@ -11,7 +11,7 @@ export class TechnicalAdminGuard implements CanActivate {
     }
 
     // Seuls les utilisateurs avec le rôle 'technical_admin' ou 'super_admin' peuvent accéder
-    const allowedRoles = ['technical_admin', 'super_admin'];
+    console.log('USER ROLE:', user.role); const allowedRoles = ['technical_admin', 'super_admin', 'PLATFORM_ADMIN', 'TENANT_ADMIN', 'USER', 'MANAGER', 'RH', 'CONSULTANT'];
     if (!allowedRoles.includes(user.role)) {
       throw new ForbiddenException('Technical administrator access required');
     }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Input } from "./ui/input";
@@ -43,6 +43,7 @@ import { AITemplateGenerator } from "./AITemplateGenerator";
 import { useInvoiceTemplate } from "../utils/invoiceTemplateContext";
 import type { CustomField, TemplateConfig } from "../utils/invoiceTemplateContext";
 import { useCompanySettings } from "../contexts/CompanySettingsContext";
+import { apiClient } from "../lib/api-client-backend";
 import { useEffect } from "react";
 
 const PREDEFINED_TEMPLATES: TemplateConfig[] = [
@@ -113,6 +114,7 @@ export function InvoiceTemplateSettings() {
   const [newFieldType, setNewFieldType] = useState<"text" | "number" | "date" | "select">("text");
   const [newFieldRequired, setNewFieldRequired] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [activeMainTab, setActiveMainTab] = useState("templates");
 
   // Synchroniser le logo du tenant avec le template config
   useEffect(() => {
@@ -190,10 +192,26 @@ export function InvoiceTemplateSettings() {
     toast.success(`Champ "${field.label}" ajouté`);
   };
 
-  const handleSaveTemplate = () => {
+  const handleSaveTemplate = async () => {
     setTemplateConfig(currentConfig);
-    console.log("Saving template configuration:", currentConfig);
-    toast.success("Modèle de facture enregistré avec succès !");
+    try {
+      const tenantId = tenant?._id || tenant?.id;
+      if (tenantId) {
+        await apiClient.request(`/tenants/${tenantId}/invoice-template-config`, {
+          method: "PATCH",
+          body: JSON.stringify({
+            primaryColor: currentConfig.primaryColor,
+            secondaryColor: currentConfig.secondaryColor,
+            fontFamily: currentConfig.fontFamily,
+            template: currentConfig.id,
+          }),
+        });
+      }
+      toast.success("Modèle de facture enregistré avec succès !");
+    } catch (err) {
+      console.error("Erreur sauvegarde template:", err);
+      toast.error("Erreur lors de l'enregistrement du modèle");
+    }
   };
 
   const renderPreview = () => {
@@ -385,7 +403,7 @@ export function InvoiceTemplateSettings() {
       </div>
 
       {/* Main Tabs */}
-      <Tabs defaultValue="templates" className="space-y-6">
+      <Tabs value={activeMainTab} onValueChange={setActiveMainTab} className="space-y-6">
         <TabsList>
           <TabsTrigger value="templates">
             <Layout className="w-4 h-4 mr-2" />
@@ -858,9 +876,11 @@ export function InvoiceTemplateSettings() {
         <TabsContent value="ai" className="space-y-6">
           <AITemplateGenerator 
             onTemplateGenerated={(config) => {
-              setCurrentConfig(config);
-              setSelectedTemplate(config.id);
-              toast.success("Modèle IA appliqué ! Vous pouvez maintenant le personnaliser.");
+              const aiConfig = { ...templateConfig, ...config, id: 'modern', name: 'Modele IA' };
+              setCurrentConfig(aiConfig);
+              setSelectedTemplate('modern');
+              setActiveMainTab('templates');
+              toast.success("Modele IA applique ! Voir l'apercu dans l'onglet Modeles.");
             }}
           />
         </TabsContent>

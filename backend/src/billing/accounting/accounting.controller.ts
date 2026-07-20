@@ -28,6 +28,11 @@ export class AccountingController {
     return this.accountingService.findAll(user.tenantId, filters);
   }
 
+  @Get('analytics/by-project')
+  getAnalyticsByProject(@CurrentUser() user: any) {
+    return this.accountingService.getAnalyticsByProject(user.tenantId);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string, @CurrentUser() user: any) {
     return this.accountingService.findOne(id, user.tenantId);

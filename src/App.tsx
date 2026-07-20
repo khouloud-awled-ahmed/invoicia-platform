@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { SuperAdminLayout } from "./components/SuperAdminLayout";
 import { MainLayout } from "./components/MainLayout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
@@ -17,6 +17,8 @@ import { PlatformDashboardPage } from "./pages/platform/PlatformDashboardPage";
 import { PlatformTenantsPage } from "./pages/platform/PlatformTenantsPage";
 import { PlatformPlansPage } from "./pages/platform/PlatformPlansPage";
 import { PlatformSettingsPage } from "./pages/platform/PlatformSettingsPage";
+import { PlatformPaymentsPage } from "./pages/platform/PlatformPaymentsPage";
+import PowerBIDashboard from "./pages/PowerBIDashboard";
 import { PaymentSettingsPage } from "./pages/PaymentSettingsPage";
 import { OnboardingPage } from "./pages/OnboardingPage";
 import { apiClient } from "./lib/api-client-backend";
@@ -199,8 +201,12 @@ export default function App() {
               return <PlatformTenantsPage />;
             } else if (pathname.includes('/platform/plans')) {
               return <PlatformPlansPage />;
+            } else if (pathname.includes('/platform/payments')) {
+              return <PlatformPaymentsPage />;
             } else if (pathname.includes('/platform/settings')) {
               return <PlatformSettingsPage />;
+              } else if (pathname.includes('/platform/dashboard-bi')) {
+                return <PowerBIDashboard />;
             } else {
               return <PlatformDashboardPage />;
             }
@@ -330,8 +336,12 @@ export default function App() {
                     return <PlatformTenantsPage />;
                   } else if (pathname.includes('/platform/plans')) {
                     return <PlatformPlansPage />;
-                  } else if (pathname.includes('/platform/settings')) {
+            } else if (pathname.includes('/platform/payments')) {
+              return <PlatformPaymentsPage />;
+            } else if (pathname.includes('/platform/settings')) {
                     return <PlatformSettingsPage />;
+                  } else if (pathname.includes('/platform/dashboard-bi')) {
+                    return <PowerBIDashboard />;
                   } else {
                     return <PlatformDashboardPage />;
                   }
@@ -360,3 +370,7 @@ export default function App() {
     </ProtectedRoute>
   );
 }
+
+
+
+

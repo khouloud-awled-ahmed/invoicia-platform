@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -107,6 +107,8 @@ export function GEDManagement() {
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploadFolderId, setUploadFolderId] = useState<string>("root");
   const [uploadDocumentType, setUploadDocumentType] = useState("general");
+  const [isClassifying, setIsClassifying] = useState(false);
+  const [aiClassified, setAiClassified] = useState(false);
 
   const [newRuleName, setNewRuleName] = useState("");
   const [newRuleDocumentType, setNewRuleDocumentType] = useState("facture");
@@ -182,6 +184,25 @@ export function GEDManagement() {
       await loadData();
     } catch (error: any) {
       toast.error(error.message || "Erreur lors de la suppression du dossier");
+    }
+  };
+
+  const handleClassifyWithAI = async () => {
+    if (!uploadFile) { toast.error("Veuillez d'abord sélectionner un fichier"); return; }
+    setIsClassifying(true);
+    try {
+      const result = await apiClient.classifyGEDDocument(uploadFile);
+      if (result.documentType && result.documentType !== "autre") {
+        setUploadDocumentType(result.documentType);
+        setAiClassified(true);
+        toast.success(`Type détecté : ${DOCUMENT_TYPES.find(t => t.value === result.documentType)?.label || result.documentType}`);
+      } else {
+        toast.info("L'IA n'a pas pu déterminer un type précis pour ce document");
+      }
+    } catch (error: any) {
+      toast.error("Erreur lors de l'analyse IA du document");
+    } finally {
+      setIsClassifying(false);
     }
   };
 
@@ -359,7 +380,7 @@ export function GEDManagement() {
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="root">Racine (aucun)</SelectItem>
-                      {folders.map(folder => (
+                      {folders.filter(folder => folder._id).map(folder => (
                         <SelectItem key={folder._id} value={folder._id}>{folder.path.join(" / ")}</SelectItem>
                       ))}
                     </SelectContent>
@@ -399,7 +420,13 @@ export function GEDManagement() {
               <div className="space-y-4">
                 <div>
                   <Label>Fichier *</Label>
-                  <input type="file" onChange={e => setUploadFile(e.target.files?.[0] || null)} className="w-full border rounded p-2 text-sm cursor-pointer" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" />
+                  <input type="file" onChange={e => { setUploadFile(e.target.files?.[0] || null); setAiClassified(false); }} className="w-full border rounded p-2 text-sm cursor-pointer" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" />
+                  {uploadFile && (
+                    <Button type="button" variant="outline" size="sm" onClick={handleClassifyWithAI} disabled={isClassifying} className="mt-2 gap-2 text-purple-700 border-purple-300">
+                      <Sparkles className="w-4 h-4" />
+                      {isClassifying ? "Analyse en cours..." : aiClassified ? "Type détecté ✓ (ré-analyser)" : "Analyser avec l'IA"}
+                    </Button>
+                  )}
                 </div>
                 <div>
                   <Label>Dossier de destination</Label>
@@ -407,7 +434,7 @@ export function GEDManagement() {
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="root">Classement automatique</SelectItem>
-                      {folders.map(folder => (
+                      {folders.filter(folder => folder._id).map(folder => (
                         <SelectItem key={folder._id} value={folder._id}>{folder.path.join(" / ")}</SelectItem>
                       ))}
                     </SelectContent>
@@ -606,7 +633,7 @@ export function GEDManagement() {
                           <SelectTrigger><SelectValue placeholder="Sélectionner un dossier" /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="none">-- Choisir --</SelectItem>
-                            {folders.map(folder => <SelectItem key={folder._id} value={folder._id}>{folder.path.join(" / ")}</SelectItem>)}
+                            {folders.filter(folder => folder._id).map(folder => <SelectItem key={folder._id} value={folder._id}>{folder.path.join(" / ")}</SelectItem>)}
                           </SelectContent>
                         </Select>
                       </div>
