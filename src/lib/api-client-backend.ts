@@ -705,7 +705,7 @@ async deleteRole(id: string) {
 
   async downloadEnvelope(id: string): Promise<void> {
     const token = localStorage.getItem('token');
-    const res = await fetch('http://localhost:3001/api/envelopes/' + id + '/download', { headers: { Authorization: 'Bearer ' + token } });
+    const res = await fetch(`${API_URL}/envelopes/` + id + `/download`, { headers: { Authorization: 'Bearer ' + token } });
     const blob = await res.blob();
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -714,7 +714,7 @@ async deleteRole(id: string) {
   }
   async downloadCertificate(id: string): Promise<void> {
     const token = localStorage.getItem('token');
-    const res = await fetch('http://localhost:3001/api/envelopes/' + id + '/download-certificate', { headers: { Authorization: 'Bearer ' + token } });
+    const res = await fetch(`${API_URL}/envelopes/` + id + `/download-certificate`, { headers: { Authorization: 'Bearer ' + token } });
     const blob = await res.blob();
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -1156,6 +1156,10 @@ async deleteRole(id: string) {
     });
   }
 
+  async getPipelinePrioritySummary(): Promise<{ summary: string }> {
+    return this.request<any>('/pipeline/ai-priority-summary');
+  }
+
   async getPipelineAIActions(): Promise<Array<{ id: string; action: string }>> {
     return this.request<any>('/pipeline/ai-actions');
   }
@@ -1227,7 +1231,7 @@ async uploadEmployeeDocument(employeeId: string, file: File) {
 
 async downloadGEDDocument(id: string, fileName: string): Promise<void> {
   const token = localStorage.getItem('token');
-  const res = await fetch('http://localhost:3001/api/ged/documents/' + id + '/download', { headers: { Authorization: 'Bearer ' + token } });
+  const res = await fetch(`${API_URL}/ged/documents/` + id + `/download`, { headers: { Authorization: 'Bearer ' + token } });
   const blob = await res.blob();
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -1294,3 +1298,6 @@ async rejectAbsence(id: string) {
 
 export const apiClient = new ApiClientBackend();
 export default apiClient;
+
+
+
