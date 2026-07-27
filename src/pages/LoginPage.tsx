@@ -1,17 +1,66 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { apiClient } from "../lib/api-client-backend";
 import { toast } from "sonner";
+
+// Illustration for LOGIN: person unlocking their dashboard — distinct from the register scene.
+function WelcomeIllustration() {
+  return (
+    <svg viewBox="0 0 360 300" width="100%" style={{ display: "block" }}>
+      <circle cx="70" cy="45" r="30" fill="rgba(255,255,255,0.06)" />
+      <circle cx="320" cy="240" r="24" fill="rgba(255,255,255,0.06)" />
+
+      {/* ground */}
+      <ellipse cx="180" cy="270" rx="150" ry="14" fill="rgba(0,0,0,0.15)" />
+
+      {/* shield / dashboard card */}
+      <g transform="translate(150,60)">
+        <rect x="0" y="0" width="130" height="150" rx="16" fill="#1E1B4B" stroke="#818CF8" strokeWidth="3" />
+        <rect x="16" y="20" width="98" height="14" rx="4" fill="#4338CA" />
+        <rect x="16" y="44" width="60" height="8" rx="3" fill="#818CF8" opacity="0.6" />
+        <rect x="16" y="60" width="98" height="46" rx="6" fill="#0F172A" />
+        <path d="M26 96l16-22 14 14 20-26 24 30" stroke="#34D399" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        <rect x="16" y="116" width="45" height="20" rx="6" fill="#4F46E5" />
+        <rect x="69" y="116" width="45" height="20" rx="6" fill="#312E81" />
+      </g>
+
+      {/* lock, unlocked */}
+      <g transform="translate(196,32)">
+        <rect x="0" y="14" width="38" height="30" rx="6" fill="#F59E0B" />
+        <path d="M6 14V8a13 13 0 0 1 26 0" stroke="#FCD34D" strokeWidth="5" fill="none" strokeLinecap="round" />
+        <circle cx="19" cy="29" r="4.5" fill="#78350F" />
+      </g>
+
+      {/* person walking toward dashboard */}
+      <g transform="translate(40,130)">
+        <circle cx="34" cy="26" r="24" fill="#C4B5FD" />
+        <path d="M8 26a26 26 0 0 1 52 0" fill="#4C1D95" />
+        <rect x="4" y="52" width="60" height="70" rx="18" fill="#EDE9FE" />
+        <rect x="16" y="70" width="36" height="26" rx="5" fill="#A78BFA" opacity="0.5" />
+        {/* raised arm */}
+        <rect x="52" y="60" width="14" height="34" rx="7" fill="#C4B5FD" transform="rotate(-25 59 60)" />
+      </g>
+
+      {/* key */}
+      <g transform="translate(105,150) rotate(-20)">
+        <circle cx="10" cy="10" r="10" fill="none" stroke="#FCD34D" strokeWidth="4" />
+        <rect x="18" y="7" width="24" height="6" fill="#FCD34D" />
+        <rect x="34" y="13" width="5" height="8" fill="#FCD34D" />
+        <rect x="42" y="7" width="5" height="8" fill="#FCD34D" />
+      </g>
+
+      {/* floating sparkles */}
+      <circle cx="290" cy="90" r="3" fill="#fff" opacity="0.7" />
+      <circle cx="305" cy="120" r="2" fill="#fff" opacity="0.5" />
+      <circle cx="60" cy="90" r="2.5" fill="#fff" opacity="0.6" />
+    </svg>
+  );
+}
 
 export function LoginPage() {
   const navigate = (path: string) => { window.location.href = path; };
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setTimeout(() => setMounted(true), 100);
-  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,296 +82,85 @@ export function LoginPage() {
   return (
     <>
       <style>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-20px); }
-        }
-        @keyframes float2 {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-15px); }
-        }
-        @keyframes pulse-ring {
-          0% { transform: scale(0.8); opacity: 1; }
-          100% { transform: scale(2); opacity: 0; }
-        }
-        @keyframes slideInLeft {
-          from { opacity: 0; transform: translateX(-40px); }
-          to { opacity: 1; transform: translateX(0); }
-        }
-        @keyframes slideInRight {
-          from { opacity: 0; transform: translateX(40px); }
-          to { opacity: 1; transform: translateX(0); }
-        }
-        @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes shimmer {
-          0% { background-position: -200% center; }
-          100% { background-position: 200% center; }
-        }
-        @keyframes rotate {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        .btn-login:hover {
-          transform: translateY(-2px) !important;
-          box-shadow: 0 8px 25px rgba(109,40,217,0.5) !important;
-        }
-        .btn-login:active {
-          transform: translateY(0px) !important;
-        }
-        .input-field:focus {
-          border-color: #6d28d9 !important;
-          box-shadow: 0 0 0 4px rgba(109,40,217,0.1) !important;
-        }
-        .stat-card:hover {
-          transform: translateY(-4px);
-          background: rgba(255,255,255,0.2) !important;
-        }
+        .inp-f { transition: border-color 0.15s, box-shadow 0.15s; }
+        .inp-f:focus { border-color: #4F46E5 !important; box-shadow: 0 0 0 3px rgba(79,70,229,0.1); }
+        .btn-primary { transition: opacity 0.15s, transform 0.15s; }
+        .btn-primary:hover { opacity: 0.92; transform: translateY(-1px); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+        @keyframes floatSlow { 0%,100%{ transform: translateY(0px); } 50%{ transform: translateY(-10px); } }
+        .float-slow { animation: floatSlow 5s ease-in-out infinite; }
       `}</style>
 
-      <div style={{ minHeight: "100vh", display: "flex", fontFamily: "'Inter', sans-serif", overflow: "hidden" }}>
+      <div style={{ minHeight: "100vh", display: "flex", fontFamily: "'Inter', sans-serif" }}>
 
-        {/* LEFT PANEL */}
+        {/* LEFT — ILLUSTRATION + HEADLINE */}
         <div style={{
-          flex: 1,
-          background: "linear-gradient(135deg, #4c1d95 0%, #6d28d9 30%, #4f46e5 60%, #2563eb 100%)",
-          padding: "48px",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-          color: "white",
-          position: "relative",
-          overflow: "hidden",
-          animation: mounted ? "slideInLeft 0.7s ease forwards" : "none",
+          flex: 1, background: "linear-gradient(160deg,#312E81,#4F46E5 60%,#1E3A8A)",
+          padding: "40px", display: "flex", flexDirection: "column",
+          alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden",
         }}>
-
-          {/* Animated background circles */}
-          <div style={{
-            position: "absolute", top: "10%", right: "10%",
-            width: "300px", height: "300px", borderRadius: "50%",
-            background: "rgba(255,255,255,0.05)",
-            animation: "float 6s ease-in-out infinite",
-          }} />
-          <div style={{
-            position: "absolute", bottom: "20%", left: "-5%",
-            width: "200px", height: "200px", borderRadius: "50%",
-            background: "rgba(255,255,255,0.07)",
-            animation: "float2 8s ease-in-out infinite",
-          }} />
-          <div style={{
-            position: "absolute", top: "50%", right: "20%",
-            width: "150px", height: "150px", borderRadius: "50%",
-            background: "rgba(255,255,255,0.04)",
-            animation: "float 10s ease-in-out infinite",
-          }} />
-
-          {/* Logo */}
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", position: "relative", zIndex: 1,
-            animation: mounted ? "fadeInUp 0.8s ease 0.2s both" : "none" }}>
-            <div style={{
-              width: "46px", height: "46px", borderRadius: "14px",
-              background: "rgba(255,255,255,0.2)",
-              backdropFilter: "blur(10px)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: "22px", fontWeight: "900", border: "1px solid rgba(255,255,255,0.3)"
-            }}>I</div>
-            <span style={{ fontSize: "26px", fontWeight: "800", letterSpacing: "-0.5px" }}>Invoicia</span>
+          <div style={{ position: "absolute", top: "24px", left: "40px", display: "flex", alignItems: "center", gap: "10px" }}>
+            <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontWeight: 800, fontSize: "14px" }}>I</div>
+            <span style={{ color: "white", fontWeight: 700, fontSize: "16px" }}>Invoicia</span>
           </div>
 
-          {/* Main content */}
-          <div style={{ position: "relative", zIndex: 1 }}>
-            <div style={{
-              fontSize: "13px",
-              background: "rgba(255,255,255,0.15)",
-              backdropFilter: "blur(10px)",
-              display: "inline-flex", alignItems: "center", gap: "6px",
-              padding: "6px 14px", borderRadius: "20px", marginBottom: "24px",
-              border: "1px solid rgba(255,255,255,0.2)",
-              animation: mounted ? "fadeInUp 0.8s ease 0.3s both" : "none"
-            }}>
-              <span>🚀</span> Plateforme SaaS Multi-Tenant
-            </div>
-
-            <h1 style={{
-              fontSize: "40px", fontWeight: "900", lineHeight: "1.15",
-              marginBottom: "16px", letterSpacing: "-1px",
-              animation: mounted ? "fadeInUp 0.8s ease 0.4s both" : "none"
-            }}>
-              Gérez votre activité<br />en toute simplicité
-            </h1>
-
-            <p style={{
-              fontSize: "16px", opacity: "0.8", lineHeight: "1.7", maxWidth: "400px",
-              animation: mounted ? "fadeInUp 0.8s ease 0.5s both" : "none"
-            }}>
-              Facturation, projets, GED, comptabilité et analytics — tout en un seul endroit.
-            </p>
-
-            {/* Feature pills */}
-            <div style={{
-              display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "24px",
-              animation: mounted ? "fadeInUp 0.8s ease 0.6s both" : "none"
-            }}>
-              {["✅ Facturation auto", "📊 Analytics", "🔐 Multi-tenant", "📁 GED", "🤖 IA intégrée"].map(f => (
-                <span key={f} style={{
-                  fontSize: "12px", padding: "5px 12px", borderRadius: "20px",
-                  background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)"
-                }}>{f}</span>
-              ))}
-            </div>
+          <div className="float-slow" style={{ maxWidth: "460px", width: "100%", marginBottom: "8px" }}>
+            <WelcomeIllustration />
           </div>
 
-          {/* Stats */}
-          <div style={{
-            display: "flex", gap: "16px", position: "relative", zIndex: 1,
-            animation: mounted ? "fadeInUp 0.8s ease 0.7s both" : "none"
-          }}>
-            {[["500+", "Entreprises", "🏢"], ["50K+", "Factures", "📄"], ["99.9%", "Disponibilité", "⚡"]].map(([val, label, icon]) => (
-              <div key={label} className="stat-card" style={{
-                flex: 1, textAlign: "center", padding: "16px 12px",
-                background: "rgba(255,255,255,0.1)", borderRadius: "16px",
-                border: "1px solid rgba(255,255,255,0.2)",
-                backdropFilter: "blur(10px)", transition: "all 0.3s ease", cursor: "default"
-              }}>
-                <div style={{ fontSize: "20px", marginBottom: "4px" }}>{icon}</div>
-                <div style={{ fontSize: "22px", fontWeight: "800" }}>{val}</div>
-                <div style={{ fontSize: "11px", opacity: "0.7", marginTop: "2px" }}>{label}</div>
-              </div>
-            ))}
-          </div>
+          <h1 style={{ color: "white", fontSize: "28px", fontWeight: 800, textAlign: "center", lineHeight: 1.3, maxWidth: "440px", marginTop: "8px" }}>
+            Gérez votre activité<br />en toute simplicité
+          </h1>
+          <p style={{ color: "rgba(255,255,255,0.65)", fontSize: "14px", textAlign: "center", maxWidth: "360px", marginTop: "10px" }}>
+            Retrouvez vos factures, projets et rapports en un instant.
+          </p>
         </div>
 
-        {/* RIGHT PANEL */}
-        <div style={{
-          flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
-          padding: "32px", background: "#f8fafc",
-          animation: mounted ? "slideInRight 0.7s ease forwards" : "none",
-        }}>
-          <div style={{ width: "100%", maxWidth: "420px" }}>
+        {/* RIGHT — FORM */}
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "32px", background: "white" }}>
+          <form onSubmit={handleLogin} style={{ width: "100%", maxWidth: "420px" }}>
 
-            {/* Logo */}
-            <div style={{
-              textAlign: "center", marginBottom: "32px",
-              animation: mounted ? "fadeInUp 0.8s ease 0.3s both" : "none"
-            }}>
-              <div style={{ position: "relative", display: "inline-block" }}>
-                <div style={{
-                  position: "absolute", inset: 0, borderRadius: "16px",
-                  background: "linear-gradient(135deg, #6d28d9, #4f46e5)",
-                  animation: "pulse-ring 2s ease-out infinite",
-                }} />
-                <div style={{
-                  width: "56px", height: "56px", borderRadius: "16px",
-                  background: "linear-gradient(135deg, #6d28d9, #4f46e5)",
-                  display: "inline-flex", alignItems: "center", justifyContent: "center",
-                  color: "white", fontSize: "26px", fontWeight: "900",
-                  position: "relative", zIndex: 1, marginBottom: "12px"
-                }}>I</div>
+            <h2 style={{ fontSize: "26px", fontWeight: 700, color: "#111827", marginBottom: "6px" }}>Welcome back</h2>
+            <div style={{ width: "48px", height: "3px", background: "#4F46E5", borderRadius: "2px", marginBottom: "8px" }} />
+            <p style={{ fontSize: "13.5px", color: "#6B7280", marginBottom: "28px" }}>Connectez-vous à votre espace Invoicia</p>
+
+            <div style={{ marginBottom: "18px" }}>
+              <label style={fieldLabel}>Email</label>
+              <input type="email" placeholder="votre@email.com" value={email} onChange={e => setEmail(e.target.value)} required className="inp-f" style={inputStyle} />
+            </div>
+
+            <div style={{ marginBottom: "24px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                <label style={{ ...fieldLabel, marginBottom: 0 }}>Password</label>
+                <a href="#" onClick={(e) => { e.preventDefault(); navigate("/forgot-password"); }} style={{ fontSize: "12px", color: "#4F46E5", textDecoration: "none", fontWeight: 500 }}>
+                  Forgot password?
+                </a>
               </div>
-              <div style={{ fontSize: "24px", fontWeight: "800", color: "#1e1b4b", marginTop: "8px" }}>Invoicia</div>
-              <div style={{ fontSize: "12px", color: "#9ca3af", marginTop: "2px" }}>Plateforme SaaS · v2026</div>
+              <input type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required className="inp-f" style={inputStyle} />
             </div>
 
-            {/* Card */}
-            <div style={{
-              background: "white", borderRadius: "24px", padding: "40px",
-              boxShadow: "0 20px 60px rgba(0,0,0,0.08)",
-              animation: mounted ? "fadeInUp 0.8s ease 0.4s both" : "none"
+            <button type="submit" disabled={isLoading} className="btn-primary" style={{
+              width: "100%", padding: "13px", borderRadius: "10px", border: "none",
+              background: isLoading ? "#9CA3AF" : "#4F46E5", color: "white", fontWeight: 700,
+              fontSize: "14px", cursor: isLoading ? "not-allowed" : "pointer",
             }}>
-              <h2 style={{ fontSize: "24px", fontWeight: "800", color: "#1e1b4b", marginBottom: "4px" }}>
-                Bon retour ! 👋
-              </h2>
-              <p style={{ color: "#9ca3af", fontSize: "14px", marginBottom: "28px" }}>
-                Connectez-vous à votre espace Invoicia
-              </p>
+              {isLoading ? "Connexion en cours..." : "Sign in →"}
+            </button>
 
-              <form onSubmit={handleLogin}>
-                <div style={{ marginBottom: "18px" }}>
-                  <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#374151", marginBottom: "8px" }}>
-                    Adresse email
-                  </label>
-                  <input
-                    type="email"
-                    placeholder="votre@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="input-field"
-                    style={{
-                      width: "100%", padding: "13px 16px", borderRadius: "12px",
-                      border: "2px solid #e5e7eb", fontSize: "14px", outline: "none",
-                      background: "#f9fafb", boxSizing: "border-box", transition: "all 0.2s"
-                    }}
-                  />
-                </div>
-
-                <div style={{ marginBottom: "28px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
-                    <label style={{ fontSize: "13px", fontWeight: "600", color: "#374151" }}>Mot de passe</label>
-                    <a href="#" onClick={(e) => { e.preventDefault(); navigate("/forgot-password"); }}
-                      style={{ fontSize: "12px", color: "#6d28d9", textDecoration: "none", fontWeight: "500" }}>
-                      Mot de passe oublié ?
-                    </a>
-                  </div>
-                  <input
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    className="input-field"
-                    style={{
-                      width: "100%", padding: "13px 16px", borderRadius: "12px",
-                      border: "2px solid #e5e7eb", fontSize: "14px", outline: "none",
-                      background: "#f9fafb", boxSizing: "border-box", transition: "all 0.2s"
-                    }}
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="btn-login"
-                  style={{
-                    width: "100%", padding: "15px", borderRadius: "12px", border: "none",
-                    background: isLoading ? "#9ca3af" : "linear-gradient(135deg, #6d28d9, #4f46e5)",
-                    color: "white", fontSize: "15px", fontWeight: "700",
-                    cursor: isLoading ? "not-allowed" : "pointer",
-                    boxShadow: "0 4px 15px rgba(109,40,217,0.35)",
-                    transition: "all 0.2s ease", display: "flex",
-                    alignItems: "center", justifyContent: "center", gap: "8px"
-                  }}
-                >
-                  {isLoading ? (
-                    <>
-                      <div style={{
-                        width: "16px", height: "16px", border: "2px solid rgba(255,255,255,0.3)",
-                        borderTopColor: "white", borderRadius: "50%",
-                        animation: "rotate 0.8s linear infinite"
-                      }} />
-                      Connexion en cours...
-                    </>
-                  ) : "Se connecter →"}
-                </button>
-
-                <p style={{ textAlign: "center", marginTop: "20px", fontSize: "13px", color: "#6b7280" }}>
-                  Pas encore de compte ?{" "}
-                  <a href="#" onClick={(e) => { e.preventDefault(); navigate("/register"); }}
-                    style={{ color: "#6d28d9", fontWeight: "700", textDecoration: "none" }}>
-                    Créer un compte
-                  </a>
-                </p>
-              </form>
-            </div>
-
-            <p style={{ textAlign: "center", marginTop: "20px", fontSize: "11px", color: "#9ca3af" }}>
-              © 2026 Invoicia Platform · Tous droits réservés
+            <p style={{ marginTop: "16px", fontSize: "13px", color: "#6B7280" }}>
+              Don't have an account?{" "}
+              <a href="#" onClick={(e) => { e.preventDefault(); navigate("/register"); }} style={{ color: "#4F46E5", fontWeight: 600, textDecoration: "none" }}>Create one</a>
             </p>
-          </div>
+          </form>
         </div>
       </div>
     </>
   );
 }
+
+const fieldLabel: React.CSSProperties = { display: "block", fontSize: "12.5px", fontWeight: 600, color: "#374151", marginBottom: "6px" };
+const inputStyle: React.CSSProperties = {
+  width: "100%", padding: "11px 14px", borderRadius: "10px",
+  border: "1.5px solid #E5E7EB", fontSize: "13.5px", outline: "none",
+  background: "#F9FAFB", boxSizing: "border-box",
+};

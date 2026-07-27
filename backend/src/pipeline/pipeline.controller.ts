@@ -21,6 +21,27 @@ export class PipelineController {
     private readonly parserService: UniversalDocumentParserService,
   ) {}
 
+  @Get('ai-priority-summary')
+  async getAIPrioritySummary(@Request() req) {
+    const opportunities = await this.pipelineService.findAll(req.user.tenantId);
+    const active = opportunities.filter((o: any) => o.stage !== 'won' && o.stage !== 'lost');
+    if (active.length === 0) return { summary: '' };
+
+    const now = Date.now();
+    const payload = active.map((o: any) => ({
+      id: o._id.toString(),
+      name: o.name,
+      client: o.client,
+      amount: o.amount,
+      probability: o.probability,
+      stage: o.stage,
+      daysSinceCreated: Math.floor((now - new Date(o.createdAt).getTime()) / (1000 * 60 * 60 * 24)),
+    }));
+
+    const summary = await this.parserService.generatePipelinePrioritySummary(payload);
+    return { summary };
+  }
+
   @Get('ai-actions')
   async getAIActions(@Request() req) {
     const opportunities = await this.pipelineService.findAll(req.user.tenantId);

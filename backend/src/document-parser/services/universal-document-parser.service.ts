@@ -271,6 +271,49 @@ ${truncatedText}`;
     }
   }
 
+  async generatePipelinePrioritySummary(opportunities: Array<{
+    id: string;
+    name: string;
+    client: string;
+    amount: number;
+    probability: number;
+    stage: string;
+    daysSinceCreated: number;
+  }>): Promise<string> {
+    if (opportunities.length === 0) return '';
+    if (!process.env.GROQ_API_KEY) return '';
+
+    const prompt = `Tu es un directeur commercial experimente. Voici la liste complete des opportunites de vente actives d'une entreprise (format JSON):
+
+${JSON.stringify(opportunities.map(o => ({ nom: o.name, client: o.client, montant: o.amount, probabilite: o.probability, etape: o.stage, joursDepuisCreation: o.daysSinceCreated })))}
+
+Analyse TOUTES ces opportunites ensemble et redige UNE SEULE phrase COURTE (maximum 20 mots), en francais tres simple, sans jargon commercial. Dis juste quelle opportunite regarder en priorite cette semaine et pourquoi en 3-4 mots. Pas de markdown, pas de titre, juste la phrase courte.`;
+
+    try {
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.3,
+          max_tokens: 80,
+        }),
+      });
+
+      if (!response.ok) return '';
+
+      const result: any = await response.json();
+      const content = result.choices?.[0]?.message?.content;
+      return content ? content.trim() : '';
+    } catch {
+      return '';
+    }
+  }
+
   async generatePipelineActions(opportunities: Array<{
     id: string;
     name: string;

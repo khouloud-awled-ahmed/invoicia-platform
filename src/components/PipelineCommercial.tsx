@@ -48,6 +48,8 @@ export function PipelineCommercial() {
   const [loading, setLoading] = useState(false);
   const [aiActions, setAiActions] = useState<Record<string, string>>({});
   const [aiActionsLoading, setAiActionsLoading] = useState(false);
+  const [prioritySummary, setPrioritySummary] = useState("");
+  const [prioritySummaryLoading, setPrioritySummaryLoading] = useState(false);
 
   const getToken = () => localStorage.getItem("token") || "";
 
@@ -60,6 +62,18 @@ export function PipelineCommercial() {
       setOpportunities(Array.isArray(data) ? data : []);
     } catch {
       toast.error("Erreur lors du chargement des opportunités.");
+    }
+  };
+
+  const fetchPrioritySummary = async () => {
+    setPrioritySummaryLoading(true);
+    try {
+      const data = await apiClient.getPipelinePrioritySummary();
+      setPrioritySummary(data.summary || "");
+    } catch {
+      setPrioritySummary("");
+    } finally {
+      setPrioritySummaryLoading(false);
     }
   };
 
@@ -80,6 +94,7 @@ export function PipelineCommercial() {
   useEffect(() => {
     fetchOpportunities();
     fetchAIActions();
+    fetchPrioritySummary();
   }, []);
 
   const totalValue = opportunities.reduce((sum, opp) => sum + opp.amount, 0);
@@ -121,6 +136,7 @@ export function PipelineCommercial() {
       if (!res.ok) throw new Error();
       await fetchOpportunities();
       fetchAIActions();
+      fetchPrioritySummary();
       setForm(EMPTY_FORM);
       setIsModalOpen(false);
       toast.success("Opportunité créée avec succès !");
@@ -200,6 +216,29 @@ export function PipelineCommercial() {
         </Card>
       </div>
 
+      {(prioritySummaryLoading || prioritySummary) && (
+        <Card className="border border-indigo-200 bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 shadow-sm">
+          <CardContent className="py-4">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Sparkles className="w-4 h-4 text-white" />
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-bold uppercase tracking-wide text-indigo-700 mb-1">Priorités de la semaine (IA)</p>
+                {prioritySummaryLoading ? (
+                  <div className="flex items-center gap-2 py-1">
+                    <div className="w-3 h-3 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"/>
+                    <p className="text-sm text-indigo-600">Analyse du pipeline en cours...</p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-700 leading-relaxed">{prioritySummary}</p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle>Opportunités Actives</CardTitle>
@@ -230,16 +269,7 @@ export function PipelineCommercial() {
                     </button>
                   </div>
                 </div>
-                {(aiActionsLoading || aiActions[opp._id]) && (
-                  <div className="mt-3 pt-3 border-t flex items-center gap-2 text-xs">
-                    <Sparkles className="w-3.5 h-3.5 text-purple-600 flex-shrink-0" />
-                    {aiActionsLoading ? (
-                      <span className="text-muted-foreground italic">Analyse en cours...</span>
-                    ) : (
-                      <span className="text-purple-700 font-medium">{aiActions[opp._id]}</span>
-                    )}
-                  </div>
-                )}
+
               </div>
             ))}
           </div>
