@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { apiClient } from '../../lib/api-client-backend';
 import { CreditCard, Clock, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 
@@ -33,7 +33,7 @@ export function PlatformPaymentsPage() {
     setApproving(id);
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:3001/api/platform/tenants/${id}/approve-transfer`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/platform/tenants/${id}/approve-transfer`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       });

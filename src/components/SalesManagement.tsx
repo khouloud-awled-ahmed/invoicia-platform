@@ -345,7 +345,7 @@ export function SalesManagement({ initialView = "dashboard" }: SalesManagementPr
       toast.info("Preparation du telechargement...");
       const token = localStorage.getItem("token");
       const id = (invoice as any)._id || (invoice as any).id;
-      const response = await fetch("http://localhost:3001/api/billing/sales/invoices/" + id + "/download", { headers: { Authorization: "Bearer " + token } });
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/billing/sales/invoices/` + id + "/download", { headers: { Authorization: "Bearer " + token } });
       if (!response.ok) throw new Error("Erreur");
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);

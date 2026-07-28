@@ -289,7 +289,7 @@ export function DocumentPreparationDialog({
                      (typeof window !== 'undefined' && pdfUrl.includes(window.location.hostname));
     
     if (isApiUrl) {
-      const fullUrl = pdfUrl.startsWith('http') ? pdfUrl : `http://localhost:3001${pdfUrl}`;
+      const fullUrl = pdfUrl.startsWith('http') ? pdfUrl : `${import.meta.env.VITE_API_URL.replace('/api', '')}${pdfUrl}`;
       return {
         url: fullUrl,
         httpHeaders: {

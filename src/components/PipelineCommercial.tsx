@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
@@ -39,7 +39,7 @@ const EMPTY_FORM = {
   stage: "lead" as Opportunity["stage"],
 };
 
-const API = "http://localhost:3001/api/pipeline";
+const API = `${import.meta.env.VITE_API_URL}/pipeline`;
 
 export function PipelineCommercial() {
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);

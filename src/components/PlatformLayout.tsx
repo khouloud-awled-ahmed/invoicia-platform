@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import {
   LayoutDashboard, Users, Package, Settings, BarChart2, CreditCard,
@@ -75,7 +75,7 @@ export function PlatformLayout({ user, onLogout, children }: PlatformLayoutProps
       try {
         const token = localStorage.getItem('token');
         if (!token) return;
-        const res = await fetch('http://localhost:3001/api/platform/tenants', { headers: { Authorization: `Bearer ${token}` } });
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/platform/tenants`, { headers: { Authorization: `Bearer ${token}` } });
         if (res.ok) {
           const data = await res.json();
           setPendingCount(data.filter((t: any) => t.subscriptionStatus === 'PENDING_PAYMENT').length);
@@ -119,7 +119,7 @@ export function PlatformLayout({ user, onLogout, children }: PlatformLayoutProps
       try {
         const token = localStorage.getItem('token') || sessionStorage.getItem('token');
         if (!token) return;
-        const res = await fetch('http://localhost:3001/api/platform/notifications', {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/platform/notifications`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {

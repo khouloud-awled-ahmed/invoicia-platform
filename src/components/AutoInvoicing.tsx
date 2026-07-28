@@ -5,7 +5,7 @@ import { Badge } from "./ui/badge";
 import { Zap, Clock, CheckCircle2, FileText, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 
-const BASE_URL = "http://localhost:3001/api";
+const BASE_URL = import.meta.env.VITE_API_URL;
 
 const authFetch = (url: string, options: RequestInit = {}) => {
   const token = localStorage.getItem('token');

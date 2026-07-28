@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { apiClient } from '../../lib/api-client-backend';
 import { Users, Package, TrendingUp, Settings, RefreshCw, Sparkles, TrendingDown, Activity } from 'lucide-react';
 
@@ -85,7 +85,7 @@ export function PlatformDashboardPage() {
   const loadActivities = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:3001/api/platform/activity-feed', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/platform/activity-feed`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -123,7 +123,7 @@ Données en temps réel:
 - Manque à gagner: ${potentialRevenue - totalRevenue} TND
 Génère une analyse percutante en français, 2-3 phrases maximum. Style: consultant senior, direct, chiffré, actionnable. Commence par un insight fort. Pas de formules génériques. Mentionne les vrais chiffres. Pas de markdown.`;
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3001/api/platform/ai-insights', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/platform/ai-insights`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ prompt }),
