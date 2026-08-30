@@ -1,0 +1,1 @@
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"}],"uuid":"c5cd53f1f2fe4e9aaf59d8f34a8ac06c","collectionName":"webhooks","type":"collection"}

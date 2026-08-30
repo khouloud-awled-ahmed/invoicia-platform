@@ -418,10 +418,10 @@ const DEFAULT_ROLES: Role[] = [
 // ==================== API HELPER ====================
 
 const getAuthToken = () => localStorage.getItem('token') || sessionStorage.getItem('token') || '';
-
 const apiCall = async (url: string, method: string, body?: any) => {
   const token = getAuthToken();
-  const response = await fetch(url, {
+  const baseUrl = import.meta.env.VITE_API_URL || "";
+  const response = await fetch(baseUrl + url, {
     method,
     headers: {
       'Content-Type': 'application/json',
@@ -1382,3 +1382,4 @@ export function UserRoleManagement() {
     </div>
   );
 }
+

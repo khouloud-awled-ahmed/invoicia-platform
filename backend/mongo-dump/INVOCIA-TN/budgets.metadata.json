@@ -1,0 +1,1 @@
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"},{"v":{"$numberInt":"2"},"key":{"tenantId":{"$numberInt":"1"},"period":{"$numberInt":"1"}},"name":"tenantId_1_period_1","background":true}],"uuid":"feaeedab50354814ba815328fc67ac23","collectionName":"budgets","type":"collection"}
