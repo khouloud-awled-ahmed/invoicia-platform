@@ -1,4 +1,4 @@
-﻿import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { AbsenceRiskService, RiskScore } from './absence-risk.service';
 
 export interface AiReport {
@@ -56,7 +56,7 @@ Sois direct, professionnel, sans blabla. Chaque champ doit être court.`;
         Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        model: 'openai/gpt-oss-120b',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.3,
         max_tokens: 500,
