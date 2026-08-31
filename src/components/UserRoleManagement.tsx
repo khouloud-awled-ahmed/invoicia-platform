@@ -471,7 +471,7 @@ export function UserRoleManagement() {
   const loadUsers = async () => {
     try {
       setIsLoadingUsers(true);
-      const data = await apiCall('/api/users', 'GET');
+      const data = await apiCall('/users', 'GET');
       setUsers(Array.isArray(data) ? data : data.users || []);
     } catch (error) {
       console.error('Erreur lors du chargement des utilisateurs:', error);
@@ -542,7 +542,7 @@ export function UserRoleManagement() {
 
   const handleDeleteUser = async (userId: string) => {
     try {
-      await apiCall(`/api/users/${userId}`, 'DELETE');
+      await apiCall(`/users/${userId}`, 'DELETE');
       setUsers(users.filter(u => u.id !== userId));
       toast.success("Utilisateur supprimé");
     } catch (error: any) {
@@ -553,7 +553,7 @@ export function UserRoleManagement() {
   const handleToggleUserStatus = async (userId: string) => {
     try {
       const user = users.find(u => u.id === userId);
-      await apiCall(`/api/users/${userId}`, 'PATCH', { isActive: !user?.isActive });
+      await apiCall(`/users/${userId}`, 'PATCH', { isActive: !user?.isActive });
       setUsers(users.filter(u => u && (u.id || u._id || u.value)).map(u =>
         u.id === userId ? { ...u, isActive: !u.isActive } : u
       ));
@@ -637,10 +637,10 @@ export function UserRoleManagement() {
       if (!payload.password) delete payload.password;
 
       if (editingUser) {
-        await apiCall(`/api/users/${editingUser.id}`, 'PATCH', payload);
+        await apiCall(`/users/${editingUser.id}`, 'PATCH', payload);
         toast.success("Utilisateur modifié avec succès !");
       } else {
-        await apiCall('/api/users', 'POST', payload);
+        await apiCall('/users', 'POST', payload);
         toast.success("Utilisateur créé avec succès !");
       }
 
@@ -1384,3 +1384,4 @@ export function UserRoleManagement() {
 }
 
 // cache bust 08/31/2026 10:48:11
+
