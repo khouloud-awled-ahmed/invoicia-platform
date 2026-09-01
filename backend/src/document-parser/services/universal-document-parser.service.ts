@@ -1,4 +1,4 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+﻿import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import {
@@ -9,7 +9,7 @@ import {
 import { parse as csvParse } from 'csv-parse/sync';
 import * as path from 'path';
 import * as mammoth from 'mammoth';
-import * as nodemailer from 'nodemailer';
+import { sendBrevoEmail, isBrevoConfigured } from '../../common/mailer/brevo-mailer.util';
 
 export interface ParsedBankTransaction {
   date: Date;
@@ -505,26 +505,16 @@ Retourne UNIQUEMENT le paragraphe, rien d'autre.`;
     subject: string;
     body: string;
   }): Promise<void> {
-    if (!data.clientEmail || !process.env.SMTP_USER) {
-      throw new BadRequestException('Email client ou configuration SMTP manquante');
+    if (!data.clientEmail || !isBrevoConfigured()) {
+      throw new BadRequestException('Email client ou configuration Brevo API manquante');
     }
-
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.SMTP_PORT || '587'),
-      secure: false,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    });
 
     const htmlBody = data.body.replace(/\n/g, '<br>');
 
     try {
-      await transporter.sendMail({
-        from: `"Invoicia" <${process.env.SMTP_USER}>`,
+      await sendBrevoEmail({
         to: data.clientEmail,
+        fromName: 'Invoicia',
         subject: data.subject,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
