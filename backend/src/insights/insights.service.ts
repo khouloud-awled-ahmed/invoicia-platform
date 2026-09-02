@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+﻿import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Invoice, InvoiceDocument } from '../billing/sales/schemas/invoice.schema';
@@ -80,7 +80,11 @@ Le premier point doit etre ce qui va bien, le deuxieme le probleme principal a r
 
     const data = await response.json();
     const raw = data.choices?.[0]?.message?.content?.trim() || '';
-    const cleaned = raw.replace(/```json/g, '').replace(/```/g, '').trim();
+    let cleaned = raw.replace(/```json/g, '').replace(/```/g, '').trim();
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      cleaned = jsonMatch[0];
+    }
     try {
       return JSON.parse(cleaned);
     } catch {

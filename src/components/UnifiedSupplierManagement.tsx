@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Input } from "./ui/input";
@@ -596,8 +596,39 @@ export function UnifiedSupplierManagement() {
                 Suivi des documents légaux (KBIS, RC Pro, URSSAF) de tous les fournisseurs
               </CardDescription>
             </CardHeader>
-            <CardContent className="text-center text-muted-foreground py-4">
-              Aucun document à renouveler
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Fournisseur</TableHead>
+                    <TableHead>Document</TableHead>
+                    <TableHead>Date d'expiration</TableHead>
+                    <TableHead>Statut</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {[
+                    { supplier: "AgencePub Digital SARL", doc: "KBIS", expiry: "05/09/2026", status: "expired" },
+                    { supplier: "Bureau Plus SARL", doc: "RC Pro", expiry: "18/09/2026", status: "soon" },
+                    { supplier: "TransportExpress SARL", doc: "URSSAF", expiry: "30/11/2026", status: "ok" },
+                  ].map((d, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell className="font-medium">{d.supplier}</TableCell>
+                      <TableCell>{d.doc}</TableCell>
+                      <TableCell>{d.expiry}</TableCell>
+                      <TableCell>
+                        {d.status === "expired" ? (
+                          <Badge className="bg-red-100 text-red-700">Expiré</Badge>
+                        ) : d.status === "soon" ? (
+                          <Badge className="bg-orange-100 text-orange-700">Expire bientôt</Badge>
+                        ) : (
+                          <Badge className="bg-green-100 text-green-700">À jour</Badge>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
         </TabsContent>

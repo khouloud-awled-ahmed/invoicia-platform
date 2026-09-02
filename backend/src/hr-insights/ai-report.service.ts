@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+﻿import { Injectable, BadRequestException } from '@nestjs/common';
 import { AbsenceRiskService, RiskScore } from './absence-risk.service';
 
 export interface AiReport {
