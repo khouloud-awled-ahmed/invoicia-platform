@@ -1,4 +1,4 @@
-﻿import { Injectable, BadRequestException } from '@nestjs/common';
+﻿import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Invoice, InvoiceDocument } from '../billing/sales/schemas/invoice.schema';
@@ -7,6 +7,8 @@ import { BankAccount, BankAccountDocument } from '../banking/schemas/bank-accoun
 
 @Injectable()
 export class InsightsService {
+  private readonly logger = new Logger(InsightsService.name);
+
   constructor(
     @InjectModel(Invoice.name) private invoiceModel: Model<InvoiceDocument>,
     @InjectModel(Expense.name) private expenseModel: Model<ExpenseDocument>,
@@ -70,7 +72,8 @@ Le premier point doit etre ce qui va bien, le deuxieme le probleme principal a r
         model: 'openai/gpt-oss-120b',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.3,
-        max_tokens: 200,
+        reasoning_effort: 'low',
+        max_tokens: 500,
       }),
     });
 
@@ -88,6 +91,7 @@ Le premier point doit etre ce qui va bien, le deuxieme le probleme principal a r
     try {
       return JSON.parse(cleaned);
     } catch {
+      this.logger.error(`Echec parsing JSON insights. Raw content: ${raw.substring(0, 800)}`);
       return {
         status: 'warning',
         headline: 'Analyse indisponible pour le moment',

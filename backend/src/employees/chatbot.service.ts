@@ -79,6 +79,7 @@ QUESTION: ${question}`;
           model: 'openai/gpt-oss-120b',
           messages: [{ role: 'user', content: prompt }],
           temperature: 0.3,
+          reasoning_effort: 'low',
           max_tokens: 800,
         }),
       });
